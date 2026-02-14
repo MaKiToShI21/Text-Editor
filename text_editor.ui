@@ -287,6 +287,9 @@ QMenu::separator {
    <property name="text">
     <string>Отменить</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
   </action>
   <action name="actionCut">
    <property name="icon">
@@ -294,6 +297,9 @@ QMenu::separator {
    </property>
    <property name="text">
     <string>Вырезать</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+X</string>
    </property>
   </action>
   <action name="actionCopy">
@@ -303,6 +309,9 @@ QMenu::separator {
    <property name="text">
     <string>Копировать</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
   </action>
   <action name="actionPaste">
    <property name="icon">
@@ -310,6 +319,9 @@ QMenu::separator {
    </property>
    <property name="text">
     <string>Вставить</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
    </property>
   </action>
   <action name="actionDelete">
@@ -319,6 +331,9 @@ QMenu::separator {
    <property name="text">
     <string>Удалить</string>
    </property>
+   <property name="shortcut">
+    <string>Backspace, Del</string>
+   </property>
   </action>
   <action name="actionSelectAll">
    <property name="icon">
@@ -326,6 +341,9 @@ QMenu::separator {
    </property>
    <property name="text">
     <string>Выделить всё</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
    </property>
   </action>
   <action name="action_15">
@@ -370,6 +388,9 @@ QMenu::separator {
    <property name="text">
     <string>О программе</string>
    </property>
+   <property name="shortcut">
+    <string>F2</string>
+   </property>
   </action>
   <action name="actionHelp">
    <property name="icon">
@@ -378,6 +399,9 @@ QMenu::separator {
    <property name="text">
     <string>Вызов справки</string>
    </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
   </action>
   <action name="actionSave">
    <property name="icon">
@@ -385,6 +409,9 @@ QMenu::separator {
    </property>
    <property name="text">
     <string>Сохранить</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="actionOpen">
@@ -396,6 +423,9 @@ QMenu::separator {
    </property>
    <property name="toolTip">
     <string>Открыть</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
@@ -411,6 +441,9 @@ QMenu::separator {
    <property name="toolTip">
     <string>Создать</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
@@ -424,6 +457,9 @@ QMenu::separator {
    </property>
    <property name="toolTip">
     <string>Сохранить как</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
@@ -439,6 +475,9 @@ QMenu::separator {
    <property name="toolTip">
     <string>Выход</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
@@ -453,6 +492,9 @@ QMenu::separator {
    <property name="toolTip">
     <string>Повторить</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
+   </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
@@ -466,6 +508,9 @@ QMenu::separator {
    </property>
    <property name="toolTip">
     <string>Пуск</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
