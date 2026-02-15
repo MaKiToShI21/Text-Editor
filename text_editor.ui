@@ -38,16 +38,53 @@
       <property name="frameShadow">
        <enum>QFrame::Shadow::Raised</enum>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
+      <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QTabWidget" name="inputTabWidget">
-         <property name="currentIndex">
-          <number>-1</number>
+        <widget class="QSplitter" name="splitter">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
+         <widget class="QTabWidget" name="inputTabWidget">
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <property name="documentMode">
+           <bool>false</bool>
+          </property>
+          <property name="tabsClosable">
+           <bool>true</bool>
+          </property>
+          <property name="movable">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QTabWidget" name="outputTabWidget">
+          <property name="sizeIncrement">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="documentMode">
+           <bool>false</bool>
+          </property>
+          <property name="tabsClosable">
+           <bool>true</bool>
+          </property>
+          <property name="movable">
+           <bool>true</bool>
+          </property>
+          <property name="tabBarAutoHide">
+           <bool>false</bool>
+          </property>
+         </widget>
         </widget>
-       </item>
-       <item>
-        <widget class="QTabWidget" name="outputTabWidget"/>
        </item>
       </layout>
      </widget>
@@ -250,7 +287,7 @@ QMenu::separator {
     <addaction name="separator"/>
     <addaction name="actionSelectAll"/>
    </widget>
-   <widget class="QMenu" name="menuReference">
+   <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Справка</string>
     </property>
@@ -269,16 +306,23 @@ QMenu::separator {
     <addaction name="action_20"/>
     <addaction name="action_21"/>
    </widget>
-   <widget class="QMenu" name="menuStart">
+   <widget class="QMenu" name="menuRun">
     <property name="title">
      <string>Пуск</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Настройки</string>
+    </property>
+    <addaction name="actionLanguage"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuText"/>
-   <addaction name="menuStart"/>
-   <addaction name="menuReference"/>
+   <addaction name="menuRun"/>
+   <addaction name="menuHelp"/>
+   <addaction name="menuSettings"/>
   </widget>
   <action name="actionUndo">
    <property name="icon">
@@ -332,7 +376,7 @@ QMenu::separator {
     <string>Удалить</string>
    </property>
    <property name="shortcut">
-    <string>Backspace, Del</string>
+    <string>Del</string>
    </property>
   </action>
   <action name="actionSelectAll">
@@ -459,7 +503,7 @@ QMenu::separator {
     <string>Сохранить как</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+F</string>
+    <string>Ctrl+Shift+S</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
@@ -514,6 +558,14 @@ QMenu::separator {
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionLanguage">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ToolsCheckSpelling"/>
+   </property>
+   <property name="text">
+    <string>Язык</string>
    </property>
   </action>
  </widget>
