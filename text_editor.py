@@ -1,20 +1,31 @@
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QTextEdit,
                              QTabWidget, QFileDialog, QMessageBox,
-                             QListWidget, QDialog, QTextBrowser,
-                             QVBoxLayout)
-from PyQt6.QtGui import QAction, QColor, QDragEnterEvent, QDropEvent
-from PyQt6.Qsci import QsciScintilla, QsciLexerPython
-from PyQt6.uic import loadUi
-import sys
-import os
-# from ui_editor import Ui_MainWindow
 
 
-class TextEditor(QMainWindow):  # , Ui_MainWindow
-    def __init__(self):
-        super().__init__()
-        loadUi('text_editor.ui', self)
-        # self.setupUi(self)
+
+mfvjnejnfvjnejnrfnvnjnejvnerjnvjnjojnervmfvjnejnfvjnejnrfnvnjnejvnerjnvjnjojnervmfvjnejnfvjnejnrfnvnjnejvnerjnvjnjojnervmfvjnejnfvjnejnrfnvnjnejvnerjnvjnjojnervmfvjnejnfvjnejnrfnvnjnejvnerjnvjnjojnerv
+v
+v
+
+mfvjnejnfvjnejnrfnvnjnejvnerjnvjnjojnervv
+mfvjnejnfvjnejnrfnvnjnejvnerjnvjnjojnerv
+mfvjnejnfvjnejnrfnvnjnejvnerjnvjnjojnerv
+
+vv
+
+vv
+
+vv
+v
+mfvjnejnfvjnejnrfnvnjnejvnerjnvjnjojnerv
+
+
+
+
+
+
+
+
 
         self.setAcceptDrops(True)
         self.setup_actions()
