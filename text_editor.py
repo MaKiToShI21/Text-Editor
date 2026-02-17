@@ -7,18 +7,17 @@ from code_editor import CodeEditor
 from PyQt6.QtGui import QAction
 from PyQt6.uic import loadUi
 import os
-# from ui_editor import Ui_MainWindow
+from ui_editor import Ui_MainWindow
 
 
-class TextEditor(QMainWindow):  # , Ui_MainWindow
+class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def __init__(self):
         super().__init__()
-        loadUi('text_editor.ui', self)
         self.setMinimumSize(500, 400)
-        # self.setupUi(self)
+        # loadUi('text_editor.ui', self)
+        self.setupUi(self)
 
         self.lang = Language()
-
         self.apply_language()
 
         self.setAcceptDrops(True)
