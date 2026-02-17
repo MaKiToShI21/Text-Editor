@@ -1,236 +1,24 @@
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QTextEdit,
-                             QTabWidget, QFileDialog, QMessageBox,
-                             QListWidget, QDialog, QTextBrowser,
-                             QVBoxLayout)
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                             QLabel, QPushButton, QRadioButton,
-                             QDialogButtonBox, QButtonGroup)
-from PyQt6.QtGui import QAction, QColor, QDragEnterEvent, QDropEvent
-from PyQt6.Qsci import QsciScintilla, QsciLexerPython
+from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QFileDialog,
+                             QMessageBox, QListWidget, QDialog,
+                             QTextBrowser, QVBoxLayout)
+from PyQt6.QtWidgets import QDialog, QVBoxLayout
+from language import Language, LanguageDialog
+from code_editor import CodeEditor
+from PyQt6.QtGui import QAction
 from PyQt6.uic import loadUi
-from PyQt6.QtCore import Qt
-import sys
 import os
 # from ui_editor import Ui_MainWindow
-
-
-class LanguageDialog(QDialog):
-    def __init__(self, current_language='ru', parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Выбор языка")
-        self.setFixedSize(300, 200)
-
-        self.selected_language = current_language
-
-        layout = QVBoxLayout(self)
-
-        title_label = QLabel("Выберите язык интерфейса:")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("font-weight: bold; font-size: 14px; margin: 10px;")
-        layout.addWidget(title_label)
-
-        self.radio_group = QButtonGroup(self)
-
-        self.rb_russian = QRadioButton("Русский")
-        self.rb_russian.setChecked(current_language == 'ru')
-        self.rb_russian.toggled.connect(lambda: self.set_language('ru'))
-        layout.addWidget(self.rb_russian)
-        self.radio_group.addButton(self.rb_russian)
-
-        self.rb_english = QRadioButton("English")
-        self.rb_english.setChecked(current_language == 'en')
-        self.rb_english.toggled.connect(lambda: self.set_language('en'))
-        layout.addWidget(self.rb_english)
-        self.radio_group.addButton(self.rb_english)
-
-        layout.addStretch()
-
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok |
-            QDialogButtonBox.StandardButton.Cancel
-        )
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
-
-    def set_language(self, lang):
-        self.selected_language = lang
-
-    def get_selected_language(self):
-        return self.selected_language
 
 
 class TextEditor(QMainWindow):  # , Ui_MainWindow
     def __init__(self):
         super().__init__()
         loadUi('text_editor.ui', self)
+        self.setMinimumSize(500, 400)
         # self.setupUi(self)
 
-        # Словарь с переводами для всех элементов
-        self.translations = {
-            'ru': {
-                # Window title
-                'window_title': 'Текстовый редактор',
+        self.lang = Language()
 
-                # Menus
-                'menuFile': 'Файл',
-                'menuEdit': 'Правка',
-                'menuText': 'Текст',
-                'menuRun': 'Пуск',
-                'menuHelp': 'Справка',
-                'menuSettings': 'Настройки',
-
-                # File menu actions
-                'actionNew': 'Создать',
-                'actionOpen': 'Открыть',
-                'actionSave': 'Сохранить',
-                'actionSaveAs': 'Сохранить как',
-                'actionExit': 'Выход',
-
-                # Edit menu actions
-                'actionUndo': 'Отменить',
-                'actionRedo': 'Повторить',
-                'actionCut': 'Вырезать',
-                'actionCopy': 'Копировать',
-                'actionPaste': 'Вставить',
-                'actionDelete': 'Удалить',
-                'actionSelectAll': 'Выделить всё',
-
-                # Tooltip for actions
-                'actionNew_toolTip': 'Создать',
-                'actionOpen_toolTip': 'Открыть',
-                'actionRedo_toolTip': 'Повторить',
-                'actionRun_toolTip': 'Пуск',
-
-                # Text menu actions
-                'action_15': 'Постановка задачи',
-                'action_16': 'Грамматика',
-                'action_17': 'Классификация грамматики',
-                'action_18': 'Метод анализа',
-                'action_19': 'Тестовый пример',
-                'action_20': 'Список литературы',
-                'action_21': 'Исходный код программы',
-
-                # Run menu actions
-                'actionRun': 'Пуск',
-
-                # Help menu actions
-                'actionHelp': 'Вызов справки',
-                'actionAbout': 'О программе',
-
-                # Settings menu actions
-                'actionLanguage': 'Язык',
-
-                # Default tab titles
-                'new_document': 'Новый документ',
-
-                # Messages
-                'file_saved': 'Файл сохранен',
-                'file_opened': 'Файл открыт',
-                'unsaved_changes': 'Несохраненные изменения',
-                'save_changes': 'Сохранить изменения в',
-                'tab_closed': 'Вкладка закрыта',
-                'copied': 'Скопировано',
-                'pasted': 'Вставлено',
-                'cut': 'Вырезано',
-                'deleted': 'Удалено',
-                'selected_all': 'Выделено всё',
-                'undo': 'Отмена',
-                'redo': 'Повтор',
-                'language_changed': 'Язык изменен на русский',
-                'drop_hint': 'Отпустите файл для открытия',
-                'opening_files': 'Открываю {} файлов...',
-                'opened_files': 'Открыто файлов: {}',
-                'tab_close_cancelled': 'Закрытие вкладки отменено',
-                'text_edit_inactive': 'Текстовое поле не активно',
-                'encoding_error': 'Не удалось открыть файл (ошибка кодировки)',
-                'error': 'Ошибка',
-                'save_cancelled': 'Сохранение отменено',
-            },
-            'en': {
-                # Window title
-                'window_title': 'Text Editor',
-
-                # Menus
-                'menuFile': 'File',
-                'menuEdit': 'Edit',
-                'menuText': 'Text',
-                'menuRun': 'Run',
-                'menuHelp': 'Help',
-                'menuSettings': 'Settings',
-
-                # File menu actions
-                'actionNew': 'New',
-                'actionOpen': 'Open',
-                'actionSave': 'Save',
-                'actionSaveAs': 'Save As',
-                'actionExit': 'Exit',
-
-                # Edit menu actions
-                'actionUndo': 'Undo',
-                'actionRedo': 'Redo',
-                'actionCut': 'Cut',
-                'actionCopy': 'Copy',
-                'actionPaste': 'Paste',
-                'actionDelete': 'Delete',
-                'actionSelectAll': 'Select All',
-
-                # Tooltip for actions
-                'actionNew_toolTip': 'Create',
-                'actionOpen_toolTip': 'Open',
-                'actionRedo_toolTip': 'Redo',
-                'actionRun_toolTip': 'Run',
-
-                # Text menu actions
-                'action_15': 'Problem Statement',
-                'action_16': 'Grammar',
-                'action_17': 'Grammar Classification',
-                'action_18': 'Analysis Method',
-                'action_19': 'Test Example',
-                'action_20': 'References',
-                'action_21': 'Source Code',
-
-                # Run menu actions
-                'actionRun': 'Run',
-
-                # Help menu actions
-                'actionHelp': 'Help',
-                'actionAbout': 'About',
-
-                # Settings menu actions
-                'actionLanguage': 'Language',
-
-                # Default tab titles
-                'new_document': 'New Document',
-
-                # Messages
-                'file_saved': 'File saved',
-                'file_opened': 'File opened',
-                'unsaved_changes': 'Unsaved Changes',
-                'save_changes': 'Save changes in',
-                'tab_closed': 'Tab closed',
-                'copied': 'Copied',
-                'pasted': 'Pasted',
-                'cut': 'Cut',
-                'deleted': 'Deleted',
-                'selected_all': 'Selected all',
-                'undo': 'Undo',
-                'redo': 'Redo',
-                'language_changed': 'Language changed to English',
-                'drop_hint': 'Drop files to open',
-                'opening_files': 'Opening {} file(s)...',
-                'opened_files': 'Opened files: {}',
-                'tab_close_cancelled': 'Tab close cancelled',
-                'text_edit_inactive': 'Text edit not active',
-                'encoding_error': 'Could not open file (encoding error)',
-                'error': 'Error',
-                'save_cancelled': 'Save cancelled',
-            }
-        }
-
-        self.current_language = 'ru'
-
-        self.load_language_setting()
         self.apply_language()
 
         self.setAcceptDrops(True)
@@ -245,38 +33,15 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
         self.status_bar = self.statusBar
         self.file_paths = {}
 
-    def tr(self, key):
-        return self.translations[self.current_language].get(key, key)
+    def read_file(self, file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
 
-    def show_language_dialog(self):
-        dialog = LanguageDialog(self.current_language, self)
-
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            new_language = dialog.get_selected_language()
-
-            if new_language != self.current_language:
-                self.current_language = new_language
-                self.save_language_setting()
-                self.apply_language()
-
-                self.status_bar.showMessage(self.tr('language_changed'), 3000)
-
-    def save_language_setting(self):
-        try:
-            with open('language_config.txt', 'w', encoding='utf-8') as f:
-                f.write(self.current_language)
-        except:
-            pass
-
-    def load_language_setting(self):
-        try:
-            with open('language_config.txt', 'r', encoding='utf-8') as f:
-                self.current_language = f.read().strip()
-        except:
-            pass
+        file_name = os.path.basename(file_path)
+        return content, file_name
 
     def apply_language(self):
-        t = self.translations[self.current_language]
+        t = self.lang.translations[self.lang.current_language]
 
         self.setWindowTitle(t['window_title'])
 
@@ -331,7 +96,7 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
 
         self.actionExit = self.findChild(QAction, 'actionExit')
         if self.actionExit:
-            self.actionExit.triggered.connect(self.close)
+            self.actionExit.triggered.connect(self.exit_app)
 
         # Run action
         self.actionRun = self.findChild(QAction, 'actionRun')
@@ -381,113 +146,95 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
         if self.actionLanguage:
             self.actionLanguage.triggered.connect(self.show_language_dialog)
 
-    def dragEnterEvent(self, event: QDragEnterEvent | None):
-        if event is None:
+    def dragEnterEvent(self, event):
+        if event is None or event.mimeData() is None:
             return
 
-        mime_data = event.mimeData()
-        if mime_data is None:
-            return
-
-        if mime_data.hasUrls():
-            event.acceptProposedAction()
-            self.status_bar.showMessage(self.tr('drop_hint'), 0)
-        else:
-            event.ignore()
-
-    def dragMoveEvent(self, event):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
+            self.status_bar.showMessage(self.lang.translate('drop_hint'), 0)
 
-    def dragLeaveEvent(self, event):
-        self.status_bar.clearMessage()
-        event.accept()
-
-    def dropEvent(self, event: QDropEvent | None):
-        if event is None:
+    def dropEvent(self, event):
+        if event is None or event.mimeData() is None:
             return
 
-        mime_data = event.mimeData()
-        if mime_data is None:
-            return
+        opened = 0
+        for url in event.mimeData().urls():
+            if url.isLocalFile() and self.open_dropped_file(url.toLocalFile()):
+                opened += 1
 
-        files = [u.toLocalFile() for u in mime_data.urls()
-                 if u.isLocalFile()]
-
-        if files:
-            self.status_bar.showMessage(
-                self.tr('opening_files').format(len(files)), 0)
-            QApplication.processEvents()
-
-            opened = 0
-            for file_path in files:
-                if os.path.isfile(file_path):
-                    if self.open_dropped_file(file_path):
-                        opened += 1
-
-            self.status_bar.showMessage(
-                self.tr('opened_files').format(opened), 3000)
+        self.status_bar.showMessage(
+                self.lang.translate('opened_files').format(opened), 3000)
 
         event.acceptProposedAction()
 
     def open_dropped_file(self, file_path):
-        try:
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+        return self.open_tab(file_path)
 
-                file_name = os.path.basename(file_path)
-                self.create_new_tab(file_name, content, file_path)
-                return True
-            except UnicodeDecodeError as e:
-                QMessageBox.critical(
-                    self, "Ошибка",
-                    f"Не удалось открыть файл (ошибка кодировки):\n{str(e)}")
-                return False
+    def open_tab(self, file_path):
+        try:
+            content, file_name = self.read_file(file_path)
+            self.create_new_tab(file_name, content, file_path)
+            return True
+
         except Exception as e:
-            QMessageBox.critical(self, "Ошибка",
-                                 f"Не удалось открыть файл:\n{str(e)}")
+            QMessageBox.critical(self, self.lang.translate('error'),
+                                 self.lang.translate('opening_error').
+                                 format(str(e), 0),
+                                 QMessageBox.StandardButton.Ok)
             return False
 
     def close_tab(self, index):
         text_edit = self.input_tab_widget.widget(index)
         tab_name = self.input_tab_widget.tabText(index)
 
+        def closing():
+            if id(text_edit) in self.file_paths:
+                del self.file_paths[id(text_edit)]
+
+            self.input_tab_widget.removeTab(index)
+            text_edit.deleteLater()
+
         if text_edit.isModified():
             reply = QMessageBox.question(
                 self,
-                self.tr('unsaved_changes'),
-                self.tr('save_changes') + f" '{tab_name}'?",
-                QMessageBox.StandardButton.Save |
-                QMessageBox.StandardButton.Discard |
+                self.lang.translate('unsaved_changes'),
+                self.lang.translate('save_changes').format(tab_name, 0),
+                QMessageBox.StandardButton.Yes |
+                QMessageBox.StandardButton.No |
                 QMessageBox.StandardButton.Cancel
             )
 
-            if reply == QMessageBox.StandardButton.Save:
+            if reply == QMessageBox.StandardButton.Yes:
                 self.input_tab_widget.setCurrentIndex(index)
 
                 saved = self.save_file()
 
                 if not saved:
                     self.status_bar.showMessage(
-                        self.tr('tab_close_cancelled'), 3000)
+                        self.lang.translate('tab_closing_cancelled').format(tab_name, 0),
+                        3000)
                     return
+
+            elif reply == QMessageBox.StandardButton.No:
+                closing()
+                self.status_bar.showMessage(
+                    self.lang.translate('tab_closed_without_saving').format(tab_name, 0),
+                    3000)
+                return
 
             elif reply == QMessageBox.StandardButton.Cancel:
                 self.status_bar.showMessage(
-                    self.tr('tab_close_cancelled'), 3000)
+                    self.lang.translate('tab_closing_cancelled').format(tab_name, 0),
+                    3000)
                 return
 
-        if id(text_edit) in self.file_paths:
-            del self.file_paths[id(text_edit)]
+        closing()
 
-        self.input_tab_widget.removeTab(index)
-        text_edit.deleteLater()
+        self.status_bar.showMessage(self.lang.translate('tab_saved_and_closed').
+                                    format(tab_name, 0), 3000)
 
-        self.status_bar.showMessage(
-            f"{self.tr('tab_closed')} '{tab_name}'", 3000)
-
-    def close(self):
+    def can_close(self):
         for i in range(self.input_tab_widget.count()):
             text_edit = self.input_tab_widget.widget(i)
             if text_edit.isModified():
@@ -495,59 +242,62 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
 
                 reply = QMessageBox.question(
                     self,
-                    self.tr('unsaved_changes'),
-                    self.tr('save_changes') + f" '{tab_name}'?",
-                    QMessageBox.StandardButton.Save |
-                    QMessageBox.StandardButton.Discard |
+                    self.lang.translate('unsaved_changes'),
+                    self.lang.translate('save_changes').format(tab_name),
+                    QMessageBox.StandardButton.Yes |
+                    QMessageBox.StandardButton.No |
                     QMessageBox.StandardButton.Cancel
                 )
 
-                if reply == QMessageBox.StandardButton.Save:
+                if reply == QMessageBox.StandardButton.Yes:
                     self.input_tab_widget.setCurrentIndex(i)
-                    saved_file = self.save_file()
-                    if not saved_file:
-                        return
+                    if not self.save_file():
+                        return False
                 elif reply == QMessageBox.StandardButton.Cancel:
-                    return
-        super().close()
+                    self.status_bar.showMessage(
+                        self.lang.translate('tab_closing_cancelled').
+                        format(tab_name),
+                        3000)
+                    return False
+
+        return True
+
+    def exit_app(self, event=None):
+        self.close()
+
+    def closeEvent(self, event):
+        if self.can_close():
+            event.accept()
+        else:
+            event.ignore()
 
     def open_file(self):
         file_path, selected_filter = QFileDialog.getOpenFileName(
             self,
-            "Выберите файл для открытия",
+            self.lang.translate('choose_file_to_open'),
             "",
             "*.*"
         )
 
         if file_path:
-            try:
-                with open(file_path, 'r', encoding='utf-8') as file:
-                    content = file.read()
-                file_name = os.path.basename(file_path)
-                self.create_new_tab(file_name, content, file_path)
-
-            except Exception as e:
-                QMessageBox.critical(self, "Ошибка",
-                                     f"Не удалось открыть файл:\n{str(e)}")
+            self.open_tab(file_path)
 
     def create_new_tab(self, title=None, content="", file_path=None):
         text_edit = CodeEditor()
         text_edit.setText(content)
 
         if title is None:
-            title = self.tr('new_document')
+            title = self.lang.translate('new_document')
 
-        index = self.input_tab_widget.addTab(text_edit, title)
-
-        if file_path:
-            self.file_paths[id(text_edit)] = file_path
         text_edit.setModified(False)
 
+        index = self.input_tab_widget.addTab(text_edit, title)
         self.input_tab_widget.setCurrentIndex(index)
 
         if file_path:
-            self.status_bar.showMessage(f"{self.tr('file_opened')} {title}",
-                                        3000)
+            self.file_paths[id(text_edit)] = file_path
+            self.status_bar.showMessage(self.lang.translate('file_opened').
+                                        format(title, 0), 3000)
         else:
             self.status_bar.showMessage(f"{title}", 3000)
 
@@ -572,14 +322,16 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
                 text_edit.setModified(False)
 
                 self.status_bar.showMessage(
-                    self.tr('file_saved') + f" {os.path.basename(file_path)}",
-                    3000)
+                    self.lang.translate('file_saved').
+                    format(os.path.basename(file_path)), 3000)
 
                 return True
 
             except Exception as e:
-                QMessageBox.critical(self, "Ошибка",
-                                     f"Не удалось сохранить файл: {str(e)}")
+                QMessageBox.critical(self, self.lang.translate('error'),
+                                     self.lang.translate('file_saving_error').
+                                     format(str(e)),
+                                     QMessageBox.StandardButton.Ok)
                 return False
         else:
             return self.save_file_as()
@@ -590,7 +342,8 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
         if not text_edit:
             return False
 
-        file_path, _ = QFileDialog.getSaveFileName(self, "Сохранить файл как",
+        file_path, _ = QFileDialog.getSaveFileName(self,
+                                                   self.lang.translate('actionSaveFileAs'),
                                                    "",
                                                    "Текстовые файлы (*.txt);;"
                                                    "doc (*.doc);;"
@@ -612,89 +365,89 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
                 file_name = os.path.basename(file_path)
                 self.input_tab_widget.setTabText(index, file_name)
 
-                self.status_bar.showMessage(f"Файл сохранен как {file_name}",
-                                            3000)
-
+                self.status_bar.showMessage(
+                    self.lang.translate('file_saved_as').format(file_name, 0), 3000)
                 return True
 
             except Exception as e:
-                QMessageBox.critical(self, "Ошибка",
-                                     f"Не удалось сохранить файл: {str(e)}")
+                QMessageBox.critical(
+                    self, self.lang.translate('error'),
+                    self.lang.translate('file_saving_error').format(str(e), 0),
+                    QMessageBox.StandardButton.Ok)
                 return False
         else:
-            self.status_bar.showMessage("Сохранение отменено", 2000)
+            self.status_bar.showMessage(self.lang.translate('save_cancelled'), 3000)
             return False
 
     def run(self):
-        if hasattr(self, 'text_edit') and self.text_edit:
-            index = self.input_tab_widget.currentIndex()
-            text_edit = self.input_tab_widget.widget(index)
-            tab_name = self.input_tab_widget.tabText(index)
+        index = self.input_tab_widget.currentIndex()
+        text_edit = self.input_tab_widget.widget(index)
+        tab_name = self.input_tab_widget.tabText(index)
 
-            lines = text_edit.text().split('\n')
+        lines = text_edit.text().split('\n')
 
-            list_widget = QListWidget()
+        list_widget = QListWidget()
 
-            for line in lines:
-                if line.strip():
-                    list_widget.addItem(line)
+        for line in lines:
+            if line.strip():
+                list_widget.addItem(line)
 
-            self.output_tab_widget.addTab(list_widget, tab_name)
-            self.output_tab_widget.setCurrentIndex(
-                self.output_tab_widget.count() - 1)
-        return None
+        self.output_tab_widget.addTab(list_widget, tab_name)
+        self.output_tab_widget.setCurrentIndex(
+            self.output_tab_widget.count() - 1)
 
     def undo(self):
         text_edit = self.get_current_text_edit()
         if text_edit:
             text_edit.undo()
-            self.status_bar.showMessage(self.tr('actionUndo'), 3000)
+            self.status_bar.showMessage(self.lang.translate('actionUndo'), 3000)
 
     def redo(self):
         text_edit = self.get_current_text_edit()
         if text_edit:
             text_edit.redo()
-            self.status_bar.showMessage(self.tr('actionRedo'), 3000)
+            self.status_bar.showMessage(self.lang.translate('actionRedo'), 3000)
 
     def copy(self):
         text_edit = self.get_current_text_edit()
         if text_edit:
-            text_edit.copy()
-            self.status_bar.showMessage(self.tr('actionCopy'), 3000)
+            if text_edit.hasSelectedText():
+                text_edit.copy()
+                self.status_bar.showMessage(self.lang.translate('actionCopy'), 3000)
 
     def paste(self):
         text_edit = self.get_current_text_edit()
         if text_edit:
             text_edit.paste()
-            self.status_bar.showMessage(self.tr('actionPaste'), 3000)
+            self.status_bar.showMessage(self.lang.translate('actionPaste'), 3000)
 
     def cut(self):
         text_edit = self.get_current_text_edit()
         if text_edit:
-            text_edit.cut()
-            self.status_bar.showMessage(self.tr('actionCut'), 3000)
+            if text_edit.hasSelectedText():
+                text_edit.cut()
+                self.status_bar.showMessage(self.lang.translate('actionCut'), 3000)
 
     def delete(self):
         text_edit = self.get_current_text_edit()
         if text_edit:
             if text_edit.hasSelectedText():
                 text_edit.removeSelectedText()
-                self.status_bar.showMessage(self.tr('actionDelete'), 3000)
+                self.status_bar.showMessage(self.lang.translate('actionDelete'), 3000)
 
     def select_all(self):
         text_edit = self.get_current_text_edit()
         if text_edit:
             text_edit.selectAll()
-            self.status_bar.showMessage(self.tr('actionSelectAll'), 3000)
+            self.status_bar.showMessage(self.lang.translate('actionSelectAll'), 3000)
 
     def get_current_text_edit(self):
         if hasattr(self, 'input_tab_widget') and self.input_tab_widget:
             current_widget = self.input_tab_widget.currentWidget()
-            if isinstance(current_widget, (QTextEdit, QsciScintilla)):
+            if isinstance(current_widget, CodeEditor):
                 return current_widget
             else:
-                self.status_bar.showMessage(self.tr('actionRedo'), 3000)
-                self.status_bar.showMessage(self.tr('text_edit_inactive'),
+                self.status_bar.showMessage(self.lang.translate('text_edit_inactive'),
                                             3000)
                 return None
         return None
@@ -710,7 +463,7 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
         layout = QVBoxLayout(dialog)
         text_browser = QTextBrowser()
 
-        if self.current_language == 'ru':
+        if self.lang.current_language == 'ru':
             dialog.setWindowTitle("Руководство пользователя")
             text_browser.setHtml("""
             <html>
@@ -939,7 +692,7 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
             </html>
             """)
         else:
-            if self.current_language == 'en':
+            if self.lang.current_language == 'en':
                 dialog.setWindowTitle("User manual")
                 text_browser.setHtml("""
                 <html>
@@ -1175,10 +928,10 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
     def about(self):
         dialog = QDialog(self)
         dialog.setMinimumWidth(450)
-        dialog.setMinimumHeight(350)
+        dialog.setMinimumHeight(300)
         layout = QVBoxLayout(dialog)
         text_browser = QTextBrowser()
-        if self.current_language == 'ru':
+        if self.lang.current_language == 'ru':
             dialog.setWindowTitle("О программе")
             text_browser.setHtml("""
                 <div style='text-align: center;'>
@@ -1237,43 +990,22 @@ class TextEditor(QMainWindow):  # , Ui_MainWindow
         layout.addWidget(text_browser)
         dialog.exec()
 
+    def show_language_dialog(self):
+        dialog = LanguageDialog(self.lang, self)
 
-class CodeEditor(QsciScintilla):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            new_language = dialog.get_selected_language()
 
-        # Нумерация строк
-        self.setMarginType(0, QsciScintilla.MarginType.NumberMargin)
-        self.setMarginWidth(0, "0000")
-        self.setMarginsForegroundColor(QColor(150, 150, 150))
-        self.setMarginsBackgroundColor(QColor(60, 63, 65))
+            if new_language != self.lang.current_language:
+                self.lang.current_language = new_language
+                self.lang.save_language_setting()
+                self.apply_language()
 
-        # Подсветка синтаксиса
-        lexer = QsciLexerPython()
-        lexer.setColor(QColor(9, 145, 0), 1)    # Комментарии c #
-        lexer.setColor(QColor(122, 191, 124), 2)   # Числа
-        lexer.setColor(QColor(180, 90, 51), 3)    # Строки в кавычках c ""
-        lexer.setColor(QColor(180, 90, 51), 4)   # Строки в кавычках c ''
-        lexer.setColor(QColor(43, 150, 214), 5)   # Ключевые слова: def, class, if, else
-        lexer.setColor(QColor(180, 90, 51), 6)   # Блочные комментарии c ''' '''
-        lexer.setColor(QColor(205, 209, 100), 9)   # Название функций
-        lexer.setColor(QColor(205, 209, 100), 15)  # Декораторы @staticmethod
-        lexer.setColor(QColor(180, 90, 51), 17)  # f'{}'
-        self.setSelectionBackgroundColor(QColor(0, 100, 200, 60))  # Выделение текста
-        self.resetSelectionForegroundColor()
-        self.setCaretForegroundColor(QColor(255, 255, 255))
-        self.setCaretWidth(2)
-        self.setLexer(lexer)
-        self.setCaretLineVisible(True)
-        self.setCaretLineBackgroundColor(QColor(50, 50, 50))  # Подсветка строки
-
-
-def main():
-    app = QApplication(sys.argv)
-    editor = TextEditor()
-    editor.show()
-    sys.exit(app.exec())
-
-
-if __name__ == '__main__':
-    main()
+                self.status_bar.showMessage(
+                    self.lang.translate('language_changed'), 3000)
+            else:
+                self.status_bar.showMessage(
+                    self.lang.translate('lang_not_changed'), 3000)
+        else:
+            self.status_bar.showMessage(
+                self.lang.translate('lang_selection_cancelled'), 3000)
