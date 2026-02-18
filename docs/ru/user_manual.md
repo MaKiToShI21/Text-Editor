@@ -40,6 +40,9 @@
 | Выделить всё  | `Ctrl+A`        | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/ru/select_all.png" width="450">      | Выделяет весь текст в документе                 |
 
 ## Меню «Текст»
+> [!NOTE]
+> **`In development but assumes:`**
+
 Меню «Текст» содержит информационные разделы о языке и грамматике.
 
 <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/ru/text.png" width="450">
@@ -55,6 +58,8 @@
 При выборе любого пункта открывается окно с соответствующей информацией.
 
 ## Меню «Пуск»
+> [!NOTE]
+> **`In development but assumes:`**
 
 **Запуск анализатора** (`F5`) — запускает синтаксический анализ текста из области редактирования.
 
@@ -114,3 +119,4 @@
 При наведении курсора мыши на любую кнопку панели инструментов появляется всплывающая подсказка с кратким описанием действия.
 
 <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/ru/tooltip.png" width="450">
+
