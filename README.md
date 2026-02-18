@@ -91,7 +91,7 @@ ___
 
 ### **Running Without Python Installation**
 
-Download `Text-Editor.exe` and run it. No additional installations are required.
+Download [Text-Editor.exe](https://github.com/MaKiToShI21/Text-Editor/releases/tag/v1.0.0) and run it. No additional installations are required.
 
 <h2 align="center">User Manual</h2>
 
@@ -99,4 +99,4 @@ Download `Text-Editor.exe` and run it. No additional installations are required.
 
 ___
 
-**This project uses the **[MIT](https://github.com/MaKiToShI21/Text-Editor/blob/main/LICENSE)** license.
+**This project uses the [MIT](https://github.com/MaKiToShI21/Text-Editor/blob/main/LICENSE) license.**
