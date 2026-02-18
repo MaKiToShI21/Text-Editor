@@ -94,6 +94,8 @@ Cкачайте `Text-Editor.exe` и запустите. Никаких допо
 
 <h2 align="center">Руководство пользователя</h2>
 
-**В разработке**
+[На русском](./docs/ru/user_manual.md)
+
+[In English](./docs/en/user_manual.md) (In developing)
 
 **В данном проекте используется лицензия [MIT](https://github.com/MaKiToShI21/Text-Editor/blob/main/LICENSE)**
