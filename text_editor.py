@@ -15,6 +15,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         super().__init__()
         # loadUi('text_editor.ui', self)
         self.setupUi(self)
+
         self.setMinimumSize(500, 400)
 
         self.lang = Language()
@@ -683,6 +684,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 <p><b>Область вывода результатов:</b> отображает результаты работы синтаксического анализатора. Область доступна только для чтения.</p>
                 <p><b>Изменение размеров областей:</b> перетаскивайте разделитель между областями мышью.</p>
 
+                <div style="text-align: center; font-size: 16px; font-weight: bold;">
+                    <a href="https://github.com/MaKiToShI21/Text-Editor/blob/main/docs/ru/user_manual.md">Подробное руководство пользователя</a>
+                </div>
+
                 <div class='footer'>
                     <p>Разработано с использованием PyQt6</p>
                     <p>© 2026 MaKiToShI</p>
@@ -911,6 +916,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     <p><b>Editing area:</b> designed for entering and editing text. All standard editing operations are supported.</p>
                     <p><b>Results output area:</b> Displays the results of the parser. This area is read-only.</p>
                     <p><b>Resizing areas:</b> drag the divider between areas with the mouse.</p>
+
+                    <div style="text-align: center; font-size: 16px; font-weight: bold;">
+                        <a href="https://github.com/MaKiToShI21/Text-Editor/blob/main/docs/en/user_manual.md">Detailed user manual</a>
+                    </div>
 
                     <div class='footer'>
                         <p>Developed using PyQt6</p>

@@ -380,4 +380,5 @@ class Ui_MainWindow(object):
         self.actionRun.setText(_translate("MainWindow", "Пуск"))
         self.actionRun.setToolTip(_translate("MainWindow", "Пуск"))
         self.actionRun.setShortcut(_translate("MainWindow", "F5"))
-        self.actionLanguage.setText(_translate("MainWindow", "Язык"))
+        self.actionLanguage.setText(_translate("MainWindow", "Смена языка"))
+        self.actionLanguage.setToolTip(_translate("MainWindow", "Смена языка"))
