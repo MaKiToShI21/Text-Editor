@@ -1,101 +1,102 @@
 <h1 align="center">Text-Editor</h1>
 
-## Содержание
-1. [Название и цель лабораторной работы](#название-и-цель-лабораторной-работы)
-2. [Сведения об авторе](#сведения-об-авторе)
-3. [Описание проекта](#описание-проекта)
-4. [Используемые технологии](#используемые-технологии)
-5. [Инструкция по сборке и запуску](#инструкция-по-сборке-и-запуску)
-6. [Руководство пользователя](#руководство-пользователя)
+## Contents
+1. **[Title and Objective of the Laboratory Work](#title-and-objective-of-the-laboratory-work)**
+2. **[Author Information](#author-information)**
+3. **[Project Description](#project-description)**
+4. **[Technologies Used](#technologies-used)**
+5. **[Build and Launch Instructions](#build-and-launch-instructions)**
+6. **[User Manual](#user-manual)**
 
 ___
 
-<h2 align="center">Название и цель лабораторной работы</h2>
+<h2 align="center">Title and Objective of the Laboratory Work</h2>
 
-**Лабораторная работа 1.** Разработка пользовательского интерфейса (GUI) для языкового процессора
+**Laboratory Work 1.** Development of a Graphical User Interface (GUI) for a Language Processor
 
-<h4>Цель работы:</h4>
-Создание кроссплатформенного графического интерфейса (GUI) для языкового процессора в виде специализированного текстового редактора
-<h2 align="center">Сведения об авторе</h2>
+**Objective:** Creation of a cross-platform graphical interface (GUI) for a language processor in the form of a specialized text.
 
-Работу выполнил ***MaKiToShI***
+<h2 align="center">Author Information</h2>
 
-<h2 align="center">Описание проекта</h2>
-Текстовый редактор — это приложение с графическим интерфейсом, разработанное на Python с использованием библиотеки PyQt6. Приложение представляет собой специализированный текстовый редактор, который в дальнейшем будет дополнен функциями синтаксического анализатора.
+Work completed by ***MaKiToShI*** 😃.
 
-<h2 align="center">Используемые технологии</h2>
+<h2 align="center">Project Description</h2>
+Text Editor is a graphical interface application developed in Python using the PyQt6 library. The application is a specialized text editor that will later be enhanced with syntax analyzer functions.
 
-**Язык программирования:**
+<h2 align="center">Technologies Used</h2>
+
+**Programming Language:**
 Python 3.12
 
-**Фреймворк для GUI:**
+**GUI Framework:**
 PyQt6 + Qt Designer
 
-**Среда разработки:**
+**Development Environment:**
 VS Code (Visual Studio Code)
 
-**Дополнительные инструменты:**
+**Additional Tools:**
 
-* PyQt6.uic - модуль для загрузки .ui файлов в Python
-* PyInstaller - инструмент для упаковки Python-приложений в исполняемые файлы
-* Git - система контроля версий
+* PyQt6.uic - module for loading .ui files into Python
+* PyInstaller - tool for packaging Python applications into executable files
+* Git - version control system
 
-<h2 align="center">Инструкция по сборке и запуску</h2>
+<h2 align="center">Build and Launch Instructions</h2>
 
-**Установка Python**
+**Installing Python**
 
-Скачайте и установите Python 3.8 или выше с официального сайта.
+Download and install Python 3.8 or higher from the official website.
 
-**Клонируйте репозиторий**
+**Clone the Repository**
 
 ```bash
 git clone https://github.com/MaKiToShI21/Text-Editor.git
 ```
 
-**Или скачайте ZIP и разархивируйте**
+**Or download ZIP and extract**
+![ZIP](https://github.com/MaKiToShI21/Text-Editor/blob/main/images/ZIP.png)
 
-**Создайте виртуальное окружение и активируйте**
+**Create and Activate a Virtual Environment**
 ```bash
 python -m venv venv
 venv\Scripts\activate
 ```
 
-**Установите зависимости**
+**Install Dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-**Запустите**
+**Run**
 ```bash
 python main.py
 ```
 
 ___
 
-### Сборка проекта
+### Building the Project
 
-Если изменили `text_editor.ui`, то необходимо выполнить следующую команду:
+If you have changed `text_editor.ui`, you need to execute the following command:
 ```bash
 pyuic6 text_editor.ui -o ui_editor.py
 ```
 
-Для создания исполняемого файла, необходимо выполнить команду PyInstaller:
+To create an executable file, run the PyInstaller command:
 ```bash
 pyinstaller --onefile --windowed main.py
 ```
 
-После успешной сборки исполняемый файл находится в папке: `/dist/main.exe`
+After successful build, the executable file is located in the folder: `/dist/main.exe`
 
 ___
 
-### **Запуск без установки Python**
+### **Running Without Python Installation**
 
-Cкачайте `Text-Editor.exe` и запустите. Никаких дополнительных установок не требуется.
+Download `Text-Editor.exe` and run it. No additional installations are required.
 
-<h2 align="center">Руководство пользователя</h2>
+<h2 align="center">User Manual</h2>
 
-[На русском](./docs/ru/user_manual.md)
+***<p align="center">[In Russian](./docs/ru/user_manual.md) or [In English](./docs/en/user_manual.md)</p>*** 
 
-[In English](./docs/en/user_manual.md) (In developing)
+___
 
-**В данном проекте используется лицензия [MIT](https://github.com/MaKiToShI21/Text-Editor/blob/main/LICENSE)**
+**This project uses the **[MIT](https://github.com/MaKiToShI21/Text-Editor/blob/main/LICENSE)** license.
