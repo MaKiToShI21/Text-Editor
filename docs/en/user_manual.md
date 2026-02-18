@@ -57,7 +57,7 @@ Menu «Text» contains informational sections about the language and grammar.
 
 Selecting any item opens a window with the corresponding information.
 
-## Меню «Пуск»
+## Menu «Run»
 
 > [!NOTE]
 > **`In development but assumes:`**
