@@ -27,19 +27,26 @@ class Language():
                 'actionExit': 'Выход',
 
                 # Edit menu actions
-                'actionUndo': 'Отменить',
-                'actionRedo': 'Повторить',
-                'actionCut': 'Вырезать',
-                'actionCopy': 'Копировать',
-                'actionPaste': 'Вставить',
-                'actionDelete': 'Удалить',
-                'actionSelectAll': 'Выделить всё',
+                'actionUndo': 'Действие отменено',
+                'actionRedo': 'Действие повторено',
+                'actionCut': 'Текст вырезан',
+                'actionCopy': 'Текст скопирован',
+                'actionPaste': 'Текст вставлен',
+                'actionDelete': 'Текст удалён',
+                'actionSelectAll': 'Весь текст выделен',
 
                 # Action tooltips
                 'actionNew_toolTip': 'Создать',
                 'actionOpen_toolTip': 'Открыть',
                 'actionRedo_toolTip': 'Повторить',
                 'actionRun_toolTip': 'Пуск',
+                'actionUndo_toolTip': 'Отменить',
+                'actionRedo_toolTip': 'Повторить',
+                'actionCut_toolTip': 'Вырезать',
+                'actionCopy_toolTip': 'Копировать',
+                'actionPaste_toolTip': 'Вставить',
+                'actionDelete_toolTip': 'Удалить',
+                'actionSelectAll_toolTip': 'Выделить всё',
 
                 # Text menu actions
                 'action_15': 'Постановка задачи',
@@ -131,19 +138,26 @@ class Language():
                 'actionExit': 'Exit',
 
                 # Edit menu actions
-                'actionUndo': 'Undo',
-                'actionRedo': 'Redo',
-                'actionCut': 'Cut',
-                'actionCopy': 'Copy',
-                'actionPaste': 'Paste',
-                'actionDelete': 'Delete',
-                'actionSelectAll': 'Select All',
+                'actionUndo': 'Action undone',
+                'actionRedo': 'Action redone',
+                'actionCut': 'Text cut',
+                'actionCopy': 'Text copied',
+                'actionPaste': 'Text pasted',
+                'actionDelete': 'Text deleted',
+                'actionSelectAll': 'All text selected',
 
                 # Tooltip for actions
                 'actionNew_toolTip': 'Create',
                 'actionOpen_toolTip': 'Open',
                 'actionRedo_toolTip': 'Redo',
                 'actionRun_toolTip': 'Run',
+                'actionUndo_toolTip': 'Undo',
+                'actionRedo_toolTip': 'Redo',
+                'actionCut_toolTip': 'Cut',
+                'actionCopy_toolTip': 'Copy',
+                'actionPaste_toolTip': 'Paste',
+                'actionDelete_toolTip': 'Delete',
+                'actionSelectAll_toolTip': 'Select All',
 
                 # Text menu actions
                 'action_15': 'Problem Statement',

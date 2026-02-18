@@ -13,9 +13,9 @@ from ui_editor import Ui_MainWindow
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def __init__(self):
         super().__init__()
-        self.setMinimumSize(500, 400)
         # loadUi('text_editor.ui', self)
         self.setupUi(self)
+        self.setMinimumSize(500, 400)
 
         self.lang = Language()
         self.apply_language()
@@ -541,7 +541,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             </head>
             <body>
                 <h1>Текстовый редактор</h1>
-                <div class='version'>Руководство пользователя   </div>
+                <div class='version'>Руководство пользователя | Версия 1.0.0</div>
 
                 <h2 id='intro'>Введение</h2>
                 <p><b>Текстовый редактор</b> — это приложение для создания и редактирования текстовых документов с возможностью синтаксического анализа. Программа предоставляет удобный интерфейс для работы с текстом и поддерживает все основные операции редактирования.</p>
@@ -770,7 +770,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 </head>
                 <body>
                     <h1>Text editor</h1>
-                    <div class='version'>User Manual | Version 1.0</div>
+                    <div class='version'>User Manual | Version 1.0.0</div>
 
                     <h2 id='intro'>Introduction</h2>
                     <p><b>Text editor</b> — This application is for creating and editing text documents with parsing capabilities. The program provides a user-friendly interface for working with text and supports all basic editing operations.</p>
@@ -935,7 +935,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             text_browser.setHtml("""
                 <div style='text-align: center;'>
                     <h1>Текстовый редактор</h1>
-                    <p style='color: #868e94; font-size: 14px;'>Версия 1.0</p>
+                    <p style='color: #868e94; font-size: 14px;'>Версия 1.0.0</p>
 
                     <div style='padding: 5px;'>
                         <p style='font-size: 16px; line-height: 1;'>
@@ -962,7 +962,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             text_browser.setHtml("""
                 <div style='text-align: center;'>
                     <h1>Text editor</h1>
-                    <p style='color: #868e94; font-size: 14px;'>Version 1.0</p>
+                    <p style='color: #868e94; font-size: 14px;'>Version 1.0.0</p>
 
                     <div style='padding: 5px;'>
                         <p style='font-size: 16px; line-height: 1;'>
