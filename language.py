@@ -65,7 +65,7 @@ class Language():
                 'actionAbout': 'О программе',
 
                 # Settings menu actions
-                'actionLanguage': 'Язык',
+                'actionLanguage': 'Смена языка',
 
                 # Default tab titles
                 'new_document': 'Новый документ',
@@ -176,7 +176,7 @@ class Language():
                 'actionAbout': 'About',
 
                 # Settings menu actions
-                'actionLanguage': 'Language',
+                'actionLanguage': 'Change language',
 
                 # Default tab titles
                 'new_document': 'New Document',

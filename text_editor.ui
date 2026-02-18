@@ -582,7 +582,10 @@ QMenu::separator {
     <iconset theme="QIcon::ThemeIcon::ToolsCheckSpelling"/>
    </property>
    <property name="text">
-    <string>Язык</string>
+    <string>Смена языка</string>
+   </property>
+   <property name="toolTip">
+    <string>Смена языка</string>
    </property>
   </action>
  </widget>

@@ -631,7 +631,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                         <td>Удаляет выделенный текст</td>
                     </tr>
                     <tr>
-                        <td><b>Выделить все</b></td>
+                        <td><b>Выделить всё</b></td>
                         <td><span>Ctrl+A</span></td>
                         <td>Выделяет весь текст в документе</td>
                     </tr>
