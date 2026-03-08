@@ -12,6 +12,7 @@ from ui_editor import Ui_MainWindow
 from PyQt6.QtCore import QProcess
 import re
 
+
 # std::complex<double> my_complex(10.0, 2.0);
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def __init__(self):
@@ -24,85 +25,49 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         self.lang = Language()
         self.apply_language()
 
-        self.file_paths = {}
         self.input_to_output_map = {}
         self.status_bar = self.statusBar
         self.lexer_process = None
         self.current_input_widget = None
         self.current_tab_name = None
+        self.current_file_path = None
 
         self.setAcceptDrops(True)
         self.setup_actions()
 
     def setup_actions(self):
-        # File actions
-        self.actionOpen = self.findChild(QAction, 'actionOpen')
-        if self.actionOpen:
-            self.actionOpen.triggered.connect(self.open_file)
+        action_map = {
+            'actionOpen': self.open_file,
+            'actionNew': self.new_file,
+            'actionSave': self.save_file,
+            'actionSaveAs': self.save_file_as,
+            'actionExit': self.exit_app,
+            'actionRun': self.run,
+            'actionHelp': self.help,
+            'actionAbout': self.about,
+            'actionLanguage': self.show_language_dialog
+        }
 
-        self.actionNew = self.findChild(QAction, 'actionNew')
-        if self.actionNew:
-            self.actionNew.triggered.connect(self.new_file)
-
-        self.actionSave = self.findChild(QAction, 'actionSave')
-        if self.actionSave:
-            self.actionSave.triggered.connect(self.save_file)
-
-        self.actionSaveAs = self.findChild(QAction, 'actionSaveAs')
-        if self.actionSaveAs:
-            self.actionSaveAs.triggered.connect(self.save_file_as)
-
-        self.actionExit = self.findChild(QAction, 'actionExit')
-        if self.actionExit:
-            self.actionExit.triggered.connect(self.exit_app)
-
-        # Run action
-        self.actionRun = self.findChild(QAction, 'actionRun')
-        if self.actionRun:
-            self.actionRun.triggered.connect(self.run)
+        for name, method in action_map.items():
+            action = self.findChild(QAction, name)
+            if action:
+                action.triggered.connect(method)
 
         # Edit actions
-        self.actionUndo = self.findChild(QAction, 'actionUndo')
-        if self.actionUndo:
-            self.actionUndo.triggered.connect(self.undo)
+        edit_methods = {
+            'actionUndo': 'undo', 'actionRedo': 'redo',
+            'actionCut': 'cut', 'actionCopy': 'copy',
+            'actionPaste': 'paste', 'actionDelete': 'removeSelectedText',
+            'actionSelectAll': 'selectAll'
+        }
 
-        self.actionRedo = self.findChild(QAction, 'actionRedo')
-        if self.actionRedo:
-            self.actionRedo.triggered.connect(self.redo)
-
-        self.actionCopy = self.findChild(QAction, 'actionCopy')
-        if self.actionCopy:
-            self.actionCopy.triggered.connect(self.copy)
-
-        self.actionPaste = self.findChild(QAction, 'actionPaste')
-        if self.actionPaste:
-            self.actionPaste.triggered.connect(self.paste)
-
-        self.actionCut = self.findChild(QAction, 'actionCut')
-        if self.actionCut:
-            self.actionCut.triggered.connect(self.cut)
-
-        self.actionDelete = self.findChild(QAction, 'actionDelete')
-        if self.actionDelete:
-            self.actionDelete.triggered.connect(self.delete)
-
-        self.actionSelectAll = self.findChild(QAction, 'actionSelectAll')
-        if self.actionSelectAll:
-            self.actionSelectAll.triggered.connect(self.select_all)
-
-        # Help actions
-        self.actionAbout = self.findChild(QAction, 'actionAbout')
-        if self.actionAbout:
-            self.actionAbout.triggered.connect(self.about)
-
-        self.actionHelp = self.findChild(QAction, 'actionHelp')
-        if self.actionHelp:
-            self.actionHelp.triggered.connect(self.help)
-
-        # Settings actions
-        self.actionLanguage = self.findChild(QAction, 'actionLanguage')
-        if self.actionLanguage:
-            self.actionLanguage.triggered.connect(self.show_language_dialog)
+        for action_name, method_name in edit_methods.items():
+            action = self.findChild(QAction, action_name)
+            if action:
+                action.triggered.connect(
+                    lambda checked, an=action_name, mn=method_name: 
+                    self.edit_action(an, mn)
+                )
 
         # Tabs
         self.input_tab_widget = self.findChild(QTabWidget, 'inputTabWidget')
@@ -151,7 +116,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         if hasattr(self, 'input_tab_widget') and self.input_tab_widget:
             for i in range(self.input_tab_widget.count()):
                 widget = self.input_tab_widget.widget(i)
-                if id(widget) not in self.file_paths:
+                if not hasattr(widget, 'file_path') or not widget.file_path:
                     self.input_tab_widget.setTabText(i, t['new_document'])
 
     def dragEnterEvent(self, event):
@@ -184,22 +149,25 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             content, file_name = self.read_file(file_path)
             self.create_new_tab(file_name, content, file_path)
             return True
-
         except Exception as e:
             QMessageBox.critical(self, self.lang.translate('error'),
                                  self.lang.translate('opening_error').
-                                 format(str(e), 0),
-                                 QMessageBox.StandardButton.Ok)
+                                 format(str(e), 0))
             return False
 
     def close_input_tab(self, index):
         widget = self.input_tab_widget.widget(index)
         tab_name = self.input_tab_widget.tabText(index)
+        file_path = getattr(widget, 'file_path', None)
 
         def closing():
-            if id(widget) in self.file_paths:
-                del self.file_paths[id(widget)]
-
+            if file_path and file_path in self.input_to_output_map:
+                output_widget = self.input_to_output_map[file_path]
+                output_index = self.output_tab_widget.indexOf(output_widget)
+                if output_index >= 0:
+                    self.output_tab_widget.removeTab(output_index)
+                    output_widget.deleteLater()
+                del self.input_to_output_map[file_path]
             self.input_tab_widget.removeTab(index)
             widget.deleteLater()
 
@@ -215,9 +183,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
             if reply == QMessageBox.StandardButton.Yes:
                 self.input_tab_widget.setCurrentIndex(index)
-
                 saved = self.save_file()
-
                 if not saved:
                     self.status_bar.showMessage(
                         self.lang.translate('tab_closing_cancelled').format(tab_name, 0),
@@ -248,43 +214,42 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         widget = self.output_tab_widget.widget(index)
         tab_name = self.output_tab_widget.tabText(index)
 
-        for input_widget, output_widget in list(self.input_to_output_map.items()):
+        for file_path, output_widget in list(self.input_to_output_map.items()):
             if output_widget == widget:
-                del self.input_to_output_map[input_widget]
+                del self.input_to_output_map[file_path]
                 break
 
         widget.deleteLater()
         self.output_tab_widget.removeTab(index)
-
         self.status_bar.showMessage(self.lang.translate('tab_closed').
                                     format(tab_name, 0), 3000)
 
     def can_close(self):
         for i in range(self.input_tab_widget.count()):
             widget = self.input_tab_widget.widget(i)
-            if widget.isModified():
-                tab_name = self.input_tab_widget.tabText(i)
+            if not widget.isModified():
+                continue
+            tab_name = self.input_tab_widget.tabText(i)
 
-                reply = QMessageBox.question(
-                    self,
-                    self.lang.translate('unsaved_changes'),
-                    self.lang.translate('save_changes').format(tab_name),
-                    QMessageBox.StandardButton.Yes |
-                    QMessageBox.StandardButton.No |
-                    QMessageBox.StandardButton.Cancel
-                )
+            reply = QMessageBox.question(
+                self,
+                self.lang.translate('unsaved_changes'),
+                self.lang.translate('save_changes').format(tab_name),
+                QMessageBox.StandardButton.Yes |
+                QMessageBox.StandardButton.No |
+                QMessageBox.StandardButton.Cancel
+            )
 
-                if reply == QMessageBox.StandardButton.Yes:
-                    self.input_tab_widget.setCurrentIndex(i)
-                    if not self.save_file():
-                        return False
-                elif reply == QMessageBox.StandardButton.Cancel:
-                    self.status_bar.showMessage(
-                        self.lang.translate('tab_closing_cancelled').
-                        format(tab_name),
-                        3000)
+            if reply == QMessageBox.StandardButton.Yes:
+                self.input_tab_widget.setCurrentIndex(i)
+                if not self.save_file():
                     return False
-
+            elif reply == QMessageBox.StandardButton.Cancel:
+                self.status_bar.showMessage(
+                    self.lang.translate('tab_closing_cancelled').
+                    format(tab_name),
+                    3000)
+                return False
         return True
 
     def exit_app(self, event=None):
@@ -310,7 +275,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def create_new_tab(self, title=None, content="", file_path=None):
         editor = CodeEditor()
         editor.setText(content)
-        # editor.file_path = file_path
+        editor.file_path = file_path
 
         if title is None:
             title = self.lang.translate('new_document')
@@ -321,7 +286,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         self.input_tab_widget.setCurrentIndex(index)
 
         if file_path:
-            self.file_paths[id(editor)] = file_path
             self.status_bar.showMessage(self.lang.translate('file_opened').
                                         format(title, 0), 3000)
         else:
@@ -334,37 +298,30 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
     def save_file(self):
         widget = self.input_tab_widget.currentWidget()
-
         if not widget:
             return False
 
-        file_path = self.file_paths.get(id(widget))
-
-        if file_path:
-            try:
-                with open(file_path, 'w', encoding='utf-8') as file:
-                    file.write(widget.text())
-
-                widget.setModified(False)
-
-                self.status_bar.showMessage(
-                    self.lang.translate('file_saved').
-                    format(os.path.basename(file_path)), 3000)
-
-                return True
-
-            except Exception as e:
-                QMessageBox.critical(self, self.lang.translate('error'),
-                                     self.lang.translate('file_saving_error').
-                                     format(str(e)),
-                                     QMessageBox.StandardButton.Ok)
-                return False
-        else:
+        file_path = getattr(widget, 'file_path', None)
+        if not file_path:
             return self.save_file_as()
+
+        try:
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(widget.text())
+            widget.file_path = file_path
+            widget.setModified(False)
+            self.status_bar.showMessage(
+                self.lang.translate('file_saved').
+                format(os.path.basename(file_path)), 3000)
+            return True
+        except Exception as e:
+            QMessageBox.critical(self, self.lang.translate('error'),
+                                 self.lang.translate('file_saving_error').
+                                 format(str(e)))
+            return False
 
     def save_file_as(self):
         widget = self.input_tab_widget.currentWidget()
-
         if not widget:
             return False
 
@@ -378,47 +335,66 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                                                    "rtf (*.rtf);;"
                                                    "Все файлы (*.*)")
 
-        if file_path:
-            try:
-                with open(file_path, 'w', encoding='utf-8') as file:
-                    file.write(widget.text())
-
-                self.file_paths[id(widget)] = file_path
-
-                widget.setModified(False)
-
-                index = self.input_tab_widget.currentIndex()
-                file_name = os.path.basename(file_path)
-                self.input_tab_widget.setTabText(index, file_name)
-
-                self.status_bar.showMessage(
-                    self.lang.translate('file_saved_as').format(file_name, 0), 3000)
-                return True
-
-            except Exception as e:
-                QMessageBox.critical(
-                    self, self.lang.translate('error'),
-                    self.lang.translate('file_saving_error').format(str(e), 0),
-                    QMessageBox.StandardButton.Ok)
-                return False
-        else:
+        if not file_path:
             self.status_bar.showMessage(self.lang.translate('save_cancelled'), 3000)
             return False
 
-    def create_table(self, tokens_data):
-        table = QTableWidget(self)
+        try:
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(widget.text())
 
+            widget.file_path = file_path
+
+            widget.setModified(False)
+            index = self.input_tab_widget.currentIndex()
+            file_name = os.path.basename(file_path)
+            self.input_tab_widget.setTabText(index, file_name)
+
+            self.status_bar.showMessage(
+                self.lang.translate('file_saved_as').format(file_name, 0), 3000)
+            return True
+        except Exception as e:
+            QMessageBox.critical(
+                self, self.lang.translate('error'),
+                self.lang.translate('file_saving_error').format(str(e), 0),
+                QMessageBox.StandardButton.Ok)
+            return False
+
+    def create_update_table(self, tokens_data, table=None):
+        if table:
+            table.clearContents()
+            table.setRowCount(0)
+        else:
+            table = QTableWidget(self)
         table.setColumnCount(4)
         table.setHorizontalHeaderLabels(['Условный код', 'Тип лексемы', 'Лексема', 'Местоположение'])
 
-        rowLables = []
         if tokens_data:
             table.setRowCount(len(tokens_data))
+            rowLables = []
             for row, token in enumerate(tokens_data):
-                table.setItem(row, 0, QTableWidgetItem(str(token['code'])))
-                table.setItem(row, 1, QTableWidgetItem(token['type']))
-                table.setItem(row, 2, QTableWidgetItem(token['lexeme']))
-                table.setItem(row, 3, QTableWidgetItem(token['location']))
+                from PyQt6.QtCore import Qt
+                if token.get('is_error', False):
+                    item_code = QTableWidgetItem(token['code'])
+                    item_code.setForeground(Qt.GlobalColor.red)
+                    table.setItem(row, 0, item_code)
+
+                    item_type = QTableWidgetItem(token['type'])
+                    item_type.setForeground(Qt.GlobalColor.red)
+                    table.setItem(row, 1, item_type)
+
+                    item_lexeme = QTableWidgetItem(token['lexeme'])
+                    item_lexeme.setForeground(Qt.GlobalColor.red)
+                    table.setItem(row, 2, item_lexeme)
+
+                    item_loc = QTableWidgetItem(token['location'])
+                    item_loc.setForeground(Qt.GlobalColor.red)
+                    table.setItem(row, 3, item_loc)
+                else:
+                    table.setItem(row, 0, QTableWidgetItem(str(token['code'])))
+                    table.setItem(row, 1, QTableWidgetItem(token['type']))
+                    table.setItem(row, 2, QTableWidgetItem(token['lexeme']))
+                    table.setItem(row, 3, QTableWidgetItem(token['location']))
 
                 rowLables.append(f'Строка {token['line']}')
             table.setVerticalHeaderLabels(rowLables)
@@ -434,20 +410,22 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def run(self):
         if not self.input_tab_widget:
             return
-
-        self.save_file()
         index = self.input_tab_widget.currentIndex()
         self.current_input_widget = self.input_tab_widget.widget(index)
+        self.current_file_path = self.current_input_widget.file_path
+
+        if not self.current_file_path or self.current_input_widget.isModified():
+            if not self.save_file():
+                return
+            if self.current_input_widget.file_path:
+                self.current_file_path = self.current_input_widget.file_path
+
         self.current_tab_name = self.input_tab_widget.tabText(index)
 
-        if self.current_input_widget in self.input_to_output_map:
-            output_widget = self.input_to_output_map[self.current_input_widget]
+        if self.current_file_path in self.input_to_output_map:
+            output_widget = self.input_to_output_map[self.current_file_path]
             output_index = self.output_tab_widget.indexOf(output_widget)
-            if output_index >= 0:
-                self.output_tab_widget.setCurrentIndex(output_index)
-                return
-            else:
-                del self.input_to_output_map[self.current_input_widget]
+            self.output_tab_widget.setCurrentIndex(output_index)
 
         text = self.current_input_widget.text()
 
@@ -458,25 +436,37 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         scanner_path = os.path.join('scanner', 'scanner.exe')
         self.lexer_process.start(scanner_path)
-
         self.lexer_process.write(text.encode('utf-8'))
         self.lexer_process.closeWriteChannel()
 
     def on_lexer_output(self):
         data = self.lexer_process.readAllStandardOutput()
-        output = bytes(data).decode('utf-8')
+
+        try:
+            output = bytes(data).decode('cp1251')
+        except:
+            try:
+                output = bytes(data).decode('utf-8')
+            except:
+                output = bytes(data).decode('cp866', errors='replace')
 
         tokens = self.parse_lexer_output(output)
-        table = self.create_table(tokens)
 
-        self.output_table_data(table)
+        existing_table = self.input_to_output_map.get(self.current_file_path)
+
+        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
+            self.create_update_table(tokens, existing_table)
+            self.output_tab_widget.setCurrentWidget(existing_table)
+        else:
+            table = self.create_update_table(tokens)
+            self.output_table_data(table)
 
     def on_lexer_error(self):
         error_data = self.lexer_process.readAllStandardError()
         error = bytes(error_data).decode('utf-8')
         print(f"Ошибка лексера: {error}")
 
-        table = self.create_table()
+        table = self.create_table(None)
         table.setRowCount(1)
         table.setItem(0, 0, QTableWidgetItem("ERROR"))
         table.setItem(0, 1, QTableWidgetItem("Ошибка лексера"))
@@ -485,9 +475,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         self.output_table_data(table)
 
-    # [TODO] Сделать вывод в status_bar
     def on_lexer_finished(self, exit_code, exit_status):
-        # print(f"Лексер завершен с кодом: {exit_code}")
         self.lexer_process = None
 
     def parse_lexer_output(self, output):
@@ -497,8 +485,30 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         # Парсим: "[1:1-3] - code=1: keyword int"
         pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
 
+        error_pattern = r'\[(\d+):(\d+)-(\d+)\] - ERROR:\s*(.+)'
+
         for line in lines:
             if not line.strip():
+                continue
+
+            error_match = re.match(error_pattern, line)
+            if error_match:
+                line_num = error_match.group(1)
+                start_col = error_match.group(2)
+                end_col = error_match.group(3)
+                error_msg = error_match.group(4)
+
+                if " " in error_msg:
+                    parts = error_msg.split(' ')
+
+                tokens.append({
+                    'line': line_num,
+                    'code': 'ERROR',
+                    'type': 'invalid character',
+                    'lexeme': parts[-1],
+                    'location': f"{start_col}-{end_col}",
+                    'is_error': True
+                })
                 continue
 
             match = re.match(pattern, line)
@@ -520,7 +530,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     'code': code,
                     'type': token_type,
                     'lexeme': lexeme,
-                    'location': f"{start_col}-{end_col}"
+                    'location': f"{start_col}-{end_col}",
+                    'is_error': False
                 })
 
         return tokens
@@ -550,63 +561,24 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
     def output_table_data(self, table):
         self.output_tab_widget.addTab(table, self.current_tab_name)
-        self.input_to_output_map[self.current_input_widget] = table
+        self.input_to_output_map[self.current_file_path] = table
         self.output_tab_widget.setCurrentWidget(table)
 
-    def undo(self):
+    def edit_action(self, action_name, method_name):
         widget = self.get_current_input_tab_widget()
         if widget:
-            widget.undo()
-            self.status_bar.showMessage(self.lang.translate('actionUndo'), 3000)
-
-    def redo(self):
-        widget = self.get_current_input_tab_widget()
-        if widget:
-            widget.redo()
-            self.status_bar.showMessage(self.lang.translate('actionRedo'), 3000)
-
-    def copy(self):
-        widget = self.get_current_input_tab_widget()
-        if widget:
-            if widget.hasSelectedText():
-                widget.copy()
-                self.status_bar.showMessage(self.lang.translate('actionCopy'), 3000)
-
-    def paste(self):
-        widget = self.get_current_input_tab_widget()
-        if widget:
-            widget.paste()
-            self.status_bar.showMessage(self.lang.translate('actionPaste'), 3000)
-
-    def cut(self):
-        widget = self.get_current_input_tab_widget()
-        if widget:
-            if widget.hasSelectedText():
-                widget.cut()
-                self.status_bar.showMessage(self.lang.translate('actionCut'), 3000)
-
-    def delete(self):
-        widget = self.get_current_input_tab_widget()
-        if widget:
-            if widget.hasSelectedText():
-                widget.removeSelectedText()
-                self.status_bar.showMessage(self.lang.translate('actionDelete'), 3000)
-
-    def select_all(self):
-        widget = self.get_current_input_tab_widget()
-        if widget:
-            widget.selectAll()
-            self.status_bar.showMessage(self.lang.translate('actionSelectAll'), 3000)
+            getattr(widget, method_name)()
+            self.status_bar.showMessage(self.lang.translate(action_name), 3000)
 
     def get_current_input_tab_widget(self):
-        if hasattr(self, 'input_tab_widget') and self.input_tab_widget:
-            current_widget = self.input_tab_widget.currentWidget()
-            if isinstance(current_widget, CodeEditor):
-                return current_widget
-            else:
-                self.status_bar.showMessage(self.lang.translate('text_edit_inactive'),
-                                            3000)
-                return None
+        if not self.input_tab_widget:
+            return None
+        widget = self.input_tab_widget.currentWidget()
+        if isinstance(widget, CodeEditor):
+            return widget
+        else:
+            self.status_bar.showMessage(self.lang.
+                                        translate('text_edit_inactive'), 3000)
         return None
 
     def show_language_dialog(self):

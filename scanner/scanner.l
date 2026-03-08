@@ -104,7 +104,7 @@ int column_num = 1;
 \n          { line_num++; column_num = 1; }
 
 .           { 
-    printf("[%d:%d-%d] - ERROR: invalid character '%s'\n", 
+    printf("[%d:%d-%d] - ERROR: invalid character %s\n", 
            line_num, column_num, column_num, yytext); 
     column_num += 1; 
 }
