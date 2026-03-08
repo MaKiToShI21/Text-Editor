@@ -1,5 +1,5 @@
 from PyQt6.QtGui import QColor, QFont
-from PyQt6.Qsci import QsciScintilla, QsciLexerPython
+from PyQt6.Qsci import QsciScintilla, QsciLexerPython, QsciLexerCPP
 
 
 class CodeEditor(QsciScintilla):
@@ -22,7 +22,8 @@ class CodeEditor(QsciScintilla):
         self.update_line_number_width()
 
         # Syntax highlighting
-        lexer = QsciLexerPython()
+        lexer = QsciLexerCPP()
+        lexer.setColor(QColor(255, 255, 255), 0)    # Text
         lexer.setColor(QColor(9, 145, 0), 1)    # Comments with #
         lexer.setColor(QColor(122, 191, 124), 2)   # Numbers
         lexer.setColor(QColor(190, 90, 55), 3)    # Quoted strings with ""

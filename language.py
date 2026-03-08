@@ -83,6 +83,7 @@ class Language():
                 # Tab actions
                 'tab_saved_and_closed': 'Вкладка "{}" сохранена и закрыта',
                 'tab_closed_without_saving': 'Вкладка "{}" закрыта без сохранения',
+                'tab_closed': 'Вкладка "{}" закрыта',
                 'tab_closing_cancelled': 'Закрытие вкладки "{}" отменено',
 
                 'text_edit_inactive': 'Текстовое поле не активно',
@@ -194,6 +195,7 @@ class Language():
                 # Tab actions
                 'tab_saved_and_closed': 'Tab "{}" saved and closed',
                 'tab_closed_without_saving': 'Tab "{}" closed without saving',
+                'tab_closed': 'Tab "{}" closed',
                 'tab_closing_cancelled': 'Tab close "{}" cancelled',
 
                 'text_edit_inactive': 'Text edit not active',

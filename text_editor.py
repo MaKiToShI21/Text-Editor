@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QFileDialog,
                              QMessageBox, QListWidget, QDialog,
-                             QTextBrowser, QVBoxLayout)
+                             QTextBrowser, QVBoxLayout, QTableWidget,
+                             QTableWidgetItem)
 from PyQt6.QtWidgets import QDialog, QVBoxLayout
 from language import Language, LanguageDialog
 from code_editor import CodeEditor
@@ -8,8 +9,10 @@ from PyQt6.QtGui import QAction
 from PyQt6.uic import loadUi
 import os
 from ui_editor import Ui_MainWindow
+from PyQt6.QtCore import QProcess
+import re
 
-
+# std::complex<double> my_complex(10.0, 2.0);
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def __init__(self):
         super().__init__()
@@ -21,60 +24,15 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         self.lang = Language()
         self.apply_language()
 
+        self.file_paths = {}
+        self.input_to_output_map = {}
+        self.status_bar = self.statusBar
+        self.lexer_process = None
+        self.current_input_widget = None
+        self.current_tab_name = None
+
         self.setAcceptDrops(True)
         self.setup_actions()
-
-        self.input_tab_widget = self.findChild(QTabWidget, 'inputTabWidget')
-        self.input_tab_widget.tabCloseRequested.connect(self.close_tab)
-
-        self.output_tab_widget = self.findChild(QTabWidget, 'outputTabWidget')
-        self.output_tab_widget.tabCloseRequested.connect(self.close_tab)
-
-        self.status_bar = self.statusBar
-        self.file_paths = {}
-
-    def read_file(self, file_path):
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        file_name = os.path.basename(file_path)
-        return content, file_name
-
-    def apply_language(self):
-        t = self.lang.translations[self.lang.current_language]
-
-        self.setWindowTitle(t['window_title'])
-
-        self.menuFile.setTitle(t['menuFile'])
-        self.menuEdit.setTitle(t['menuEdit'])
-        self.menuText.setTitle(t['menuText'])
-        self.menuRun.setTitle(t['menuRun'])
-        self.menuHelp.setTitle(t['menuHelp'])
-        self.menuSettings.setTitle(t['menuSettings'])
-
-        action_names = [
-            'actionNew', 'actionOpen', 'actionSave', 'actionSaveAs',
-            'actionExit', 'actionUndo', 'actionRedo', 'actionCut',
-            'actionCopy', 'actionPaste', 'actionDelete', 'actionSelectAll',
-            'action_15', 'action_16', 'action_17', 'action_18', 'action_19',
-            'action_20', 'action_21', 'actionRun', 'actionHelp',
-            'actionAbout', 'actionLanguage'
-        ]
-
-        for action_name in action_names:
-            action = getattr(self, action_name, None)
-            if action:
-                action.setText(t[action_name])
-
-            tooltip_key = f"{action_name}_toolTip"
-            if tooltip_key in t:
-                action.setToolTip(t[tooltip_key])
-
-        if hasattr(self, 'input_tab_widget') and self.input_tab_widget:
-            for i in range(self.input_tab_widget.count()):
-                text_edit = self.input_tab_widget.widget(i)
-                if id(text_edit) not in self.file_paths:
-                    self.input_tab_widget.setTabText(i, t['new_document'])
 
     def setup_actions(self):
         # File actions
@@ -146,6 +104,56 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         if self.actionLanguage:
             self.actionLanguage.triggered.connect(self.show_language_dialog)
 
+        # Tabs
+        self.input_tab_widget = self.findChild(QTabWidget, 'inputTabWidget')
+        self.input_tab_widget.tabCloseRequested.connect(self.close_input_tab)
+
+        self.output_tab_widget = self.findChild(QTabWidget, 'outputTabWidget')
+        self.output_tab_widget.tabCloseRequested.connect(self.close_output_tab)
+
+    def read_file(self, file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        file_name = os.path.basename(file_path)
+        return content, file_name
+
+    def apply_language(self):
+        t = self.lang.translations[self.lang.current_language]
+
+        self.setWindowTitle(t['window_title'])
+
+        self.menuFile.setTitle(t['menuFile'])
+        self.menuEdit.setTitle(t['menuEdit'])
+        self.menuText.setTitle(t['menuText'])
+        self.menuRun.setTitle(t['menuRun'])
+        self.menuHelp.setTitle(t['menuHelp'])
+        self.menuSettings.setTitle(t['menuSettings'])
+
+        action_names = [
+            'actionNew', 'actionOpen', 'actionSave', 'actionSaveAs',
+            'actionExit', 'actionUndo', 'actionRedo', 'actionCut',
+            'actionCopy', 'actionPaste', 'actionDelete', 'actionSelectAll',
+            'action_15', 'action_16', 'action_17', 'action_18', 'action_19',
+            'action_20', 'action_21', 'actionRun', 'actionHelp',
+            'actionAbout', 'actionLanguage'
+        ]
+
+        for action_name in action_names:
+            action = getattr(self, action_name, None)
+            if action:
+                action.setText(t[action_name])
+
+            tooltip_key = f"{action_name}_toolTip"
+            if tooltip_key in t:
+                action.setToolTip(t[tooltip_key])
+
+        if hasattr(self, 'input_tab_widget') and self.input_tab_widget:
+            for i in range(self.input_tab_widget.count()):
+                widget = self.input_tab_widget.widget(i)
+                if id(widget) not in self.file_paths:
+                    self.input_tab_widget.setTabText(i, t['new_document'])
+
     def dragEnterEvent(self, event):
         if event is None or event.mimeData() is None:
             return
@@ -184,18 +192,18 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                                  QMessageBox.StandardButton.Ok)
             return False
 
-    def close_tab(self, index):
-        text_edit = self.input_tab_widget.widget(index)
+    def close_input_tab(self, index):
+        widget = self.input_tab_widget.widget(index)
         tab_name = self.input_tab_widget.tabText(index)
 
         def closing():
-            if id(text_edit) in self.file_paths:
-                del self.file_paths[id(text_edit)]
+            if id(widget) in self.file_paths:
+                del self.file_paths[id(widget)]
 
             self.input_tab_widget.removeTab(index)
-            text_edit.deleteLater()
+            widget.deleteLater()
 
-        if text_edit.isModified():
+        if widget.isModified():
             reply = QMessageBox.question(
                 self,
                 self.lang.translate('unsaved_changes'),
@@ -229,15 +237,32 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     3000)
                 return
 
+            self.status_bar.showMessage(self.lang.translate('tab_saved_and_closed').
+                                        format(tab_name, 0), 3000)
+        else:
+            self.status_bar.showMessage(self.lang.translate('tab_closed').
+                                        format(tab_name, 0), 3000)
         closing()
 
-        self.status_bar.showMessage(self.lang.translate('tab_saved_and_closed').
+    def close_output_tab(self, index):
+        widget = self.output_tab_widget.widget(index)
+        tab_name = self.output_tab_widget.tabText(index)
+
+        for input_widget, output_widget in list(self.input_to_output_map.items()):
+            if output_widget == widget:
+                del self.input_to_output_map[input_widget]
+                break
+
+        widget.deleteLater()
+        self.output_tab_widget.removeTab(index)
+
+        self.status_bar.showMessage(self.lang.translate('tab_closed').
                                     format(tab_name, 0), 3000)
 
     def can_close(self):
         for i in range(self.input_tab_widget.count()):
-            text_edit = self.input_tab_widget.widget(i)
-            if text_edit.isModified():
+            widget = self.input_tab_widget.widget(i)
+            if widget.isModified():
                 tab_name = self.input_tab_widget.tabText(i)
 
                 reply = QMessageBox.question(
@@ -283,43 +308,44 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             self.open_tab(file_path)
 
     def create_new_tab(self, title=None, content="", file_path=None):
-        text_edit = CodeEditor()
-        text_edit.setText(content)
+        editor = CodeEditor()
+        editor.setText(content)
+        # editor.file_path = file_path
 
         if title is None:
             title = self.lang.translate('new_document')
 
-        text_edit.setModified(False)
+        editor.setModified(False)
 
-        index = self.input_tab_widget.addTab(text_edit, title)
+        index = self.input_tab_widget.addTab(editor, title)
         self.input_tab_widget.setCurrentIndex(index)
 
         if file_path:
-            self.file_paths[id(text_edit)] = file_path
+            self.file_paths[id(editor)] = file_path
             self.status_bar.showMessage(self.lang.translate('file_opened').
                                         format(title, 0), 3000)
         else:
             self.status_bar.showMessage(f"{title}", 3000)
 
-        return text_edit
+        return editor
 
     def new_file(self):
         self.create_new_tab()
 
     def save_file(self):
-        text_edit = self.input_tab_widget.currentWidget()
+        widget = self.input_tab_widget.currentWidget()
 
-        if not text_edit:
+        if not widget:
             return False
 
-        file_path = self.file_paths.get(id(text_edit))
+        file_path = self.file_paths.get(id(widget))
 
         if file_path:
             try:
                 with open(file_path, 'w', encoding='utf-8') as file:
-                    file.write(text_edit.text())
+                    file.write(widget.text())
 
-                text_edit.setModified(False)
+                widget.setModified(False)
 
                 self.status_bar.showMessage(
                     self.lang.translate('file_saved').
@@ -337,9 +363,9 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             return self.save_file_as()
 
     def save_file_as(self):
-        text_edit = self.input_tab_widget.currentWidget()
+        widget = self.input_tab_widget.currentWidget()
 
-        if not text_edit:
+        if not widget:
             return False
 
         file_path, _ = QFileDialog.getSaveFileName(self,
@@ -355,11 +381,11 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         if file_path:
             try:
                 with open(file_path, 'w', encoding='utf-8') as file:
-                    file.write(text_edit.text())
+                    file.write(widget.text())
 
-                self.file_paths[id(text_edit)] = file_path
+                self.file_paths[id(widget)] = file_path
 
-                text_edit.setModified(False)
+                widget.setModified(False)
 
                 index = self.input_tab_widget.currentIndex()
                 file_name = os.path.basename(file_path)
@@ -379,69 +405,200 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             self.status_bar.showMessage(self.lang.translate('save_cancelled'), 3000)
             return False
 
+    def create_table(self, tokens_data):
+        table = QTableWidget(self)
+
+        table.setColumnCount(4)
+        table.setHorizontalHeaderLabels(['Условный код', 'Тип лексемы', 'Лексема', 'Местоположение'])
+
+        rowLables = []
+        if tokens_data:
+            table.setRowCount(len(tokens_data))
+            for row, token in enumerate(tokens_data):
+                table.setItem(row, 0, QTableWidgetItem(str(token['code'])))
+                table.setItem(row, 1, QTableWidgetItem(token['type']))
+                table.setItem(row, 2, QTableWidgetItem(token['lexeme']))
+                table.setItem(row, 3, QTableWidgetItem(token['location']))
+
+                rowLables.append(f'Строка {token['line']}')
+            table.setVerticalHeaderLabels(rowLables)
+        else:
+            table.setRowCount(0)
+
+        table.resizeColumnsToContents()
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        # table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+
+        return table
+
     def run(self):
+        if not self.input_tab_widget:
+            return
+
+        self.save_file()
         index = self.input_tab_widget.currentIndex()
-        text_edit = self.input_tab_widget.widget(index)
-        tab_name = self.input_tab_widget.tabText(index)
+        self.current_input_widget = self.input_tab_widget.widget(index)
+        self.current_tab_name = self.input_tab_widget.tabText(index)
 
-        lines = text_edit.text().split('\n')
+        if self.current_input_widget in self.input_to_output_map:
+            output_widget = self.input_to_output_map[self.current_input_widget]
+            output_index = self.output_tab_widget.indexOf(output_widget)
+            if output_index >= 0:
+                self.output_tab_widget.setCurrentIndex(output_index)
+                return
+            else:
+                del self.input_to_output_map[self.current_input_widget]
 
-        list_widget = QListWidget()
+        text = self.current_input_widget.text()
+
+        self.lexer_process = QProcess()
+        self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
+        self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
+        self.lexer_process.finished.connect(self.on_lexer_finished)
+
+        scanner_path = os.path.join('scanner', 'scanner.exe')
+        self.lexer_process.start(scanner_path)
+
+        self.lexer_process.write(text.encode('utf-8'))
+        self.lexer_process.closeWriteChannel()
+
+    def on_lexer_output(self):
+        data = self.lexer_process.readAllStandardOutput()
+        output = bytes(data).decode('utf-8')
+
+        tokens = self.parse_lexer_output(output)
+        table = self.create_table(tokens)
+
+        self.output_table_data(table)
+
+    def on_lexer_error(self):
+        error_data = self.lexer_process.readAllStandardError()
+        error = bytes(error_data).decode('utf-8')
+        print(f"Ошибка лексера: {error}")
+
+        table = self.create_table()
+        table.setRowCount(1)
+        table.setItem(0, 0, QTableWidgetItem("ERROR"))
+        table.setItem(0, 1, QTableWidgetItem("Ошибка лексера"))
+        table.setItem(0, 2, QTableWidgetItem(error[:50]))
+        table.setItem(0, 3, QTableWidgetItem("-"))
+
+        self.output_table_data(table)
+
+    # [TODO] Сделать вывод в status_bar
+    def on_lexer_finished(self, exit_code, exit_status):
+        # print(f"Лексер завершен с кодом: {exit_code}")
+        self.lexer_process = None
+
+    def parse_lexer_output(self, output):
+        tokens = []
+        lines = output.strip().split('\n')
+
+        # Парсим: "[1:1-3] - code=1: keyword int"
+        pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
 
         for line in lines:
-            if line.strip():
-                list_widget.addItem(line)
+            if not line.strip():
+                continue
 
-        self.output_tab_widget.addTab(list_widget, tab_name)
-        self.output_tab_widget.setCurrentIndex(
-            self.output_tab_widget.count() - 1)
+            match = re.match(pattern, line)
+            if match:
+                line_num = match.group(1)
+                start_col = match.group(2)
+                end_col = match.group(3)
+                code = match.group(4)
+                description = match.group(5)
+
+                token_type = self.get_token_type(int(code))
+
+                if " " in description:
+                    parts = description.split()
+                    lexeme = parts[-1]
+
+                tokens.append({
+                    'line': line_num,
+                    'code': code,
+                    'type': token_type,
+                    'lexeme': lexeme,
+                    'location': f"{start_col}-{end_col}"
+                })
+
+        return tokens
+
+    # [TODO] Сделать перевод
+    def get_token_type(self, code):
+        token_types = {
+            1: "Ключевое слово int",
+            2: "Ключевое слово float",
+            3: "Ключевое слово double",
+            4: "Ключевое слово std",
+            5: "Ключевое слово complex",
+            6: "Идентификатор",
+            7: "Пробел",
+            8: "Целое число",
+            9: "Число с плавающей точкой",
+            10: "Двойное двоеточие",
+            11: "Открывающая угловая скобка",
+            12: "Закрывающая угловая скобка",
+            13: "Открывающая круглая скобка",
+            14: "Закрывающая круглая скобка",
+            15: "Минус",
+            16: "Запятая",
+            17: "Точка с запятой"
+        }
+        return token_types.get(code, f"Неизвестный код {code}")
+
+    def output_table_data(self, table):
+        self.output_tab_widget.addTab(table, self.current_tab_name)
+        self.input_to_output_map[self.current_input_widget] = table
+        self.output_tab_widget.setCurrentWidget(table)
 
     def undo(self):
-        text_edit = self.get_current_text_edit()
-        if text_edit:
-            text_edit.undo()
+        widget = self.get_current_input_tab_widget()
+        if widget:
+            widget.undo()
             self.status_bar.showMessage(self.lang.translate('actionUndo'), 3000)
 
     def redo(self):
-        text_edit = self.get_current_text_edit()
-        if text_edit:
-            text_edit.redo()
+        widget = self.get_current_input_tab_widget()
+        if widget:
+            widget.redo()
             self.status_bar.showMessage(self.lang.translate('actionRedo'), 3000)
 
     def copy(self):
-        text_edit = self.get_current_text_edit()
-        if text_edit:
-            if text_edit.hasSelectedText():
-                text_edit.copy()
+        widget = self.get_current_input_tab_widget()
+        if widget:
+            if widget.hasSelectedText():
+                widget.copy()
                 self.status_bar.showMessage(self.lang.translate('actionCopy'), 3000)
 
     def paste(self):
-        text_edit = self.get_current_text_edit()
-        if text_edit:
-            text_edit.paste()
+        widget = self.get_current_input_tab_widget()
+        if widget:
+            widget.paste()
             self.status_bar.showMessage(self.lang.translate('actionPaste'), 3000)
 
     def cut(self):
-        text_edit = self.get_current_text_edit()
-        if text_edit:
-            if text_edit.hasSelectedText():
-                text_edit.cut()
+        widget = self.get_current_input_tab_widget()
+        if widget:
+            if widget.hasSelectedText():
+                widget.cut()
                 self.status_bar.showMessage(self.lang.translate('actionCut'), 3000)
 
     def delete(self):
-        text_edit = self.get_current_text_edit()
-        if text_edit:
-            if text_edit.hasSelectedText():
-                text_edit.removeSelectedText()
+        widget = self.get_current_input_tab_widget()
+        if widget:
+            if widget.hasSelectedText():
+                widget.removeSelectedText()
                 self.status_bar.showMessage(self.lang.translate('actionDelete'), 3000)
 
     def select_all(self):
-        text_edit = self.get_current_text_edit()
-        if text_edit:
-            text_edit.selectAll()
+        widget = self.get_current_input_tab_widget()
+        if widget:
+            widget.selectAll()
             self.status_bar.showMessage(self.lang.translate('actionSelectAll'), 3000)
 
-    def get_current_text_edit(self):
+    def get_current_input_tab_widget(self):
         if hasattr(self, 'input_tab_widget') and self.input_tab_widget:
             current_widget = self.input_tab_widget.currentWidget()
             if isinstance(current_widget, CodeEditor):
@@ -451,6 +608,26 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                                             3000)
                 return None
         return None
+
+    def show_language_dialog(self):
+        dialog = LanguageDialog(self.lang, self)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            new_language = dialog.get_selected_language()
+
+            if new_language != self.lang.current_language:
+                self.lang.current_language = new_language
+                self.lang.save_language_setting()
+                self.apply_language()
+
+                self.status_bar.showMessage(
+                    self.lang.translate('language_changed'), 3000)
+            else:
+                self.status_bar.showMessage(
+                    self.lang.translate('lang_not_changed'), 3000)
+        else:
+            self.status_bar.showMessage(
+                self.lang.translate('lang_selection_cancelled'), 3000)
 
     def help(self):
         dialog = QDialog(self)
@@ -997,23 +1174,3 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         text_browser.setReadOnly(True)
         layout.addWidget(text_browser)
         dialog.exec()
-
-    def show_language_dialog(self):
-        dialog = LanguageDialog(self.lang, self)
-
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            new_language = dialog.get_selected_language()
-
-            if new_language != self.lang.current_language:
-                self.lang.current_language = new_language
-                self.lang.save_language_setting()
-                self.apply_language()
-
-                self.status_bar.showMessage(
-                    self.lang.translate('language_changed'), 3000)
-            else:
-                self.status_bar.showMessage(
-                    self.lang.translate('lang_not_changed'), 3000)
-        else:
-            self.status_bar.showMessage(
-                self.lang.translate('lang_selection_cancelled'), 3000)
