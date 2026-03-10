@@ -19,8 +19,8 @@ import os
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def __init__(self):
         super().__init__()
-        # loadUi('text_editor.ui', self)
-        self.setupUi(self)
+        loadUi('text_editor.ui', self)
+        # self.setupUi(self)
 
         self.setMinimumSize(500, 400)
 
@@ -362,56 +362,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 QMessageBox.StandardButton.Ok)
             return False
 
-    def create_update_table(self, tokens, errors, table=None):
-        if table:
-            table.clearContents()
-            table.setRowCount(0)
-        else:
-            table = QTableWidget(self)
-        table.setColumnCount(4)
-        table.setHorizontalHeaderLabels(['Условный код', 'Тип лексемы', 'Лексема', 'Местоположение'])
-        print(errors)
-
-        if tokens:
-            total_rows = len(tokens) + len(errors)
-            table.setRowCount(total_rows)
-            rowLables = []
-            for row, token in enumerate(tokens):
-                table.setItem(row, 0, QTableWidgetItem(str(token['code'])))
-                table.setItem(row, 1, QTableWidgetItem(token['type']))
-                table.setItem(row, 2, QTableWidgetItem(token['lexeme']))
-                table.setItem(row, 3, QTableWidgetItem(token['location']))
-                rowLables.append(f'Строка {token['line']}')
-            if errors:
-                for i, error in enumerate(errors):
-                    row = len(tokens) + i
-                    item_code = QTableWidgetItem(error['code'])
-                    item_code.setForeground(Qt.GlobalColor.red)
-                    table.setItem(row, 0, item_code)
-
-                    item_type = QTableWidgetItem(error['type'])
-                    item_type.setForeground(Qt.GlobalColor.red)
-                    table.setItem(row, 1, item_type)
-
-                    item_lexeme = QTableWidgetItem(error['lexeme'])
-                    item_lexeme.setForeground(Qt.GlobalColor.red)
-                    table.setItem(row, 2, item_lexeme)
-
-                    item_loc = QTableWidgetItem(error['location'])
-                    item_loc.setForeground(Qt.GlobalColor.red)
-                    table.setItem(row, 3, item_loc)
-
-                    rowLables.append(f'Строка {error['line']}')
-        else:
-            table.setRowCount(0)
-
-        table.setVerticalHeaderLabels(rowLables)
-        table.resizeColumnsToContents()
-        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        # table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-
-        return table
-
     def run(self):
         if not self.input_tab_widget:
             return
@@ -434,7 +384,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         text = self.current_input_widget.text()
 
-        lexer = LexicalAnalyzer()
+        lexer = LexicalAnalyzer(self.lang)
         tokens, errors = lexer.analyze(text)
 
         existing_table = self.input_to_output_map.get(self.current_file_path)
@@ -520,7 +470,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 errors.append({
                     'line': line_num,
                     'code': 'ERROR',
-                    'type': 'Недопустимый символ',
+                    'type': self.lang.translate('invalid_char'),
                     'lexeme': parts[-1],
                     'location': f"{start_col}-{end_col}",
                 })
@@ -554,28 +504,79 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         return tokens, errors
 
-    # [TODO] Сделать перевод
     def get_token_type(self, code):
-        token_types = {
-            1: "Ключевое слово int",
-            2: "Ключевое слово float",
-            3: "Ключевое слово double",
-            4: "Ключевое слово std",
-            5: "Ключевое слово complex",
-            6: "Идентификатор",
-            7: "Пробел",
-            8: "Целое число",
-            9: "Число с плавающей точкой",
-            10: "Двойное двоеточие",
-            11: "Открывающая угловая скобка",
-            12: "Закрывающая угловая скобка",
-            13: "Открывающая круглая скобка",
-            14: "Закрывающая круглая скобка",
-            15: "Минус",
-            16: "Запятая",
-            17: "Точка с запятой"
-        }
-        return token_types.get(code, f"Неизвестный код {code}")
+        lexer = LexicalAnalyzer(self.lang)
+        return lexer.TOKEN_TYPES.get(code, self.lang.translate('unknown_code').format(code, 0))
+
+    def create_update_table(self, tokens, errors, table=None):
+        if table:
+            table.clearContents()
+            table.setRowCount(0)
+        else:
+            table = QTableWidget(self)
+        table.setColumnCount(4)
+        table.setHorizontalHeaderLabels([
+            self.lang.translate('cond_code'),
+            self.lang.translate('lexeme_type'),
+            self.lang.translate('lexeme'),
+            self.lang.translate('location')])
+
+        if tokens:
+            total_rows = len(tokens) + len(errors)
+            table.setRowCount(total_rows)
+            rowLables = []
+            for row, token in enumerate(tokens):
+                table.setItem(row, 0, QTableWidgetItem(str(token['code'])))
+                table.setItem(row, 1, QTableWidgetItem(token['type']))
+                table.setItem(row, 2, QTableWidgetItem(token['lexeme']))
+                table.setItem(row, 3, QTableWidgetItem(token['location']))
+                rowLables.append(self.lang.translate('line_num').
+                                 format(token['line'], 0))
+            if errors:
+                for i, error in enumerate(errors):
+                    row = len(tokens) + i
+                    item_code = QTableWidgetItem(error['code'])
+                    item_code.setForeground(Qt.GlobalColor.red)
+                    table.setItem(row, 0, item_code)
+
+                    item_type = QTableWidgetItem(error['type'])
+                    item_type.setForeground(Qt.GlobalColor.red)
+                    table.setItem(row, 1, item_type)
+
+                    item_lexeme = QTableWidgetItem(error['lexeme'])
+                    item_lexeme.setForeground(Qt.GlobalColor.red)
+                    table.setItem(row, 2, item_lexeme)
+
+                    item_loc = QTableWidgetItem(error['location'])
+                    item_loc.setForeground(Qt.GlobalColor.red)
+                    table.setItem(row, 3, item_loc)
+
+                    rowLables.append(self.lang.translate('line_num').
+                                     format(error['line'], 0))
+            table.itemClicked.connect(self.on_table_item_clicked)
+        else:
+            table.setRowCount(0)
+
+        table.setVerticalHeaderLabels(rowLables)
+        table.resizeColumnsToContents()
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+        return table
+
+    def on_table_item_clicked(self, item):
+        row = item.row()
+        table = item.tableWidget()
+
+        location_text = table.item(row, 3).text()
+
+        start, end = map(int, location_text.split('-'))
+
+        editor = self.input_tab_widget.currentWidget()
+        if editor:
+            editor.SendScintilla(editor.SCI_SETSEL, start - 1, end)
+            editor.SendScintilla(editor.SCI_SCROLLCARET)
 
     def output_table_data(self, table):
         self.output_tab_widget.addTab(table, self.current_tab_name)

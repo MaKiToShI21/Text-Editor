@@ -20,7 +20,8 @@
    <string>Text Editor</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">font-size: 10pt;</string>
+   <string notr="true">font-size: 10pt;
+background-color: rgb(40, 40, 40);</string>
   </property>
   <property name="toolButtonStyle">
    <enum>Qt::ToolButtonStyle::ToolButtonIconOnly</enum>
@@ -222,7 +223,7 @@ QToolButton QIcon {
      <x>0</x>
      <y>0</y>
      <width>851</width>
-     <height>44</height>
+     <height>45</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -327,6 +328,7 @@ QMenu::separator {
     <property name="title">
      <string>Пуск</string>
     </property>
+    <addaction name="actionRun"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">

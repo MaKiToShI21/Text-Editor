@@ -1,4 +1,27 @@
 class LexicalAnalyzer:
+    def __init__(self, lang='ru'):
+        self.lang = lang
+
+        self.TOKEN_TYPES = {
+            1: self.lang.translate('kw_int'),
+            2: self.lang.translate('kw_float'),
+            4: self.lang.translate('kw_std'),
+            3: self.lang.translate('kw_double'),
+            5: self.lang.translate('kw_complex'),
+            6: self.lang.translate('identifier'),
+            7: self.lang.translate('space'),
+            8: self.lang.translate('integer'),
+            9: self.lang.translate('float'),
+            10: self.lang.translate('double_colon'),
+            11: self.lang.translate('open_angle'),
+            12: self.lang.translate('close_angle'),
+            13: self.lang.translate('open_paren'),
+            14: self.lang.translate('close_paren'),
+            15: self.lang.translate('minus'),
+            16: self.lang.translate('comma'),
+            17: self.lang.translate('semicolon')
+        }
+
     TOKEN_CODES = {
         'KEYWORD_INT': 1,
         'KEYWORD_FLOAT': 2,
@@ -16,27 +39,7 @@ class LexicalAnalyzer:
         'CLOSE_PAREN': 14,
         'MINUS': 15,
         'COMMA': 16,
-        'SEMICOLON': 17
-    }
-
-    TOKEN_TYPES = {
-        1: 'Ключевое слово int',
-        2: 'Ключевое слово float',
-        3: 'Ключевое слово double',
-        4: 'Ключевое слово std',
-        5: 'Ключевое слово complex',
-        6: 'Идентификатор',
-        7: 'Пробел',
-        8: 'Целое число',
-        9: 'Число с плавающей точкой',
-        10: 'Двойное двоеточие',
-        11: 'Открывающая угловая скобка',
-        12: 'Закрывающая угловая скобка',
-        13: 'Открывающая круглая скобка',
-        14: 'Закрывающая круглая скобка',
-        15: 'Минус',
-        16: 'Запятая',
-        17: 'Точка с запятой'
+        'SEMICOLON': 17,
     }
 
     KEYWORDS = {
@@ -119,9 +122,9 @@ class LexicalAnalyzer:
         self.errors.append({
             'line': self.line,
             'code': 'ERROR',
-            'type': 'Недопустимый символ',
+            'type': self.lang.translate('invalid_char'),
             'lexeme': lexeme,
-            'location': f'{self.column}',
+            'location': f'{self.column}-{self.column}',
         })
 
     def _process_identifier_or_keyword(self):
@@ -157,7 +160,7 @@ class LexicalAnalyzer:
             'code': self.TOKEN_CODES['SPACE'],
             'type': self.TOKEN_TYPES[self.TOKEN_CODES['SPACE']],
             'lexeme': ' ',
-            'location': f"{start_col}-{self.column - 1}",
+            'location': f"{start_col}-{start_col}",
         })
 
     def _process_number(self):
@@ -213,24 +216,3 @@ class LexicalAnalyzer:
         else:
             self._add_error(':')
             self._advance()
-
-
-# def main():
-#     test_code = 'std:::complex<float> _12complex(-10.0, 2.0);'
-
-#     lexer = LexicalAnalyzer()
-#     tokens, errors = lexer.analyze(test_code)
-
-#     print("Исходный код:", test_code)
-#     print("\nТокены:")
-#     for token in tokens:
-#         print(f"  Строка {token['line']}  {token['code']:2}  {token['type']:25}  {repr(token['lexeme']):10}  {token['location']}")
-
-#     if errors:
-#         print("\nОшибки:")
-#         for error in errors:
-#             print(f"  {error['message']} (строка {error['line']}, колонка {error['column']})")
-
-
-# if __name__ == "__main__":
-#     main()
