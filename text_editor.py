@@ -4,13 +4,15 @@ from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QFileDialog,
                              QTableWidgetItem)
 from PyQt6.QtWidgets import QDialog, QVBoxLayout
 from language import Language, LanguageDialog
+from ui_editor import Ui_MainWindow
 from code_editor import CodeEditor
+from PyQt6.QtCore import QProcess
+from lexer import LexicalAnalyzer
 from PyQt6.QtGui import QAction
 from PyQt6.uic import loadUi
-import os
-from ui_editor import Ui_MainWindow
-from PyQt6.QtCore import QProcess
+from PyQt6.QtCore import Qt
 import re
+import os
 
 
 # std::complex<double> my_complex(10.0, 2.0);
@@ -360,7 +362,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 QMessageBox.StandardButton.Ok)
             return False
 
-    def create_update_table(self, tokens_data, table=None):
+    def create_update_table(self, tokens, errors, table=None):
         if table:
             table.clearContents()
             table.setRowCount(0)
@@ -368,39 +370,42 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             table = QTableWidget(self)
         table.setColumnCount(4)
         table.setHorizontalHeaderLabels(['Условный код', 'Тип лексемы', 'Лексема', 'Местоположение'])
+        print(errors)
 
-        if tokens_data:
-            table.setRowCount(len(tokens_data))
+        if tokens:
+            total_rows = len(tokens) + len(errors)
+            table.setRowCount(total_rows)
             rowLables = []
-            for row, token in enumerate(tokens_data):
-                from PyQt6.QtCore import Qt
-                if token.get('is_error', False):
-                    item_code = QTableWidgetItem(token['code'])
+            for row, token in enumerate(tokens):
+                table.setItem(row, 0, QTableWidgetItem(str(token['code'])))
+                table.setItem(row, 1, QTableWidgetItem(token['type']))
+                table.setItem(row, 2, QTableWidgetItem(token['lexeme']))
+                table.setItem(row, 3, QTableWidgetItem(token['location']))
+                rowLables.append(f'Строка {token['line']}')
+            if errors:
+                for i, error in enumerate(errors):
+                    row = len(tokens) + i
+                    item_code = QTableWidgetItem(error['code'])
                     item_code.setForeground(Qt.GlobalColor.red)
                     table.setItem(row, 0, item_code)
 
-                    item_type = QTableWidgetItem(token['type'])
+                    item_type = QTableWidgetItem(error['type'])
                     item_type.setForeground(Qt.GlobalColor.red)
                     table.setItem(row, 1, item_type)
 
-                    item_lexeme = QTableWidgetItem(token['lexeme'])
+                    item_lexeme = QTableWidgetItem(error['lexeme'])
                     item_lexeme.setForeground(Qt.GlobalColor.red)
                     table.setItem(row, 2, item_lexeme)
 
-                    item_loc = QTableWidgetItem(token['location'])
+                    item_loc = QTableWidgetItem(error['location'])
                     item_loc.setForeground(Qt.GlobalColor.red)
                     table.setItem(row, 3, item_loc)
-                else:
-                    table.setItem(row, 0, QTableWidgetItem(str(token['code'])))
-                    table.setItem(row, 1, QTableWidgetItem(token['type']))
-                    table.setItem(row, 2, QTableWidgetItem(token['lexeme']))
-                    table.setItem(row, 3, QTableWidgetItem(token['location']))
 
-                rowLables.append(f'Строка {token['line']}')
-            table.setVerticalHeaderLabels(rowLables)
+                    rowLables.append(f'Строка {error['line']}')
         else:
             table.setRowCount(0)
 
+        table.setVerticalHeaderLabels(rowLables)
         table.resizeColumnsToContents()
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         # table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -429,15 +434,27 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         text = self.current_input_widget.text()
 
-        self.lexer_process = QProcess()
-        self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
-        self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
-        self.lexer_process.finished.connect(self.on_lexer_finished)
+        lexer = LexicalAnalyzer()
+        tokens, errors = lexer.analyze(text)
 
-        scanner_path = os.path.join('scanner', 'scanner.exe')
-        self.lexer_process.start(scanner_path)
-        self.lexer_process.write(text.encode('utf-8'))
-        self.lexer_process.closeWriteChannel()
+        existing_table = self.input_to_output_map.get(self.current_file_path)
+
+        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
+            self.create_update_table(tokens, errors, existing_table)
+            self.output_tab_widget.setCurrentWidget(existing_table)
+        else:
+            table = self.create_update_table(tokens, errors)
+            self.output_table_data(table)
+
+        # self.lexer_process = QProcess()
+        # self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
+        # self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
+        # self.lexer_process.finished.connect(self.on_lexer_finished)
+
+        # scanner_path = os.path.join('lexer', 'lexer.exe')
+        # self.lexer_process.start(scanner_path)
+        # self.lexer_process.write(text.encode('utf-8'))
+        # self.lexer_process.closeWriteChannel()
 
     def on_lexer_output(self):
         data = self.lexer_process.readAllStandardOutput()
@@ -450,22 +467,20 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             except:
                 output = bytes(data).decode('cp866', errors='replace')
 
-        tokens = self.parse_lexer_output(output)
+        tokens, errors = self.parse_lexer_output(output)
 
         existing_table = self.input_to_output_map.get(self.current_file_path)
 
         if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-            self.create_update_table(tokens, existing_table)
+            self.create_update_table(tokens, errors, existing_table)
             self.output_tab_widget.setCurrentWidget(existing_table)
         else:
-            table = self.create_update_table(tokens)
+            table = self.create_update_table(tokens, errors)
             self.output_table_data(table)
 
     def on_lexer_error(self):
         error_data = self.lexer_process.readAllStandardError()
         error = bytes(error_data).decode('utf-8')
-        print(f"Ошибка лексера: {error}")
-
         table = self.create_table(None)
         table.setRowCount(1)
         table.setItem(0, 0, QTableWidgetItem("ERROR"))
@@ -480,6 +495,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
     def parse_lexer_output(self, output):
         tokens = []
+        errors = []
         lines = output.strip().split('\n')
 
         # Парсим: "[1:1-3] - code=1: keyword int"
@@ -501,13 +517,12 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 if " " in error_msg:
                     parts = error_msg.split(' ')
 
-                tokens.append({
+                errors.append({
                     'line': line_num,
                     'code': 'ERROR',
-                    'type': 'invalid character',
+                    'type': 'Недопустимый символ',
                     'lexeme': parts[-1],
                     'location': f"{start_col}-{end_col}",
-                    'is_error': True
                 })
                 continue
 
@@ -524,6 +539,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 if " " in description:
                     parts = description.split()
                     lexeme = parts[-1]
+                elif description == 'space':
+                    lexeme = ' '
+                else:
+                    lexeme = description
 
                 tokens.append({
                     'line': line_num,
@@ -531,10 +550,9 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     'type': token_type,
                     'lexeme': lexeme,
                     'location': f"{start_col}-{end_col}",
-                    'is_error': False
                 })
 
-        return tokens
+        return tokens, errors
 
     # [TODO] Сделать перевод
     def get_token_type(self, code):
