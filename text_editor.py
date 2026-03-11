@@ -33,6 +33,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         self.current_input_widget = None
         self.current_tab_name = None
         self.current_file_path = None
+        self.my_lexer = True
 
         self.setAcceptDrops(True)
         self.setup_actions()
@@ -384,27 +385,20 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         text = self.current_input_widget.text()
 
-        lexer = LexicalAnalyzer(self.lang)
-        tokens, errors = lexer.analyze(text)
-
-        existing_table = self.input_to_output_map.get(self.current_file_path)
-
-        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-            self.create_update_table(tokens, errors, existing_table)
-            self.output_tab_widget.setCurrentWidget(existing_table)
+        if self.my_lexer:
+            lexer = LexicalAnalyzer(self.lang)
+            tokens, errors = lexer.analyze(text)
+            self.create_or_update_table(tokens, errors)
         else:
-            table = self.create_update_table(tokens, errors)
-            self.output_table_data(table)
+            self.lexer_process = QProcess()
+            self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
+            self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
+            self.lexer_process.finished.connect(self.on_lexer_finished)
 
-        # self.lexer_process = QProcess()
-        # self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
-        # self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
-        # self.lexer_process.finished.connect(self.on_lexer_finished)
-
-        # scanner_path = os.path.join('lexer', 'lexer.exe')
-        # self.lexer_process.start(scanner_path)
-        # self.lexer_process.write(text.encode('utf-8'))
-        # self.lexer_process.closeWriteChannel()
+            scanner_path = os.path.join('lexer', 'lexer.exe')
+            self.lexer_process.start(scanner_path)
+            self.lexer_process.write(text.encode('utf-8'))
+            self.lexer_process.closeWriteChannel()
 
     def on_lexer_output(self):
         data = self.lexer_process.readAllStandardOutput()
@@ -418,15 +412,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 output = bytes(data).decode('cp866', errors='replace')
 
         tokens, errors = self.parse_lexer_output(output)
-
-        existing_table = self.input_to_output_map.get(self.current_file_path)
-
-        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-            self.create_update_table(tokens, errors, existing_table)
-            self.output_tab_widget.setCurrentWidget(existing_table)
-        else:
-            table = self.create_update_table(tokens, errors)
-            self.output_table_data(table)
+        self.create_or_update_table(tokens, errors)
 
     def on_lexer_error(self):
         error_data = self.lexer_process.readAllStandardError()
@@ -434,9 +420,9 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         table = self.create_table(None)
         table.setRowCount(1)
         table.setItem(0, 0, QTableWidgetItem("ERROR"))
-        table.setItem(0, 1, QTableWidgetItem("Ошибка лексера"))
+        table.setItem(0, 1, QTableWidgetItem("Lexer error"))
         table.setItem(0, 2, QTableWidgetItem(error[:50]))
-        table.setItem(0, 3, QTableWidgetItem("-"))
+        table.setItem(0, 3, QTableWidgetItem(""))
 
         self.output_table_data(table)
 
@@ -468,11 +454,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     parts = error_msg.split(' ')
 
                 errors.append({
-                    'line': line_num,
                     'code': 'ERROR',
                     'type': self.lang.translate('invalid_char'),
                     'lexeme': parts[-1],
-                    'location': f"{start_col}-{end_col}",
+                    'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
                 })
                 continue
 
@@ -495,11 +480,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     lexeme = description
 
                 tokens.append({
-                    'line': line_num,
                     'code': code,
                     'type': token_type,
                     'lexeme': lexeme,
-                    'location': f"{start_col}-{end_col}",
+                    'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
                 })
 
         return tokens, errors
@@ -508,7 +492,17 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         lexer = LexicalAnalyzer(self.lang)
         return lexer.TOKEN_TYPES.get(code, self.lang.translate('unknown_code').format(code, 0))
 
-    def create_update_table(self, tokens, errors, table=None):
+    def create_or_update_table(self, tokens, errors):
+        existing_table = self.input_to_output_map.get(self.current_file_path)
+
+        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
+            self.fill_table(tokens, errors, existing_table)
+            self.output_tab_widget.setCurrentWidget(existing_table)
+        else:
+            table = self.fill_table(tokens, errors)
+            self.output_table_data(table)
+
+    def fill_table(self, tokens, errors, table=None):
         if table:
             table.clearContents()
             table.setRowCount(0)
@@ -530,8 +524,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 table.setItem(row, 1, QTableWidgetItem(token['type']))
                 table.setItem(row, 2, QTableWidgetItem(token['lexeme']))
                 table.setItem(row, 3, QTableWidgetItem(token['location']))
-                rowLables.append(self.lang.translate('line_num').
-                                 format(token['line'], 0))
+                rowLables.append(str(row + 1))
             if errors:
                 for i, error in enumerate(errors):
                     row = len(tokens) + i
@@ -551,8 +544,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     item_loc.setForeground(Qt.GlobalColor.red)
                     table.setItem(row, 3, item_loc)
 
-                    rowLables.append(self.lang.translate('line_num').
-                                     format(error['line'], 0))
+                    rowLables.append(str(row))
             table.itemClicked.connect(self.on_table_item_clicked)
         else:
             table.setRowCount(0)
@@ -571,12 +563,20 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         location_text = table.item(row, 3).text()
 
-        start, end = map(int, location_text.split('-'))
+        match = re.match(r'.*?(\d+),\s*(\d+)-(\d+)', location_text)
+        if match:
+            line_num = int(match.group(1))
+            start_col = int(match.group(2))
+            end_col = int(match.group(3))
 
-        editor = self.input_tab_widget.currentWidget()
-        if editor:
-            editor.SendScintilla(editor.SCI_SETSEL, start - 1, end)
-            editor.SendScintilla(editor.SCI_SCROLLCARET)
+            editor = self.input_tab_widget.currentWidget()
+            if editor:
+                line_start_pos = editor.SendScintilla(editor.SCI_POSITIONFROMLINE, line_num - 1)
+                start_pos = line_start_pos + start_col - 1
+                end_pos = line_start_pos + end_col
+
+                editor.SendScintilla(editor.SCI_SETSEL, start_pos, end_pos)
+                editor.SendScintilla(editor.SCI_SCROLLCARET)
 
     def output_table_data(self, table):
         self.output_tab_widget.addTab(table, self.current_tab_name)

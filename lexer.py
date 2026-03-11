@@ -111,20 +111,18 @@ class LexicalAnalyzer:
         start_col = self.column
         end_col = start_col + len(lexeme) - 1
         self.tokens.append({
-            'line': self.line,
             'code': code,
             'type': self.TOKEN_TYPES[code],
             'lexeme': lexeme,
-            'location': f"{start_col}-{end_col}",
+            'location': f"{self.lang.translate('line_num').format(self.line, 0)}, {start_col}-{end_col}",
         })
 
     def _add_error(self, lexeme):
         self.errors.append({
-            'line': self.line,
             'code': 'ERROR',
             'type': self.lang.translate('invalid_char'),
             'lexeme': lexeme,
-            'location': f'{self.column}-{self.column}',
+            'location': f"{self.lang.translate('line_num').format(self.line, 0)}, {self.column}-{self.column}",
         })
 
     def _process_identifier_or_keyword(self):
@@ -140,11 +138,10 @@ class LexicalAnalyzer:
         code = self.KEYWORDS.get(lexeme, self.TOKEN_CODES['IDENTIFIER'])
 
         self.tokens.append({
-            'line': start_line,
             'code': code,
             'type': self.TOKEN_TYPES[code],
             'lexeme': lexeme,
-            'location': f"{start_col}-{self.column - 1}",
+            'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{self.column - 1}",
         })
 
     def _process_space(self):
@@ -156,11 +153,10 @@ class LexicalAnalyzer:
             self._advance()
 
         self.tokens.append({
-            'line': start_line,
             'code': self.TOKEN_CODES['SPACE'],
             'type': self.TOKEN_TYPES[self.TOKEN_CODES['SPACE']],
             'lexeme': ' ',
-            'location': f"{start_col}-{start_col}",
+            'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{start_col}",
         })
 
     def _process_number(self):
@@ -186,11 +182,10 @@ class LexicalAnalyzer:
         code = self.TOKEN_CODES['FLOAT'] if has_decimal else self.TOKEN_CODES['INTEGER']
 
         self.tokens.append({
-            'line': start_line,
             'code': code,
             'type': self.TOKEN_TYPES[code],
             'lexeme': lexeme,
-            'location': f"{start_col}-{self.column - 1}",
+            'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{self.column - 1}",
         })
 
     def _process_double_colon(self):
@@ -202,11 +197,10 @@ class LexicalAnalyzer:
             self._advance()
             self._advance()
             self.tokens.append({
-                'line': start_line,
                 'code': self.TOKEN_CODES['DOUBLE_COLON'],
                 'type': self.TOKEN_TYPES[self.TOKEN_CODES['DOUBLE_COLON']],
                 'lexeme': '::',
-                'location': f"{start_col}-{self.column - 1}",
+                'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{self.column - 1}",
             })
 
             if (self.position < len(self.text) and

@@ -809,7 +809,7 @@ YY_RULE_SETUP
 #line 40 "lexer.l"
 { 
     printf("[%d:%d-%d] - code=%d: identifier %s\n", 
-           line_num, column_num, column_num + yyleng, IDENTIFIER, yytext); 
+           line_num, column_num, column_num + yyleng - 1, IDENTIFIER, yytext); 
     column_num += yyleng; 
 }
 	YY_BREAK
@@ -827,7 +827,7 @@ YY_RULE_SETUP
 #line 52 "lexer.l"
 { 
     printf("[%d:%d-%d] - code=%d: float %s\n", 
-           line_num, column_num, column_num + yyleng, FLOAT, yytext); 
+           line_num, column_num, column_num + yyleng - 1, FLOAT, yytext); 
     column_num += yyleng; 
 }
 	YY_BREAK

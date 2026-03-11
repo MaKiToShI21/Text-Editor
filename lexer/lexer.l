@@ -39,7 +39,7 @@ int column_num = 1;
 
 [a-zA-Z_][a-zA-Z0-9_]* { 
     printf("[%d:%d-%d] - code=%d: identifier %s\n", 
-           line_num, column_num, column_num + yyleng, IDENTIFIER, yytext); 
+           line_num, column_num, column_num + yyleng - 1, IDENTIFIER, yytext); 
     column_num += yyleng; 
 }
 
@@ -51,7 +51,7 @@ int column_num = 1;
 
 [0-9]+\.[0-9]+ { 
     printf("[%d:%d-%d] - code=%d: float %s\n", 
-           line_num, column_num, column_num + yyleng, FLOAT, yytext); 
+           line_num, column_num, column_num + yyleng - 1, FLOAT, yytext); 
     column_num += yyleng; 
 }
 [0-9]+      { 
