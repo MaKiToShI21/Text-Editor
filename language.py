@@ -83,6 +83,7 @@ class Language():
                 # Tab actions
                 'tab_saved_and_closed': 'Вкладка "{}" сохранена и закрыта',
                 'tab_closed_without_saving': 'Вкладка "{}" закрыта без сохранения',
+                'tab_closed': 'Вкладка "{}" закрыта',
                 'tab_closing_cancelled': 'Закрытие вкладки "{}" отменено',
 
                 'text_edit_inactive': 'Текстовое поле не активно',
@@ -117,6 +118,32 @@ class Language():
                 'error': 'Ошибка',
                 'opening_error': 'Не удалось открыть файл:\n{}',
                 'file_saving_error': 'Не удалось сохранить файл: {}',
+
+                # For lexer
+                'kw_int': 'Ключевое слово int',
+                'kw_float': 'Ключевое слово float',
+                'kw_double': 'Ключевое слово double',
+                'kw_std': 'Ключевое слово std',
+                'kw_complex': 'Ключевое слово complex',
+                'identifier': 'Идентификатор',
+                'space': 'Пробел',
+                'integer': 'Целое число',
+                'float': 'Число с плавающей точкой',
+                'double_colon': 'Двойное двоеточие',
+                'open_angle': 'Открывающая угловая скобка',
+                'close_angle': 'Закрывающая угловая скобка',
+                'open_paren': 'Открывающая круглая скобка',
+                'close_paren': 'Закрывающая круглая скобка',
+                'minus': 'Минус',
+                'comma': 'Запятая',
+                'semicolon': 'Точка с запятой',
+                'invalid_char': 'Недопустимый символ',
+                'unknown_code': 'Неизвестный код {}',
+                'line_num': 'Строка {}',
+                'cond_code': 'Условный код',
+                'lexeme_type': 'Тип лексемы',
+                'lexeme': 'Лексема',
+                'location': 'Местоположение'
             },
             'en': {
                 # Window title
@@ -194,6 +221,7 @@ class Language():
                 # Tab actions
                 'tab_saved_and_closed': 'Tab "{}" saved and closed',
                 'tab_closed_without_saving': 'Tab "{}" closed without saving',
+                'tab_closed': 'Tab "{}" closed',
                 'tab_closing_cancelled': 'Tab close "{}" cancelled',
 
                 'text_edit_inactive': 'Text edit not active',
@@ -228,6 +256,31 @@ class Language():
                 'error': 'Error',
                 'opening_error': 'Could not open file:\n{}',
                 'file_saving_error': 'Failed to save file: {}',
+
+                # For lexer
+                'kw_int': 'Keyword int',
+                'kw_float': 'Keyword float',
+                'kw_double': 'Keyword double',
+                'kw_std': 'Keyword std',
+                'kw_complex': 'Keyword complex',
+                'identifier': 'Identifier',
+                'space': 'Space',
+                'integer': 'Integer number',
+                'float': 'Floating point number',
+                'double_colon': 'Double colon',
+                'open_angle': 'Opening angle bracket',
+                'close_angle': 'Closing angle bracket',
+                'open_paren': 'Opening parenthesis',
+                'close_paren': 'Closing parenthesis',
+                'minus': 'Minus',
+                'comma': 'Comma',
+                'semicolon': 'Semicolon',
+                'invalid_char': 'Invalid character',
+                'line_num': 'Line {}',
+                'cond_code': 'Conditional code',
+                'lexeme_type': 'Lexeme type',
+                'lexeme': 'Lexeme',
+                'location': 'Location'
             }
         }
 

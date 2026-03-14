@@ -1,5 +1,5 @@
 from PyQt6.QtGui import QColor, QFont
-from PyQt6.Qsci import QsciScintilla, QsciLexerPython
+from PyQt6.Qsci import QsciScintilla, QsciLexerPython, QsciLexerCPP
 
 
 class CodeEditor(QsciScintilla):
@@ -22,25 +22,39 @@ class CodeEditor(QsciScintilla):
         self.update_line_number_width()
 
         # Syntax highlighting
-        lexer = QsciLexerPython()
-        lexer.setColor(QColor(9, 145, 0), 1)    # Comments with #
-        lexer.setColor(QColor(122, 191, 124), 2)   # Numbers
-        lexer.setColor(QColor(190, 90, 55), 3)    # Quoted strings with ""
-        lexer.setColor(QColor(180, 90, 51), 4)   # Strings in quotes with ''
-        lexer.setColor(QColor(43, 150, 214), 5)   # Keywords: def, class, if, else
-        lexer.setColor(QColor(180, 90, 51), 6)   # Block comments with ''' '''
-        lexer.setColor(QColor(0, 210, 180), 8)  # Class names
-        lexer.setColor(QColor(205, 209, 100), 9)   # Name of functions
-        lexer.setColor(QColor(190, 90, 55), 13)  # Quoted strings with ", '
-        lexer.setColor(QColor(205, 209, 100), 15)  # Decorators @staticmethod
-        lexer.setColor(QColor(180, 90, 51), 17)  # f'{}'
+        lexer = QsciLexerCPP()
+        lexer.setColor(QColor(255, 255, 255), 0)    # #
+        lexer.setColor(QColor(9, 145, 0), 1)    # Comments with /* */
+        lexer.setColor(QColor(9, 145, 0), 2)   # //
+        lexer.setColor(QColor(122, 191, 124), 4)   # Numbers
+        lexer.setColor(QColor(43, 150, 214), 5)   # Keywords: class, if, else
+        lexer.setColor(QColor(255, 166, 74), 6)   # Quoted strings with ""
+        lexer.setColor(QColor(255, 166, 74), 7)   # Strings in quotes with
+        lexer.setColor(QColor(207, 90, 230), 9)   # include, define
+        lexer.setColor(QColor(255, 255, 255), 10)   # signs
+        lexer.setColor(QColor(255, 255, 255), 11)   # Text
+
+        # For Python
+        # lexer.setColor(QColor(255, 255, 255), 0)    # Text
+        # lexer.setColor(QColor(9, 145, 0), 1)    # Comments with #
+        # lexer.setColor(QColor(122, 191, 124), 2)   # Numbers
+        # lexer.setColor(QColor(190, 90, 55), 3)    # Quoted strings with ""
+        # lexer.setColor(QColor(180, 90, 51), 4)   # Strings in quotes with ''
+        # lexer.setColor(QColor(43, 150, 214), 5)   # Keywords: def, class, if, else
+        # lexer.setColor(QColor(180, 90, 51), 6)   # Block comments with ''' '''
+        # lexer.setColor(QColor(0, 210, 180), 8)  # Class names
+        # lexer.setColor(QColor(205, 209, 100), 9)   # Name of functions
+        # lexer.setColor(QColor(190, 90, 55), 13)  # Quoted strings with ", '
+        # lexer.setColor(QColor(205, 209, 100), 15)  # Decorators @staticmethod
+        # lexer.setColor(QColor(180, 90, 51), 17)  # f'{}'
 
         # Background
         lexer.setDefaultPaper(QColor("#242424"))
         lexer.setPaper(QColor("#242424"))
 
         # Text selection
-        self.setSelectionBackgroundColor(QColor(0, 100, 200, 60))
+        self.setSelectionBackgroundColor(QColor(190, 201, 58, 100)) # (0, 100, 200, 60) blue
+
         self.resetSelectionForegroundColor()
 
         # Cursor
