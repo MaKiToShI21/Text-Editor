@@ -13,7 +13,10 @@ from PyQt6.uic import loadUi
 from PyQt6.QtCore import Qt
 import re
 import os
-
+import sys
+import os
+import tempfile
+import shutil
 
 # std::complex<double> my_complex(10.0, 2.0);
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
@@ -33,7 +36,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         self.current_input_widget = None
         self.current_tab_name = None
         self.current_file_path = None
-        self.my_lexer = True
+        self.my_lexer = False
 
         self.setAcceptDrops(True)
         self.setup_actions()
@@ -259,6 +262,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         self.close()
 
     def closeEvent(self, event):
+        self.cleanup_temp_files()
         if self.can_close():
             event.accept()
         else:
@@ -363,6 +367,51 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 QMessageBox.StandardButton.Ok)
             return False
 
+    def get_lexer_path(self):
+        if getattr(sys, 'frozen', False):
+            # app_dir = os.path.dirname(sys.executable)
+            # external_lexer = os.path.join(app_dir, 'lexer', 'lexer.exe')
+
+            # if os.path.exists(external_lexer):
+            #     return external_lexer
+
+            return self.extract_lexer_from_resources()
+        else:
+            return os.path.join(os.path.dirname(__file__), 'lexer', 'lexer.exe')
+
+    def extract_lexer_from_resources(self):
+        try:
+            if hasattr(self, 'temp_lexer_path') and self.temp_lexer_path:
+                if os.path.exists(self.temp_lexer_path):
+                    return self.temp_lexer_path
+
+            source = os.path.join(sys._MEIPASS, 'lexer', 'lexer.exe')
+
+            if not os.path.exists(source):
+                return None
+
+            temp_dir = tempfile.mkdtemp(prefix='texteditor_')
+            temp_path = os.path.join(temp_dir, 'lexer.exe')
+
+            shutil.copy2(source, temp_path)
+
+            self.temp_lexer_path = temp_path
+            self.temp_lexer_dir = temp_dir
+
+            return temp_path
+        except Exception as e:
+            return None
+
+    def cleanup_temp_files(self):
+        if hasattr(self, 'temp_lexer_path') and self.temp_lexer_path:
+            try:
+                if os.path.exists(self.temp_lexer_path):
+                    os.remove(self.temp_lexer_path)
+                if hasattr(self, 'temp_lexer_dir') and os.path.exists(self.temp_lexer_dir):
+                    os.rmdir(self.temp_lexer_dir)
+            except:
+                pass
+
     def run(self):
         if not self.input_tab_widget:
             return
@@ -390,13 +439,14 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             tokens, errors = lexer.analyze(text)
             self.create_or_update_table(tokens, errors)
         else:
+            lexer_path = self.get_lexer_path()
+
             self.lexer_process = QProcess()
             self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
             self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
             self.lexer_process.finished.connect(self.on_lexer_finished)
 
-            scanner_path = os.path.join('lexer', 'lexer.exe')
-            self.lexer_process.start(scanner_path)
+            self.lexer_process.start(lexer_path)
             self.lexer_process.write(text.encode('utf-8'))
             self.lexer_process.closeWriteChannel()
 
@@ -417,7 +467,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def on_lexer_error(self):
         error_data = self.lexer_process.readAllStandardError()
         error = bytes(error_data).decode('utf-8')
-        table = self.create_table(None)
+        table = self.create_or_update_table(None)
         table.setRowCount(1)
         table.setItem(0, 0, QTableWidgetItem("ERROR"))
         table.setItem(0, 1, QTableWidgetItem("Lexer error"))
