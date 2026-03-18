@@ -22,8 +22,8 @@ import shutil
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def __init__(self):
         super().__init__()
-        loadUi('text_editor.ui', self)
-        # self.setupUi(self)
+        # loadUi('text_editor.ui', self)
+        self.setupUi(self)
 
         self.setMinimumSize(500, 400)
 
@@ -594,7 +594,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     item_loc.setForeground(Qt.GlobalColor.red)
                     table.setItem(row, 3, item_loc)
 
-                    rowLables.append(str(row))
+                    rowLables.append(str(row + 1))
             table.itemClicked.connect(self.on_table_item_clicked)
         else:
             table.setRowCount(0)
