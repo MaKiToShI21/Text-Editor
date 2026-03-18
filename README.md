@@ -6,7 +6,8 @@
 3. **[Project Description](#project-description)**
 4. **[Technologies Used](#technologies-used)**
 5. **[Build and Launch Instructions](#build-and-launch-instructions)**
-6. **[User Manual](#user-manual)**
+6. **[Title and Objective of the Laboratory Work](#title-and-objective-of-the-laboratory-work)**
+7. **[User Manual](#user-manual)**
 
 ___
 
@@ -39,6 +40,26 @@ VS Code (Visual Studio Code)
 * PyQt6.uic - module for loading .ui files into Python
 * PyInstaller - tool for packaging Python applications into executable files
 * Git - version control system
+
+<h2 align="center">Title and Objective of the Laboratory Work</h2>
+
+**Laboratory Work 2.** Development of a lexical analyzer (scanner)
+
+**Objective:** Study the purpose and operating principles of a lexical analyzer within a compiler. Design an algorithm (state diagram) and implement a software implementation of a scanner for extracting lexemes from input text.
+
+A state diagram was developed.
+
+<div align="center">
+  <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/state_diagram.png" width="450">
+</div>
+
+A lexer was created based on it to parse the string "**`std::complex<double> my_complex(10.0, 2.0);`**" into tokens, which are then output as a table.
+
+| Correct line                                                                                         | Invalid char                                                                                         | multi-line
+|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/correct_line.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/invalid_char.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/multi-line.png" width="500">
+
+
 
 <h2 align="center">Build and Launch Instructions</h2>
 
@@ -85,13 +106,18 @@ To create an executable file, run the PyInstaller command:
 pyinstaller --onefile --windowed main.py
 ```
 
+To create an executable file with flex lexer, run the PyInstaller command:
+```bash
+pyinstaller --onefile --windowed --add-data "lexer/lexer.exe;lexer" main.py
+```
+
 After successful build, the executable file is located in the folder: `/dist/main.exe`
 
 ___
 
 ### **Running Without Python Installation**
 
-Download [Text-Editor.exe](https://github.com/MaKiToShI21/Text-Editor/releases/tag/v1.0.0) and run it. No additional installations are required.
+Download [Text-Editor.exe](https://github.com/MaKiToShI21/Text-Editor/releases/tag/v1.1.0) and run it. No additional installations are required.
 
 <h2 align="center">User Manual</h2>
 
