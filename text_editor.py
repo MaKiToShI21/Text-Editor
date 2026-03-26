@@ -18,6 +18,7 @@ import os
 import tempfile
 import shutil
 
+
 # std::complex<double> my_complex(10.0, 2.0);
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def __init__(self):
@@ -412,43 +413,43 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             except:
                 pass
 
-    def run(self):
-        if not self.input_tab_widget:
-            return
-        index = self.input_tab_widget.currentIndex()
-        self.current_input_widget = self.input_tab_widget.widget(index)
-        self.current_file_path = self.current_input_widget.file_path
+    # def run(self):
+    #     if not self.input_tab_widget:
+    #         return
+    #     index = self.input_tab_widget.currentIndex()
+    #     self.current_input_widget = self.input_tab_widget.widget(index)
+    #     self.current_file_path = self.current_input_widget.file_path
 
-        if not self.current_file_path or self.current_input_widget.isModified():
-            if not self.save_file():
-                return
-            if self.current_input_widget.file_path:
-                self.current_file_path = self.current_input_widget.file_path
+    #     if not self.current_file_path or self.current_input_widget.isModified():
+    #         if not self.save_file():
+    #             return
+    #         if self.current_input_widget.file_path:
+    #             self.current_file_path = self.current_input_widget.file_path
 
-        self.current_tab_name = self.input_tab_widget.tabText(index)
+    #     self.current_tab_name = self.input_tab_widget.tabText(index)
 
-        if self.current_file_path in self.input_to_output_map:
-            output_widget = self.input_to_output_map[self.current_file_path]
-            output_index = self.output_tab_widget.indexOf(output_widget)
-            self.output_tab_widget.setCurrentIndex(output_index)
+    #     if self.current_file_path in self.input_to_output_map:
+    #         output_widget = self.input_to_output_map[self.current_file_path]
+    #         output_index = self.output_tab_widget.indexOf(output_widget)
+    #         self.output_tab_widget.setCurrentIndex(output_index)
 
-        text = self.current_input_widget.text()
+    #     text = self.current_input_widget.text()
 
-        if self.my_lexer:
-            lexer = LexicalAnalyzer(self.lang)
-            tokens, errors = lexer.analyze(text)
-            self.create_or_update_table(tokens, errors)
-        else:
-            lexer_path = self.get_lexer_path()
+    #     if self.my_lexer:
+    #         lexer = LexicalAnalyzer(self.lang)
+    #         tokens, errors = lexer.analyze(text)
+    #         self.create_or_update_table(tokens, errors)
+    #     else:
+    #         lexer_path = self.get_lexer_path()
 
-            self.lexer_process = QProcess()
-            self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
-            self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
-            self.lexer_process.finished.connect(self.on_lexer_finished)
+    #         self.lexer_process = QProcess()
+    #         self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
+    #         self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
+    #         self.lexer_process.finished.connect(self.on_lexer_finished)
 
-            self.lexer_process.start(lexer_path)
-            self.lexer_process.write(text.encode('utf-8'))
-            self.lexer_process.closeWriteChannel()
+    #         self.lexer_process.start(lexer_path)
+    #         self.lexer_process.write(text.encode('utf-8'))
+    #         self.lexer_process.closeWriteChannel()
 
     def on_lexer_output(self):
         data = self.lexer_process.readAllStandardOutput()
@@ -486,7 +487,102 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         # Парсим: "[1:1-3] - code=1: keyword int"
         pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
+        error_pattern = r'\[(\d+):(\d+)-(\d+)\] - ERROR:\s*(.+)'
 
+        # Для объединения смежных ошибок
+        current_error = None
+        prev_end_col = None
+        prev_line_num = None
+
+        for line in lines:
+            if not line.strip():
+                continue
+
+            error_match = re.match(error_pattern, line)
+            if error_match:
+                line_num = int(error_match.group(1))
+                start_col = int(error_match.group(2))
+                end_col = int(error_match.group(3))
+                error_msg = error_match.group(4)
+
+                parts = error_msg.split(' ')
+                lexeme = parts[-1] if " " in error_msg else error_msg
+
+                # Проверяем, является ли текущая ошибка продолжением предыдущей
+                if (current_error and 
+                    prev_line_num == line_num and 
+                    prev_end_col and 
+                    prev_end_col + 1 == start_col):
+                    # Объединяем с предыдущей ошибкой
+                    current_error['lexeme'] += lexeme
+                    current_error['location'] = f"{self.lang.translate('line_num').format(line_num, 0)}, {current_error['start_col']}-{end_col}"
+                else:
+                    # Если была предыдущая ошибка, добавляем её в список
+                    if current_error:
+                        # Удаляем временные поля
+                        del current_error['start_col']
+                        errors.append(current_error)
+
+                    # Создаём новую ошибку
+                    current_error = {
+                        'code': 'ERROR',
+                        'type': self.lang.translate('invalid_char'),
+                        'lexeme': lexeme,
+                        'start_col': start_col,
+                        'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
+                    }
+
+                prev_end_col = end_col
+                prev_line_num = line_num
+                continue
+
+            # Если встретили обычный токен, добавляем накопленную ошибку
+            if current_error:
+                del current_error['start_col']
+                errors.append(current_error)
+                current_error = None
+                prev_end_col = None
+                prev_line_num = None
+
+            match = re.match(pattern, line)
+            if match:
+                line_num = match.group(1)
+                start_col = match.group(2)
+                end_col = match.group(3)
+                code = match.group(4)
+                description = match.group(5)
+
+                token_type = self.get_token_type(int(code))
+
+                if " " in description:
+                    parts = description.split()
+                    lexeme = parts[-1]
+                elif description == 'space':
+                    lexeme = ' '
+                else:
+                    lexeme = description
+
+                tokens.append({
+                    'code': code,
+                    'type': token_type,
+                    'lexeme': lexeme,
+                    'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
+                })
+
+        # Добавляем последнюю накопленную ошибку
+        if current_error:
+            del current_error['start_col']
+            errors.append(current_error)
+
+        return tokens, errors
+
+    # def parse_lexer_output(self, output):
+        tokens = []
+        errors = []
+        lines = output.strip().split('\n')
+
+        # Парсим: "[1:1-3] - code=1: keyword int"
+        pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
         error_pattern = r'\[(\d+):(\d+)-(\d+)\] - ERROR:\s*(.+)'
 
         for line in lines:
@@ -1215,3 +1311,142 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         text_browser.setReadOnly(True)
         layout.addWidget(text_browser)
         dialog.exec()
+
+    def run(self):
+        if not self.input_tab_widget:
+            return
+        index = self.input_tab_widget.currentIndex()
+        self.current_input_widget = self.input_tab_widget.widget(index)
+        self.current_file_path = self.current_input_widget.file_path
+
+        if not self.current_file_path or self.current_input_widget.isModified():
+            if not self.save_file():
+                return
+            if self.current_input_widget.file_path:
+                self.current_file_path = self.current_input_widget.file_path
+
+        self.current_tab_name = self.input_tab_widget.tabText(index)
+
+        if self.current_file_path in self.input_to_output_map:
+            output_widget = self.input_to_output_map[self.current_file_path]
+            output_index = self.output_tab_widget.indexOf(output_widget)
+            self.output_tab_widget.setCurrentIndex(output_index)
+
+        text = self.current_input_widget.text()
+
+        xml_comment_regex = r'<!--(.*?)-->'
+
+        matches = []
+        pattern = re.compile(xml_comment_regex, re.DOTALL)
+
+        for match in pattern.finditer(text):
+            comment_text = match.group(1).strip()
+            start_pos = match.start()
+            end_pos = match.end()
+            length = end_pos - start_pos
+            substring = f"<!--{comment_text}-->"
+
+            line_num = text.count('\n', 0, start_pos) + 1
+            line_start = text.rfind('\n', 0, start_pos) + 1
+            start_col = start_pos - line_start + 1
+            end_line_num = text.count('\n', 0, end_pos) + 1
+
+            if line_num == end_line_num:
+                end_col = end_pos - line_start
+                location = f"{line_num}, {start_col}-{end_col}"
+            else:
+                location = f"{line_num}, {start_col}-{start_col + length}"
+
+            matches.append({
+                'substring': substring,
+                'location': location,
+                'length': length,
+                'start_pos': start_pos,
+                'end_pos': end_pos,
+                'line_num': line_num,
+                'start_col': start_col
+            })
+
+        self.create_comment_table(matches, self.current_file_path)
+
+    def create_comment_table(self, matches, file_path):
+        if file_path and file_path in self.input_to_output_map:
+            old_table = self.input_to_output_map[file_path]
+            index = self.output_tab_widget.indexOf(old_table)
+            if index >= 0:
+                self.output_tab_widget.removeTab(index)
+                old_table.deleteLater()
+            del self.input_to_output_map[file_path]
+
+        table = QTableWidget()
+        table.setColumnCount(3)
+
+        if self.lang.current_language == 'ru':
+            headers = ['Найденная подстрока', 'Позиция', 'Длина']
+        else:
+            headers = ['Found substring', 'Position', 'Length']
+        table.setHorizontalHeaderLabels(headers)
+
+        if not matches:
+            table.setRowCount(0)
+        else:
+            table.setRowCount(len(matches))
+
+            for row, match in enumerate(matches):
+                substring_item = QTableWidgetItem(match['substring'])
+                substring_item.setToolTip(f"XML comment: {match['substring']}")
+                table.setItem(row, 0, substring_item)
+
+                location_item = QTableWidgetItem(match['location'])
+                table.setItem(row, 1, location_item)
+
+                length_item = QTableWidgetItem(str(match['length']))
+                length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+                table.setItem(row, 2, length_item)
+
+            table.matches_data = matches
+
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        table.resizeColumnsToContents()
+
+        table.itemClicked.connect(self.on_comment_table_clicked)
+
+        tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
+        tab_display_name = f"{tab_name}"
+
+        self.output_tab_widget.addTab(table, tab_display_name)
+        if file_path:
+            self.input_to_output_map[file_path] = table
+        self.output_tab_widget.setCurrentWidget(table)
+
+        table.setColumnWidth(0, 500)
+        table.setColumnWidth(1, 200)
+        table.setColumnWidth(2, 80)
+
+    def on_comment_table_clicked(self, item):
+        row = item.row()
+        table = item.tableWidget()
+
+        if not hasattr(table, 'matches_data') or row >= len(table.matches_data):
+            return
+
+        match = table.matches_data[row]
+
+        editor = self.input_tab_widget.currentWidget()
+        if not editor:
+            return
+
+        start_pos = match['start_pos']
+        end_pos = match['end_pos']
+
+        try:
+            editor.SendScintilla(editor.SCI_SETSEL, start_pos, end_pos)
+            editor.SendScintilla(editor.SCI_SCROLLCARET)
+            editor.setFocus()
+        except AttributeError:
+            cursor = editor.textCursor()
+            cursor.setPosition(start_pos)
+            cursor.setPosition(end_pos, cursor.MoveMode.KeepAnchor)
+            editor.setTextCursor(cursor)
+            editor.setFocus()
