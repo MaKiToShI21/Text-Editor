@@ -1312,6 +1312,115 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         layout.addWidget(text_browser)
         dialog.exec()
 
+    # 2 Задание
+    # def run(self):
+    #     if not self.input_tab_widget:
+    #         return
+    #     index = self.input_tab_widget.currentIndex()
+    #     self.current_input_widget = self.input_tab_widget.widget(index)
+    #     self.current_file_path = self.current_input_widget.file_path
+
+    #     if not self.current_file_path or self.current_input_widget.isModified():
+    #         if not self.save_file():
+    #             return
+    #         if self.current_input_widget.file_path:
+    #             self.current_file_path = self.current_input_widget.file_path
+
+    #     self.current_tab_name = self.input_tab_widget.tabText(index)
+
+    #     if self.current_file_path in self.input_to_output_map:
+    #         output_widget = self.input_to_output_map[self.current_file_path]
+    #         output_index = self.output_tab_widget.indexOf(output_widget)
+    #         self.output_tab_widget.setCurrentIndex(output_index)
+
+    #     text = self.current_input_widget.text()
+
+    #     filename_regex = r'\b[^\\/:*?"<>|\s]+\.[^\\/:*?"<>|\s]+\b'
+
+    #     matches = []
+    #     pattern = re.compile(filename_regex)
+
+    #     for match in pattern.finditer(text):
+    #         filename = match.group()
+    #         start_pos = match.start()
+    #         end_pos = match.end()
+    #         length = end_pos - start_pos
+
+    #         line_num = text.count('\n', 0, start_pos) + 1
+    #         line_start = text.rfind('\n', 0, start_pos) + 1
+    #         start_col = start_pos - line_start + 1
+    #         end_col = end_pos - line_start
+
+    #         location = f"{line_num}, {start_col}-{end_col}"
+
+    #         matches.append({
+    #             'substring': filename,
+    #             'location': location,
+    #             'length': length,
+    #             'start_pos': start_pos,
+    #             'end_pos': end_pos
+    #         })
+
+    #     self.create_filename_table(matches, self.current_file_path)
+
+    # def create_filename_table(self, matches, file_path):
+    #     if file_path and file_path in self.input_to_output_map:
+    #         old_table = self.input_to_output_map[file_path]
+    #         index = self.output_tab_widget.indexOf(old_table)
+    #         if index >= 0:
+    #             self.output_tab_widget.removeTab(index)
+    #             old_table.deleteLater()
+    #         del self.input_to_output_map[file_path]
+
+    #     table = QTableWidget()
+    #     table.setColumnCount(3)
+
+    #     if self.lang.current_language == 'ru':
+    #         headers = ['Найденная подстрока', 'Позиция', 'Длина']
+    #     else:
+    #         headers = ['Found substring', 'Position', 'Length']
+    #     table.setHorizontalHeaderLabels(headers)
+
+    #     if not matches:
+    #         table.setRowCount(0)
+    #     else:
+    #         table.setRowCount(len(matches))
+
+    #         for row, match in enumerate(matches):
+    #             substring_item = QTableWidgetItem(match['substring'])
+    #             substring_item.setToolTip(f"Filename: {match['substring']}")
+    #             table.setItem(row, 0, substring_item)
+
+    #             location_item = QTableWidgetItem(match['location'])
+    #             table.setItem(row, 1, location_item)
+
+    #             length_item = QTableWidgetItem(str(match['length']))
+    #             length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+    #             table.setItem(row, 2, length_item)
+
+    #         table.matches_data = matches
+
+    #     table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+    #     table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+    #     table.resizeColumnsToContents()
+
+    #     table.itemClicked.connect(self.on_filename_table_clicked)
+
+    #     tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
+    #     if self.lang.current_language == 'ru':
+    #         tab_display_name = f"{tab_name} - Названия файлов"
+    #     else:
+    #         tab_display_name = f"{tab_name} - Filenames"
+
+    #     self.output_tab_widget.addTab(table, tab_display_name)
+    #     if file_path:
+    #         self.input_to_output_map[file_path] = table
+    #     self.output_tab_widget.setCurrentWidget(table)
+
+    #     table.setColumnWidth(0, 400)
+    #     table.setColumnWidth(1, 150)
+    #     table.setColumnWidth(2, 80)
+
     def run(self):
         if not self.input_tab_widget:
             return
@@ -1334,13 +1443,13 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         text = self.current_input_widget.text()
 
-        filename_regex = r'\b[^\\/:*?"<>|\s]+\.[^\\/:*?"<>|\s]+\b'
+        url_regex = r'\b(?:https?|ftp)://(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?::\d{1,5})?(?:/[^\s]*)?\b'
 
         matches = []
-        pattern = re.compile(filename_regex)
+        pattern = re.compile(url_regex, re.IGNORECASE)
 
         for match in pattern.finditer(text):
-            filename = match.group()
+            url = match.group()
             start_pos = match.start()
             end_pos = match.end()
             length = end_pos - start_pos
@@ -1353,16 +1462,16 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             location = f"{line_num}, {start_col}-{end_col}"
 
             matches.append({
-                'substring': filename,
+                'substring': url,
                 'location': location,
                 'length': length,
                 'start_pos': start_pos,
                 'end_pos': end_pos
             })
 
-        self.create_filename_table(matches, self.current_file_path)
+        self.create_url_table(matches, self.current_file_path)
 
-    def create_filename_table(self, matches, file_path):
+    def create_url_table(self, matches, file_path):
         if file_path and file_path in self.input_to_output_map:
             old_table = self.input_to_output_map[file_path]
             index = self.output_tab_widget.indexOf(old_table)
@@ -1384,50 +1493,40 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             table.setRowCount(0)
         else:
             table.setRowCount(len(matches))
-            
+
             for row, match in enumerate(matches):
-                # Найденная подстрока
-                substring_item = QTableWidgetItem(match['substring'])
-                substring_item.setToolTip(f"Filename: {match['substring']}")
-                table.setItem(row, 0, substring_item)
-                
-                # Позиция
+                url_item = QTableWidgetItem(match['substring'])
+                url_item.setToolTip(f"URL: {match['substring']}")
+                table.setItem(row, 0, url_item)
+
                 location_item = QTableWidgetItem(match['location'])
                 table.setItem(row, 1, location_item)
-                
-                # Длина
+
                 length_item = QTableWidgetItem(str(match['length']))
                 length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
                 table.setItem(row, 2, length_item)
-            
+
             table.matches_data = matches
-        
-        # Настройка внешнего вида таблицы
+
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         table.resizeColumnsToContents()
-        
-        # Подключаем обработчик клика
-        table.itemClicked.connect(self.on_filename_table_clicked)
-        
-        # Добавляем таблицу в область вывода
+
+        table.itemClicked.connect(self.on_url_table_clicked)
+
         tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
-        if self.lang.current_language == 'ru':
-            tab_display_name = f"{tab_name} - Названия файлов"
-        else:
-            tab_display_name = f"{tab_name} - Filenames"
-        
+        tab_display_name = f"{tab_name}"
+
         self.output_tab_widget.addTab(table, tab_display_name)
         if file_path:
             self.input_to_output_map[file_path] = table
         self.output_tab_widget.setCurrentWidget(table)
-        
-        # Настройка ширины колонок
-        table.setColumnWidth(0, 400)  # Найденная подстрока
-        table.setColumnWidth(1, 150)  # Позиция
-        table.setColumnWidth(2, 80)   # Длина
 
-    def on_filename_table_clicked(self, item):
+        table.setColumnWidth(0, 500)
+        table.setColumnWidth(1, 150)
+        table.setColumnWidth(2, 80)
+
+    def on_url_table_clicked(self, item):  # on_filename_table_clicked
         row = item.row()
         table = item.tableWidget()
 
