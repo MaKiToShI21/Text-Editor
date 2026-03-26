@@ -1334,42 +1334,35 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         text = self.current_input_widget.text()
 
-        xml_comment_regex = r'<!--(.*?)-->'
+        filename_regex = r'\b[^\\/:*?"<>|\s]+\.[^\\/:*?"<>|\s]+\b'
 
         matches = []
-        pattern = re.compile(xml_comment_regex, re.DOTALL)
+        pattern = re.compile(filename_regex)
 
         for match in pattern.finditer(text):
-            comment_text = match.group(1).strip()
+            filename = match.group()
             start_pos = match.start()
             end_pos = match.end()
             length = end_pos - start_pos
-            substring = f"<!--{comment_text}-->"
 
             line_num = text.count('\n', 0, start_pos) + 1
             line_start = text.rfind('\n', 0, start_pos) + 1
             start_col = start_pos - line_start + 1
-            end_line_num = text.count('\n', 0, end_pos) + 1
+            end_col = end_pos - line_start
 
-            if line_num == end_line_num:
-                end_col = end_pos - line_start
-                location = f"{line_num}, {start_col}-{end_col}"
-            else:
-                location = f"{line_num}, {start_col}-{start_col + length}"
+            location = f"{line_num}, {start_col}-{end_col}"
 
             matches.append({
-                'substring': substring,
+                'substring': filename,
                 'location': location,
                 'length': length,
                 'start_pos': start_pos,
-                'end_pos': end_pos,
-                'line_num': line_num,
-                'start_col': start_col
+                'end_pos': end_pos
             })
 
-        self.create_comment_table(matches, self.current_file_path)
+        self.create_filename_table(matches, self.current_file_path)
 
-    def create_comment_table(self, matches, file_path):
+    def create_filename_table(self, matches, file_path):
         if file_path and file_path in self.input_to_output_map:
             old_table = self.input_to_output_map[file_path]
             index = self.output_tab_widget.indexOf(old_table)
@@ -1391,40 +1384,50 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             table.setRowCount(0)
         else:
             table.setRowCount(len(matches))
-
+            
             for row, match in enumerate(matches):
+                # Найденная подстрока
                 substring_item = QTableWidgetItem(match['substring'])
-                substring_item.setToolTip(f"XML comment: {match['substring']}")
+                substring_item.setToolTip(f"Filename: {match['substring']}")
                 table.setItem(row, 0, substring_item)
-
+                
+                # Позиция
                 location_item = QTableWidgetItem(match['location'])
                 table.setItem(row, 1, location_item)
-
+                
+                # Длина
                 length_item = QTableWidgetItem(str(match['length']))
                 length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
                 table.setItem(row, 2, length_item)
-
+            
             table.matches_data = matches
-
+        
+        # Настройка внешнего вида таблицы
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         table.resizeColumnsToContents()
-
-        table.itemClicked.connect(self.on_comment_table_clicked)
-
+        
+        # Подключаем обработчик клика
+        table.itemClicked.connect(self.on_filename_table_clicked)
+        
+        # Добавляем таблицу в область вывода
         tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
-        tab_display_name = f"{tab_name}"
-
+        if self.lang.current_language == 'ru':
+            tab_display_name = f"{tab_name} - Названия файлов"
+        else:
+            tab_display_name = f"{tab_name} - Filenames"
+        
         self.output_tab_widget.addTab(table, tab_display_name)
         if file_path:
             self.input_to_output_map[file_path] = table
         self.output_tab_widget.setCurrentWidget(table)
+        
+        # Настройка ширины колонок
+        table.setColumnWidth(0, 400)  # Найденная подстрока
+        table.setColumnWidth(1, 150)  # Позиция
+        table.setColumnWidth(2, 80)   # Длина
 
-        table.setColumnWidth(0, 500)
-        table.setColumnWidth(1, 200)
-        table.setColumnWidth(2, 80)
-
-    def on_comment_table_clicked(self, item):
+    def on_filename_table_clicked(self, item):
         row = item.row()
         table = item.tableWidget()
 
