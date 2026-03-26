@@ -413,43 +413,43 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             except:
                 pass
 
-    # def run(self):
-    #     if not self.input_tab_widget:
-    #         return
-    #     index = self.input_tab_widget.currentIndex()
-    #     self.current_input_widget = self.input_tab_widget.widget(index)
-    #     self.current_file_path = self.current_input_widget.file_path
+    def run(self):
+        if not self.input_tab_widget:
+            return
+        index = self.input_tab_widget.currentIndex()
+        self.current_input_widget = self.input_tab_widget.widget(index)
+        self.current_file_path = self.current_input_widget.file_path
 
-    #     if not self.current_file_path or self.current_input_widget.isModified():
-    #         if not self.save_file():
-    #             return
-    #         if self.current_input_widget.file_path:
-    #             self.current_file_path = self.current_input_widget.file_path
+        if not self.current_file_path or self.current_input_widget.isModified():
+            if not self.save_file():
+                return
+            if self.current_input_widget.file_path:
+                self.current_file_path = self.current_input_widget.file_path
 
-    #     self.current_tab_name = self.input_tab_widget.tabText(index)
+        self.current_tab_name = self.input_tab_widget.tabText(index)
 
-    #     if self.current_file_path in self.input_to_output_map:
-    #         output_widget = self.input_to_output_map[self.current_file_path]
-    #         output_index = self.output_tab_widget.indexOf(output_widget)
-    #         self.output_tab_widget.setCurrentIndex(output_index)
+        if self.current_file_path in self.input_to_output_map:
+            output_widget = self.input_to_output_map[self.current_file_path]
+            output_index = self.output_tab_widget.indexOf(output_widget)
+            self.output_tab_widget.setCurrentIndex(output_index)
 
-    #     text = self.current_input_widget.text()
+        text = self.current_input_widget.text()
 
-    #     if self.my_lexer:
-    #         lexer = LexicalAnalyzer(self.lang)
-    #         tokens, errors = lexer.analyze(text)
-    #         self.create_or_update_table(tokens, errors)
-    #     else:
-    #         lexer_path = self.get_lexer_path()
+        if self.my_lexer:
+            lexer = LexicalAnalyzer(self.lang)
+            tokens, errors = lexer.analyze(text)
+            self.create_or_update_table(tokens, errors)
+        else:
+            lexer_path = self.get_lexer_path()
 
-    #         self.lexer_process = QProcess()
-    #         self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
-    #         self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
-    #         self.lexer_process.finished.connect(self.on_lexer_finished)
+            self.lexer_process = QProcess()
+            self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
+            self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
+            self.lexer_process.finished.connect(self.on_lexer_finished)
 
-    #         self.lexer_process.start(lexer_path)
-    #         self.lexer_process.write(text.encode('utf-8'))
-    #         self.lexer_process.closeWriteChannel()
+            self.lexer_process.start(lexer_path)
+            self.lexer_process.write(text.encode('utf-8'))
+            self.lexer_process.closeWriteChannel()
 
     def on_lexer_output(self):
         data = self.lexer_process.readAllStandardOutput()
@@ -573,64 +573,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         if current_error:
             del current_error['start_col']
             errors.append(current_error)
-
-        return tokens, errors
-
-    # def parse_lexer_output(self, output):
-        tokens = []
-        errors = []
-        lines = output.strip().split('\n')
-
-        # Парсим: "[1:1-3] - code=1: keyword int"
-        pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
-        error_pattern = r'\[(\d+):(\d+)-(\d+)\] - ERROR:\s*(.+)'
-
-        for line in lines:
-            if not line.strip():
-                continue
-
-            error_match = re.match(error_pattern, line)
-            if error_match:
-                line_num = error_match.group(1)
-                start_col = error_match.group(2)
-                end_col = error_match.group(3)
-                error_msg = error_match.group(4)
-
-                if " " in error_msg:
-                    parts = error_msg.split(' ')
-
-                errors.append({
-                    'code': 'ERROR',
-                    'type': self.lang.translate('invalid_char'),
-                    'lexeme': parts[-1],
-                    'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
-                })
-                continue
-
-            match = re.match(pattern, line)
-            if match:
-                line_num = match.group(1)
-                start_col = match.group(2)
-                end_col = match.group(3)
-                code = match.group(4)
-                description = match.group(5)
-
-                token_type = self.get_token_type(int(code))
-
-                if " " in description:
-                    parts = description.split()
-                    lexeme = parts[-1]
-                elif description == 'space':
-                    lexeme = ' '
-                else:
-                    lexeme = description
-
-                tokens.append({
-                    'code': code,
-                    'type': token_type,
-                    'lexeme': lexeme,
-                    'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
-                })
 
         return tokens, errors
 
@@ -1312,6 +1254,119 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         layout.addWidget(text_browser)
         dialog.exec()
 
+    # Задание 1
+    # def run(self):
+    #     if not self.input_tab_widget:
+    #         return
+    #     index = self.input_tab_widget.currentIndex()
+    #     self.current_input_widget = self.input_tab_widget.widget(index)
+    #     self.current_file_path = self.current_input_widget.file_path
+
+    #     if not self.current_file_path or self.current_input_widget.isModified():
+    #         if not self.save_file():
+    #             return
+    #         if self.current_input_widget.file_path:
+    #             self.current_file_path = self.current_input_widget.file_path
+
+    #     self.current_tab_name = self.input_tab_widget.tabText(index)
+
+    #     if self.current_file_path in self.input_to_output_map:
+    #         output_widget = self.input_to_output_map[self.current_file_path]
+    #         output_index = self.output_tab_widget.indexOf(output_widget)
+    #         self.output_tab_widget.setCurrentIndex(output_index)
+
+    #     text = self.current_input_widget.text()
+
+    #     xml_comment_regex = r'<!--(.*?)-->'
+
+    #     matches = []
+    #     pattern = re.compile(xml_comment_regex, re.DOTALL)
+
+    #     for match in pattern.finditer(text):
+    #         comment_text = match.group(1).strip()
+    #         start_pos = match.start()
+    #         end_pos = match.end()
+    #         length = end_pos - start_pos
+    #         substring = f"<!--{comment_text}-->"
+
+    #         line_num = text.count('\n', 0, start_pos) + 1
+    #         line_start = text.rfind('\n', 0, start_pos) + 1
+    #         start_col = start_pos - line_start + 1
+    #         end_line_num = text.count('\n', 0, end_pos) + 1
+
+    #         if line_num == end_line_num:
+    #             end_col = end_pos - line_start
+    #             location = f"{line_num}, {start_col}-{end_col}"
+    #         else:
+    #             location = f"{line_num}, {start_col}-{start_col + length}"
+
+    #         matches.append({
+    #             'substring': substring,
+    #             'location': location,
+    #             'length': length,
+    #             'start_pos': start_pos,
+    #             'end_pos': end_pos,
+    #             'line_num': line_num,
+    #             'start_col': start_col
+    #         })
+
+    #     self.create_comment_table(matches, self.current_file_path)
+
+    # def create_comment_table(self, matches, file_path):
+    #     if file_path and file_path in self.input_to_output_map:
+    #         old_table = self.input_to_output_map[file_path]
+    #         index = self.output_tab_widget.indexOf(old_table)
+    #         if index >= 0:
+    #             self.output_tab_widget.removeTab(index)
+    #             old_table.deleteLater()
+    #         del self.input_to_output_map[file_path]
+
+    #     table = QTableWidget()
+    #     table.setColumnCount(3)
+
+    #     if self.lang.current_language == 'ru':
+    #         headers = ['Найденная подстрока', 'Позиция', 'Длина']
+    #     else:
+    #         headers = ['Found substring', 'Position', 'Length']
+    #     table.setHorizontalHeaderLabels(headers)
+
+    #     if not matches:
+    #         table.setRowCount(0)
+    #     else:
+    #         table.setRowCount(len(matches))
+
+    #         for row, match in enumerate(matches):
+    #             substring_item = QTableWidgetItem(match['substring'])
+    #             substring_item.setToolTip(f"XML comment: {match['substring']}")
+    #             table.setItem(row, 0, substring_item)
+
+    #             location_item = QTableWidgetItem(match['location'])
+    #             table.setItem(row, 1, location_item)
+
+    #             length_item = QTableWidgetItem(str(match['length']))
+    #             length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+    #             table.setItem(row, 2, length_item)
+
+    #         table.matches_data = matches
+
+    #     table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+    #     table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+    #     table.resizeColumnsToContents()
+
+    #     table.itemClicked.connect(self.on_comment_table_clicked)
+
+    #     tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
+    #     tab_display_name = f"{tab_name}"
+
+    #     self.output_tab_widget.addTab(table, tab_display_name)
+    #     if file_path:
+    #         self.input_to_output_map[file_path] = table
+    #     self.output_tab_widget.setCurrentWidget(table)
+
+    #     table.setColumnWidth(0, 500)
+    #     table.setColumnWidth(1, 200)
+    #     table.setColumnWidth(2, 80)
+
     # 2 Задание
     # def run(self):
     #     if not self.input_tab_widget:
@@ -1364,132 +1419,132 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     #     self.create_filename_table(matches, self.current_file_path)
 
     # Доп задание на основе 2
-    def run(self):
-        if not self.input_tab_widget:
-            return
-        index = self.input_tab_widget.currentIndex()
-        self.current_input_widget = self.input_tab_widget.widget(index)
-        self.current_file_path = self.current_input_widget.file_path
+    # def run(self):
+    #     if not self.input_tab_widget:
+    #         return
+    #     index = self.input_tab_widget.currentIndex()
+    #     self.current_input_widget = self.input_tab_widget.widget(index)
+    #     self.current_file_path = self.current_input_widget.file_path
 
-        if not self.current_file_path or self.current_input_widget.isModified():
-            if not self.save_file():
-                return
-            if self.current_input_widget.file_path:
-                self.current_file_path = self.current_input_widget.file_path
+    #     if not self.current_file_path or self.current_input_widget.isModified():
+    #         if not self.save_file():
+    #             return
+    #         if self.current_input_widget.file_path:
+    #             self.current_file_path = self.current_input_widget.file_path
 
-        self.current_tab_name = self.input_tab_widget.tabText(index)
+    #     self.current_tab_name = self.input_tab_widget.tabText(index)
 
-        if self.current_file_path in self.input_to_output_map:
-            output_widget = self.input_to_output_map[self.current_file_path]
-            output_index = self.output_tab_widget.indexOf(output_widget)
-            self.output_tab_widget.setCurrentIndex(output_index)
+    #     if self.current_file_path in self.input_to_output_map:
+    #         output_widget = self.input_to_output_map[self.current_file_path]
+    #         output_index = self.output_tab_widget.indexOf(output_widget)
+    #         self.output_tab_widget.setCurrentIndex(output_index)
 
-        text = self.current_input_widget.text()
+    #     text = self.current_input_widget.text()
 
-        matches = self.search_filenames_with_automaton(text)
+    #     matches = self.search_filenames_with_automaton(text)
 
-        self.create_filename_table(matches, self.current_file_path)
+    #     self.create_filename_table(matches, self.current_file_path)
 
-    def search_filenames_with_automaton(self, text):
-        forbidden_chars = set('\\/:*?"<>|')
+    # def search_filenames_with_automaton(self, text):
+    #     forbidden_chars = set('\\/:*?"<>|')
 
-        matches = []
-        i = 0
-        n = len(text)
+    #     matches = []
+    #     i = 0
+    #     n = len(text)
 
-        while i < n:
-            if text[i] not in forbidden_chars and text[i] != ' ' and text[i] != '\n' and text[i] != '\r':
-                start = i
-                has_dot = False
-                valid = True
+    #     while i < n:
+    #         if text[i] not in forbidden_chars and text[i] != ' ' and text[i] != '\n' and text[i] != '\r':
+    #             start = i
+    #             has_dot = False
+    #             valid = True
 
-                while i < n and text[i] not in forbidden_chars and text[i] != ' ' and text[i] != '\n' and text[i] != '\r':
-                    if text[i] == '.':
-                        has_dot = True
-                    i += 1
+    #             while i < n and text[i] not in forbidden_chars and text[i] != ' ' and text[i] != '\n' and text[i] != '\r':
+    #                 if text[i] == '.':
+    #                     has_dot = True
+    #                 i += 1
 
-                end = i
+    #             end = i
 
-                if has_dot and end > start:
-                    filename = text[start:end]
+    #             if has_dot and end > start:
+    #                 filename = text[start:end]
 
-                    if not filename.startswith('.') and not filename.endswith('.'):
-                        parts = filename.split('.')
-                        if len(parts) >= 2 and parts[-1]:
-                            line_num = text.count('\n', 0, start) + 1
-                            line_start = text.rfind('\n', 0, start) + 1
-                            start_col = start - line_start + 1
-                            end_col = end - line_start
+    #                 if not filename.startswith('.') and not filename.endswith('.'):
+    #                     parts = filename.split('.')
+    #                     if len(parts) >= 2 and parts[-1]:
+    #                         line_num = text.count('\n', 0, start) + 1
+    #                         line_start = text.rfind('\n', 0, start) + 1
+    #                         start_col = start - line_start + 1
+    #                         end_col = end - line_start
 
-                            location = f"{line_num}, {start_col}-{end_col}"
-                            length = end - start
+    #                         location = f"{line_num}, {start_col}-{end_col}"
+    #                         length = end - start
 
-                            matches.append({
-                                'substring': filename,
-                                'location': location,
-                                'length': length,
-                                'start_pos': start,
-                                'end_pos': end
-                            })
-            else:
-                i += 1
+    #                         matches.append({
+    #                             'substring': filename,
+    #                             'location': location,
+    #                             'length': length,
+    #                             'start_pos': start,
+    #                             'end_pos': end
+    #                         })
+    #         else:
+    #             i += 1
 
-        return matches
+    #     return matches
 
-    def create_filename_table(self, matches, file_path):
-        if file_path and file_path in self.input_to_output_map:
-            old_table = self.input_to_output_map[file_path]
-            index = self.output_tab_widget.indexOf(old_table)
-            if index >= 0:
-                self.output_tab_widget.removeTab(index)
-                old_table.deleteLater()
-            del self.input_to_output_map[file_path]
+    # def create_filename_table(self, matches, file_path):
+    #     if file_path and file_path in self.input_to_output_map:
+    #         old_table = self.input_to_output_map[file_path]
+    #         index = self.output_tab_widget.indexOf(old_table)
+    #         if index >= 0:
+    #             self.output_tab_widget.removeTab(index)
+    #             old_table.deleteLater()
+    #         del self.input_to_output_map[file_path]
 
-        table = QTableWidget()
-        table.setColumnCount(3)
+    #     table = QTableWidget()
+    #     table.setColumnCount(3)
 
-        if self.lang.current_language == 'ru':
-            headers = ['Найденная подстрока', 'Позиция', 'Длина']
-        else:
-            headers = ['Found substring', 'Position', 'Length']
-        table.setHorizontalHeaderLabels(headers)
+    #     if self.lang.current_language == 'ru':
+    #         headers = ['Найденная подстрока', 'Позиция', 'Длина']
+    #     else:
+    #         headers = ['Found substring', 'Position', 'Length']
+    #     table.setHorizontalHeaderLabels(headers)
 
-        if not matches:
-            table.setRowCount(0)
-        else:
-            table.setRowCount(len(matches))
+    #     if not matches:
+    #         table.setRowCount(0)
+    #     else:
+    #         table.setRowCount(len(matches))
 
-            for row, match in enumerate(matches):
-                substring_item = QTableWidgetItem(match['substring'])
-                substring_item.setToolTip(f"Filename: {match['substring']}")
-                table.setItem(row, 0, substring_item)
+    #         for row, match in enumerate(matches):
+    #             substring_item = QTableWidgetItem(match['substring'])
+    #             substring_item.setToolTip(f"Filename: {match['substring']}")
+    #             table.setItem(row, 0, substring_item)
 
-                location_item = QTableWidgetItem(match['location'])
-                table.setItem(row, 1, location_item)
+    #             location_item = QTableWidgetItem(match['location'])
+    #             table.setItem(row, 1, location_item)
 
-                length_item = QTableWidgetItem(str(match['length']))
-                length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
-                table.setItem(row, 2, length_item)
+    #             length_item = QTableWidgetItem(str(match['length']))
+    #             length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+    #             table.setItem(row, 2, length_item)
 
-            table.matches_data = matches
+    #         table.matches_data = matches
 
-        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        table.resizeColumnsToContents()
+    #     table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+    #     table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+    #     table.resizeColumnsToContents()
 
-        table.itemClicked.connect(self.on_filename_table_clicked)
+    #     table.itemClicked.connect(self.on_filename_table_clicked)
 
-        tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
-        tab_display_name = f"{tab_name}"
+    #     tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
+    #     tab_display_name = f"{tab_name}"
 
-        self.output_tab_widget.addTab(table, tab_display_name)
-        if file_path:
-            self.input_to_output_map[file_path] = table
-        self.output_tab_widget.setCurrentWidget(table)
+    #     self.output_tab_widget.addTab(table, tab_display_name)
+    #     if file_path:
+    #         self.input_to_output_map[file_path] = table
+    #     self.output_tab_widget.setCurrentWidget(table)
 
-        table.setColumnWidth(0, 400)
-        table.setColumnWidth(1, 150)
-        table.setColumnWidth(2, 80)
+    #     table.setColumnWidth(0, 400)
+    #     table.setColumnWidth(1, 150)
+    #     table.setColumnWidth(2, 80)
 
     # 3 Задание
     # def run(self):
@@ -1597,7 +1652,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     #     table.setColumnWidth(1, 150)
     #     table.setColumnWidth(2, 80)
 
-    def on_filename_table_clicked(self, item):  # on_url_table_clicked
+    def on_comment_table_clicked(self, item):  # 2) on_filename_table_clicked, 3) on_url_table_clicked
         row = item.row()
         table = item.tableWidget()
 
