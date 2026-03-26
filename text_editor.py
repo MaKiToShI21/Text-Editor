@@ -1363,64 +1363,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
     #     self.create_filename_table(matches, self.current_file_path)
 
-    # def create_filename_table(self, matches, file_path):
-    #     if file_path and file_path in self.input_to_output_map:
-    #         old_table = self.input_to_output_map[file_path]
-    #         index = self.output_tab_widget.indexOf(old_table)
-    #         if index >= 0:
-    #             self.output_tab_widget.removeTab(index)
-    #             old_table.deleteLater()
-    #         del self.input_to_output_map[file_path]
-
-    #     table = QTableWidget()
-    #     table.setColumnCount(3)
-
-    #     if self.lang.current_language == 'ru':
-    #         headers = ['Найденная подстрока', 'Позиция', 'Длина']
-    #     else:
-    #         headers = ['Found substring', 'Position', 'Length']
-    #     table.setHorizontalHeaderLabels(headers)
-
-    #     if not matches:
-    #         table.setRowCount(0)
-    #     else:
-    #         table.setRowCount(len(matches))
-
-    #         for row, match in enumerate(matches):
-    #             substring_item = QTableWidgetItem(match['substring'])
-    #             substring_item.setToolTip(f"Filename: {match['substring']}")
-    #             table.setItem(row, 0, substring_item)
-
-    #             location_item = QTableWidgetItem(match['location'])
-    #             table.setItem(row, 1, location_item)
-
-    #             length_item = QTableWidgetItem(str(match['length']))
-    #             length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
-    #             table.setItem(row, 2, length_item)
-
-    #         table.matches_data = matches
-
-    #     table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-    #     table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-    #     table.resizeColumnsToContents()
-
-    #     table.itemClicked.connect(self.on_filename_table_clicked)
-
-    #     tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
-    #     if self.lang.current_language == 'ru':
-    #         tab_display_name = f"{tab_name} - Названия файлов"
-    #     else:
-    #         tab_display_name = f"{tab_name} - Filenames"
-
-    #     self.output_tab_widget.addTab(table, tab_display_name)
-    #     if file_path:
-    #         self.input_to_output_map[file_path] = table
-    #     self.output_tab_widget.setCurrentWidget(table)
-
-    #     table.setColumnWidth(0, 400)
-    #     table.setColumnWidth(1, 150)
-    #     table.setColumnWidth(2, 80)
-
+    # Доп задание на основе 2
     def run(self):
         if not self.input_tab_widget:
             return
@@ -1443,35 +1386,57 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         text = self.current_input_widget.text()
 
-        url_regex = r'\b(?:https?|ftp)://(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?::\d{1,5})?(?:/[^\s]*)?\b'
+        matches = self.search_filenames_with_automaton(text)
+
+        self.create_filename_table(matches, self.current_file_path)
+
+    def search_filenames_with_automaton(self, text):
+        forbidden_chars = set('\\/:*?"<>|')
 
         matches = []
-        pattern = re.compile(url_regex, re.IGNORECASE)
+        i = 0
+        n = len(text)
 
-        for match in pattern.finditer(text):
-            url = match.group()
-            start_pos = match.start()
-            end_pos = match.end()
-            length = end_pos - start_pos
+        while i < n:
+            if text[i] not in forbidden_chars and text[i] != ' ' and text[i] != '\n' and text[i] != '\r':
+                start = i
+                has_dot = False
+                valid = True
 
-            line_num = text.count('\n', 0, start_pos) + 1
-            line_start = text.rfind('\n', 0, start_pos) + 1
-            start_col = start_pos - line_start + 1
-            end_col = end_pos - line_start
+                while i < n and text[i] not in forbidden_chars and text[i] != ' ' and text[i] != '\n' and text[i] != '\r':
+                    if text[i] == '.':
+                        has_dot = True
+                    i += 1
 
-            location = f"{line_num}, {start_col}-{end_col}"
+                end = i
 
-            matches.append({
-                'substring': url,
-                'location': location,
-                'length': length,
-                'start_pos': start_pos,
-                'end_pos': end_pos
-            })
+                if has_dot and end > start:
+                    filename = text[start:end]
 
-        self.create_url_table(matches, self.current_file_path)
+                    if not filename.startswith('.') and not filename.endswith('.'):
+                        parts = filename.split('.')
+                        if len(parts) >= 2 and parts[-1]:
+                            line_num = text.count('\n', 0, start) + 1
+                            line_start = text.rfind('\n', 0, start) + 1
+                            start_col = start - line_start + 1
+                            end_col = end - line_start
 
-    def create_url_table(self, matches, file_path):
+                            location = f"{line_num}, {start_col}-{end_col}"
+                            length = end - start
+
+                            matches.append({
+                                'substring': filename,
+                                'location': location,
+                                'length': length,
+                                'start_pos': start,
+                                'end_pos': end
+                            })
+            else:
+                i += 1
+
+        return matches
+
+    def create_filename_table(self, matches, file_path):
         if file_path and file_path in self.input_to_output_map:
             old_table = self.input_to_output_map[file_path]
             index = self.output_tab_widget.indexOf(old_table)
@@ -1495,9 +1460,9 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             table.setRowCount(len(matches))
 
             for row, match in enumerate(matches):
-                url_item = QTableWidgetItem(match['substring'])
-                url_item.setToolTip(f"URL: {match['substring']}")
-                table.setItem(row, 0, url_item)
+                substring_item = QTableWidgetItem(match['substring'])
+                substring_item.setToolTip(f"Filename: {match['substring']}")
+                table.setItem(row, 0, substring_item)
 
                 location_item = QTableWidgetItem(match['location'])
                 table.setItem(row, 1, location_item)
@@ -1512,7 +1477,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         table.resizeColumnsToContents()
 
-        table.itemClicked.connect(self.on_url_table_clicked)
+        table.itemClicked.connect(self.on_filename_table_clicked)
 
         tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
         tab_display_name = f"{tab_name}"
@@ -1522,11 +1487,117 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             self.input_to_output_map[file_path] = table
         self.output_tab_widget.setCurrentWidget(table)
 
-        table.setColumnWidth(0, 500)
+        table.setColumnWidth(0, 400)
         table.setColumnWidth(1, 150)
         table.setColumnWidth(2, 80)
 
-    def on_url_table_clicked(self, item):  # on_filename_table_clicked
+    # 3 Задание
+    # def run(self):
+    #     if not self.input_tab_widget:
+    #         return
+    #     index = self.input_tab_widget.currentIndex()
+    #     self.current_input_widget = self.input_tab_widget.widget(index)
+    #     self.current_file_path = self.current_input_widget.file_path
+
+    #     if not self.current_file_path or self.current_input_widget.isModified():
+    #         if not self.save_file():
+    #             return
+    #         if self.current_input_widget.file_path:
+    #             self.current_file_path = self.current_input_widget.file_path
+
+    #     self.current_tab_name = self.input_tab_widget.tabText(index)
+
+    #     if self.current_file_path in self.input_to_output_map:
+    #         output_widget = self.input_to_output_map[self.current_file_path]
+    #         output_index = self.output_tab_widget.indexOf(output_widget)
+    #         self.output_tab_widget.setCurrentIndex(output_index)
+
+    #     text = self.current_input_widget.text()
+
+    #     url_regex = r'\b(?:https?|ftp)://(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?::\d{1,5})?(?:/[^\s]*)?\b'
+
+    #     matches = []
+    #     pattern = re.compile(url_regex, re.IGNORECASE)
+
+    #     for match in pattern.finditer(text):
+    #         url = match.group()
+    #         start_pos = match.start()
+    #         end_pos = match.end()
+    #         length = end_pos - start_pos
+
+    #         line_num = text.count('\n', 0, start_pos) + 1
+    #         line_start = text.rfind('\n', 0, start_pos) + 1
+    #         start_col = start_pos - line_start + 1
+    #         end_col = end_pos - line_start
+
+    #         location = f"{line_num}, {start_col}-{end_col}"
+
+    #         matches.append({
+    #             'substring': url,
+    #             'location': location,
+    #             'length': length,
+    #             'start_pos': start_pos,
+    #             'end_pos': end_pos
+    #         })
+
+    #     self.create_url_table(matches, self.current_file_path)
+
+    # def create_url_table(self, matches, file_path):
+    #     if file_path and file_path in self.input_to_output_map:
+    #         old_table = self.input_to_output_map[file_path]
+    #         index = self.output_tab_widget.indexOf(old_table)
+    #         if index >= 0:
+    #             self.output_tab_widget.removeTab(index)
+    #             old_table.deleteLater()
+    #         del self.input_to_output_map[file_path]
+
+    #     table = QTableWidget()
+    #     table.setColumnCount(3)
+
+    #     if self.lang.current_language == 'ru':
+    #         headers = ['Найденная подстрока', 'Позиция', 'Длина']
+    #     else:
+    #         headers = ['Found substring', 'Position', 'Length']
+    #     table.setHorizontalHeaderLabels(headers)
+
+    #     if not matches:
+    #         table.setRowCount(0)
+    #     else:
+    #         table.setRowCount(len(matches))
+
+    #         for row, match in enumerate(matches):
+    #             url_item = QTableWidgetItem(match['substring'])
+    #             url_item.setToolTip(f"URL: {match['substring']}")
+    #             table.setItem(row, 0, url_item)
+
+    #             location_item = QTableWidgetItem(match['location'])
+    #             table.setItem(row, 1, location_item)
+
+    #             length_item = QTableWidgetItem(str(match['length']))
+    #             length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+    #             table.setItem(row, 2, length_item)
+
+    #         table.matches_data = matches
+
+    #     table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+    #     table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+    #     table.resizeColumnsToContents()
+
+    #     table.itemClicked.connect(self.on_url_table_clicked)
+
+    #     tab_name = self.input_tab_widget.tabText(self.input_tab_widget.currentIndex())
+    #     tab_display_name = f"{tab_name}"
+
+    #     self.output_tab_widget.addTab(table, tab_display_name)
+    #     if file_path:
+    #         self.input_to_output_map[file_path] = table
+    #     self.output_tab_widget.setCurrentWidget(table)
+
+    #     table.setColumnWidth(0, 500)
+    #     table.setColumnWidth(1, 150)
+    #     table.setColumnWidth(2, 80)
+
+    def on_filename_table_clicked(self, item):  # on_url_table_clicked
         row = item.row()
         table = item.tableWidget()
 
