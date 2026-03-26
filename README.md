@@ -1,17 +1,18 @@
 <h1 align="center">Text-Editor</h1>
 
 ## Contents
-1. **[Title and Objective of the Laboratory Work](#title-and-objective-of-the-laboratory-work)**
+1. **[Title and Objective of the Laboratory Work 1](#title-and-objective-of-the-laboratory-work-1)**
 2. **[Author Information](#author-information)**
 3. **[Project Description](#project-description)**
 4. **[Technologies Used](#technologies-used)**
 5. **[Build and Launch Instructions](#build-and-launch-instructions)**
-6. **[Title and Objective of the Laboratory Work](#title-and-objective-of-the-laboratory-work)**
-7. **[User Manual](#user-manual)**
+6. **[Title and Objective of the Laboratory Work 2](#title-and-objective-of-the-laboratory-work-2)**
+7. **[Title and Objective of the Laboratory Work 4](#title-and-objective-of-the-laboratory-work-4)**
+8. **[User Manual](#user-manual)**
 
 ___
 
-<h2 align="center">Title and Objective of the Laboratory Work</h2>
+<h2 align="center">Title and Objective of the Laboratory Work 1</h2>
 
 **Laboratory Work 1.** Development of a Graphical User Interface (GUI) for a Language Processor
 
@@ -41,7 +42,7 @@ VS Code (Visual Studio Code)
 * PyInstaller - tool for packaging Python applications into executable files
 * Git - version control system
 
-<h2 align="center">Title and Objective of the Laboratory Work</h2>
+<h2 align="center">Title and Objective of the Laboratory Work 2</h2>
 
 **Laboratory Work 2.** Development of a lexical analyzer (scanner)
 
@@ -55,11 +56,63 @@ A state diagram was developed.
 
 A lexer was created based on it to parse the string "**`std::complex<double> my_complex(10.0, 2.0);`**" into tokens, which are then output as a table.
 
-| Correct line                                                                                         | Invalid char                                                                                         | multi-line
-|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/correct_line.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/invalid_char.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/multi-line.png" width="500">
+| Correct line | Invalid char | multi-line |
+|--------------|--------------|------------|
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/correct_line.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/invalid_char.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/multi-line.png" width="500"> |
 
+<h2 align="center">Title and Objective of the Laboratory Work 4</h2>
 
+**Laboratory Work 4.** Implementation of a substring search algorithm using regular expressions
+
+**Objective:** Explore the theoretical foundations of regular expressions and their application to searching and extracting substrings from text. Develop practical skills in using library tools for working with regular expressions, as well as integrating search algorithms into the application's graphical interface.
+
+**Statement of the problem:** Develop a substring search module using regular expressions, integrate it into an existing application (text editor), and provide visual output of the results.
+
+1) Regular expression describing XML comments: ``r'<!--(.*?)-->'``
+
+|     Symbol    |                     Description                          |
+|---------------|----------------------------------------------------------|
+|   ``<!--``    | XML comment opening tag                                  |
+|     ``(``     | Beginning of capturing group                             |
+|     ``.``     | Any character (except newline)                           |
+|     ``*?``    | Lazy quantifier (zero or more repetitions)               |
+|     ``)``     | End of capturing group                                   |
+|    ``-->``    | XML comment closing tag                                  |
+
+```re.DOTALL``` was also used - it allows the dot to match newline characters, which is necessary for searching multi-line comments.
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/regular-expressions/images/regular-expressions/xml_comments.png" width="550">
+
+2) Regular expression to check if a file name is correct: ``r'\b[^\\/:*?"<>|\s]+\.[^\\/:*?"<>|\s]+\b'``
+
+|     Symbol     |                                    Description                                      |
+|----------------|-------------------------------------------------------------------------------------|
+|   ``\b``       | Word boundary (beginning or end of word)                                            |
+| ``[^...]``     | Negated character class (any character EXCEPT those specified)                      |
+| ``\/:*?"<>\|`` | listed signs                                                                        |
+|    ``\s``      | Whitespace character (space, tab, newline)                                          |
+|    ``+``       | The quantifier "one or more"                                                        |
+|    ``\.``      | Point (shielded)                                                                    |
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/regular-expressions/images/regular-expressions/filename.png" width="550">
+
+3) Regular expression describing a URL link to a web page in Latin with support for subdomains and ports (with various protocols HTTP, HTTPS, FTP): ``r'\b(?:https?|ftp)://(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?::\d{1,5})?(?:/[^\s]*)?\b'``
+
+|     Symbol          |                                    Description                                      |
+|---------------------|-------------------------------------------------------------------------------------|
+| ``\b``              | Word boundary (beginning or end of word)                                            |
+| ``(?:...)``         | Non-capturing group (grouping without saving to the result)                         |
+| ``https?``          | ``http`` with an optional ``s`` character (i.e. ``http`` or ``https)``              |
+| ``\|``               | The "or" operator                                                                   |
+| ``ftp`` and ``://`` | Literal match                                                                       |
+| ``[a-zA-Z0-9-]+``   | One or more characters: Latin (upper and lower case), numbers, hyphen               |
+| ``\.``              | Dot (subdomain separator)                                                           |
+| ``(?:...)+``        | Repeat a group of subdomains one or more times                                      |
+| ``[a-zA-Z]{2,}``    | Two or more Latin letters (top-level domain)                                        |
+| ``(?::\d{1,5})?``   | Optional port group: colon and 1 to 5 digits                                        |
+| ``(?:/[^\s]*)?``    | Optional path group: slash and zero or more characters except spaces                |
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/regular-expressions/images/regular-expressions/URL.png" width="550">
 
 <h2 align="center">Build and Launch Instructions</h2>
 
