@@ -96,10 +96,6 @@ A lexer was created based on it to parse the string "**`std::complex<double> my_
 
 <img src="https://github.com/MaKiToShI21/Text-Editor/blob/regular-expressions/images/regular-expressions/filename.png" width="550">
 
-Graph automaton:
-
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/regular-expressions/images/regular-expressions/graph_automaton.png" width="550">
-
 3) Regular expression describing a URL link to a web page in Latin with support for subdomains and ports (with various protocols HTTP, HTTPS, FTP): ``r'\b(?:https?|ftp)://(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?::\d{1,5})?(?:/[^\s]*)?\b'``
 
 |     Symbol          |                                    Description                                      |
