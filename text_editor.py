@@ -370,12 +370,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
     def get_lexer_path(self):
         if getattr(sys, 'frozen', False):
-            # app_dir = os.path.dirname(sys.executable)
-            # external_lexer = os.path.join(app_dir, 'lexer', 'lexer.exe')
-
-            # if os.path.exists(external_lexer):
-            #     return external_lexer
-
             return self.extract_lexer_from_resources()
         else:
             return os.path.join(os.path.dirname(__file__), 'lexer', 'lexer.exe')
@@ -489,7 +483,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
         error_pattern = r'\[(\d+):(\d+)-(\d+)\] - ERROR:\s*(.+)'
 
-        # Для объединения смежных ошибок
         current_error = None
         prev_end_col = None
         prev_line_num = None
@@ -508,22 +501,17 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 parts = error_msg.split(' ')
                 lexeme = parts[-1] if " " in error_msg else error_msg
 
-                # Проверяем, является ли текущая ошибка продолжением предыдущей
                 if (current_error and 
                     prev_line_num == line_num and 
                     prev_end_col and 
                     prev_end_col + 1 == start_col):
-                    # Объединяем с предыдущей ошибкой
                     current_error['lexeme'] += lexeme
                     current_error['location'] = f"{self.lang.translate('line_num').format(line_num, 0)}, {current_error['start_col']}-{end_col}"
                 else:
-                    # Если была предыдущая ошибка, добавляем её в список
                     if current_error:
-                        # Удаляем временные поля
                         del current_error['start_col']
                         errors.append(current_error)
 
-                    # Создаём новую ошибку
                     current_error = {
                         'code': 'ERROR',
                         'type': self.lang.translate('invalid_char'),
@@ -536,7 +524,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 prev_line_num = line_num
                 continue
 
-            # Если встретили обычный токен, добавляем накопленную ошибку
             if current_error:
                 del current_error['start_col']
                 errors.append(current_error)
@@ -569,7 +556,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
                 })
 
-        # Добавляем последнюю накопленную ошибку
         if current_error:
             del current_error['start_col']
             errors.append(current_error)
