@@ -7,8 +7,9 @@
 4. **[Technologies Used](#technologies-used)**
 5. **[Build and Launch Instructions](#build-and-launch-instructions)**
 6. **[Title and Objective of the Laboratory Work 2](#title-and-objective-of-the-laboratory-work-2)**
-7. **[Title and Objective of the Laboratory Work 4](#title-and-objective-of-the-laboratory-work-4)**
-8. **[User Manual](#user-manual)**
+7. **[Title and Objective of the Laboratory Work 3](#title-and-objective-of-the-laboratory-work-3)**
+8. **[Title and Objective of the Laboratory Work 4](#title-and-objective-of-the-laboratory-work-4)**
+9. **[User Manual](#user-manual)**
 
 ___
 
