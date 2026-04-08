@@ -39,7 +39,8 @@ class Language():
                 'actionNew_toolTip': 'Создать',
                 'actionOpen_toolTip': 'Открыть',
                 'actionRedo_toolTip': 'Повторить',
-                'actionRun_toolTip': 'Пуск',
+                'actionRunParser_toolTip': 'Запустить парсер',
+                'actionRunLexer_toolTip': 'Запустить лексер',
                 'actionUndo_toolTip': 'Отменить',
                 'actionRedo_toolTip': 'Повторить',
                 'actionCut_toolTip': 'Вырезать',
@@ -58,7 +59,8 @@ class Language():
                 'action_21': 'Исходный код программы',
 
                 # Run menu actions
-                'actionRun': 'Пуск',
+                'actionRunParser': 'Запустить парсер',
+                'actionRunLexer': 'Запустить лексер',
 
                 # Help menu actions
                 'actionHelp': 'Вызов справки',
@@ -79,6 +81,8 @@ class Language():
                 'file_saved_as': 'Файл сохранён как "{}"',
 
                 'save_cancelled': 'Сохранение отменено',
+
+                'total_errors': 'Количество ошибок: {}',
 
                 # Tab actions
                 'tab_saved_and_closed': 'Вкладка "{}" сохранена и закрыта',
@@ -120,14 +124,11 @@ class Language():
                 'file_saving_error': 'Не удалось сохранить файл: {}',
 
                 # For lexer
-                'kw_int': 'Ключевое слово int',
-                'kw_float': 'Ключевое слово float',
                 'kw_double': 'Ключевое слово double',
                 'kw_std': 'Ключевое слово std',
                 'kw_complex': 'Ключевое слово complex',
                 'identifier': 'Идентификатор',
                 'space': 'Пробел',
-                'integer': 'Целое число',
                 'float': 'Число с плавающей точкой',
                 'double_colon': 'Двойное двоеточие',
                 'open_angle': 'Открывающая угловая скобка',
@@ -137,7 +138,7 @@ class Language():
                 'minus': 'Минус',
                 'comma': 'Запятая',
                 'semicolon': 'Точка с запятой',
-                'invalid_char': 'Недопустимый символ',
+                'invalid_char': 'Недопустимый фрагмент',
                 'unknown_code': 'Неизвестный код {}',
                 'line_num': 'Строка {}',
                 'cond_code': 'Условный код',
@@ -177,26 +178,28 @@ class Language():
                 'actionNew_toolTip': 'Create',
                 'actionOpen_toolTip': 'Open',
                 'actionRedo_toolTip': 'Redo',
-                'actionRun_toolTip': 'Run',
+                'actionRunParser_toolTip': 'Run parser',
+                'actionRunLexer_toolTip': 'Run lexer',
                 'actionUndo_toolTip': 'Undo',
                 'actionRedo_toolTip': 'Redo',
                 'actionCut_toolTip': 'Cut',
                 'actionCopy_toolTip': 'Copy',
                 'actionPaste_toolTip': 'Paste',
                 'actionDelete_toolTip': 'Delete',
-                'actionSelectAll_toolTip': 'Select All',
+                'actionSelectAll_toolTip': 'Select all',
 
                 # Text menu actions
-                'action_15': 'Problem Statement',
+                'action_15': 'Problem statement',
                 'action_16': 'Grammar',
-                'action_17': 'Grammar Classification',
-                'action_18': 'Analysis Method',
-                'action_19': 'Test Example',
+                'action_17': 'Grammar classification',
+                'action_18': 'Analysis method',
+                'action_19': 'Test example',
                 'action_20': 'References',
-                'action_21': 'Source Code',
+                'action_21': 'Source code',
 
                 # Run menu actions
-                'actionRun': 'Run',
+                'actionRunParser': 'Run parser',
+                'actionRunLexer': 'Run lexer',
 
                 # Help menu actions
                 'actionHelp': 'Help',
@@ -217,6 +220,8 @@ class Language():
                 'file_saved_as': 'File saved as "{}"',
 
                 'save_cancelled': 'Save cancelled',
+
+                'total_errors': 'Number of errors: {}',
 
                 # Tab actions
                 'tab_saved_and_closed': 'Tab "{}" saved and closed',
@@ -258,14 +263,11 @@ class Language():
                 'file_saving_error': 'Failed to save file: {}',
 
                 # For lexer
-                'kw_int': 'Keyword int',
-                'kw_float': 'Keyword float',
                 'kw_double': 'Keyword double',
                 'kw_std': 'Keyword std',
                 'kw_complex': 'Keyword complex',
                 'identifier': 'Identifier',
                 'space': 'Space',
-                'integer': 'Integer number',
                 'float': 'Floating point number',
                 'double_colon': 'Double colon',
                 'open_angle': 'Opening angle bracket',
@@ -275,7 +277,7 @@ class Language():
                 'minus': 'Minus',
                 'comma': 'Comma',
                 'semicolon': 'Semicolon',
-                'invalid_char': 'Invalid character',
+                'invalid_char': 'Invalid fragment',
                 'line_num': 'Line {}',
                 'cond_code': 'Conditional code',
                 'lexeme_type': 'Lexeme type',

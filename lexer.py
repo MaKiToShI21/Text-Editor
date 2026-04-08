@@ -3,48 +3,40 @@ class LexicalAnalyzer:
         self.lang = lang
 
         self.TOKEN_TYPES = {
-            1: self.lang.translate('kw_int'),
-            2: self.lang.translate('kw_float'),
-            4: self.lang.translate('kw_std'),
-            3: self.lang.translate('kw_double'),
-            5: self.lang.translate('kw_complex'),
-            6: self.lang.translate('identifier'),
-            7: self.lang.translate('space'),
-            8: self.lang.translate('integer'),
-            9: self.lang.translate('float'),
-            10: self.lang.translate('double_colon'),
-            11: self.lang.translate('open_angle'),
-            12: self.lang.translate('close_angle'),
-            13: self.lang.translate('open_paren'),
-            14: self.lang.translate('close_paren'),
-            15: self.lang.translate('minus'),
-            16: self.lang.translate('comma'),
-            17: self.lang.translate('semicolon')
+            1: self.lang.translate('kw_double'),
+            2: self.lang.translate('kw_std'),
+            3: self.lang.translate('kw_complex'),
+            4: self.lang.translate('identifier'),
+            5: self.lang.translate('space'),
+            6: self.lang.translate('float'),
+            7: self.lang.translate('double_colon'),
+            8: self.lang.translate('open_angle'),
+            9: self.lang.translate('close_angle'),
+            10: self.lang.translate('open_paren'),
+            11: self.lang.translate('close_paren'),
+            12: self.lang.translate('minus'),
+            13: self.lang.translate('comma'),
+            14: self.lang.translate('semicolon')
         }
 
     TOKEN_CODES = {
-        'KEYWORD_INT': 1,
-        'KEYWORD_FLOAT': 2,
-        'KEYWORD_DOUBLE': 3,
-        'KEYWORD_STD': 4,
-        'KEYWORD_COMPLEX': 5,
-        'IDENTIFIER': 6,
-        'SPACE': 7,
-        'INTEGER': 8,
-        'FLOAT': 9,
-        'DOUBLE_COLON': 10,
-        'OPEN_ANGLE': 11,
-        'CLOSE_ANGLE': 12,
-        'OPEN_PAREN': 13,
-        'CLOSE_PAREN': 14,
-        'MINUS': 15,
-        'COMMA': 16,
-        'SEMICOLON': 17,
+        'KEYWORD_DOUBLE': 1,
+        'KEYWORD_STD': 2,
+        'KEYWORD_COMPLEX': 3,
+        'IDENTIFIER': 4,
+        'SPACE': 5,
+        'FLOAT': 6,
+        'DOUBLE_COLON': 7,
+        'OPEN_ANGLE': 8,
+        'CLOSE_ANGLE': 9,
+        'OPEN_PAREN': 10,
+        'CLOSE_PAREN': 11,
+        'MINUS': 12,
+        'COMMA': 13,
+        'SEMICOLON': 14,
     }
 
     KEYWORDS = {
-        'int': TOKEN_CODES['KEYWORD_INT'],
-        'float': TOKEN_CODES['KEYWORD_FLOAT'],
         'double': TOKEN_CODES['KEYWORD_DOUBLE'],
         'std': TOKEN_CODES['KEYWORD_STD'],
         'complex': TOKEN_CODES['KEYWORD_COMPLEX']
@@ -163,7 +155,6 @@ class LexicalAnalyzer:
         start_line = self.line
         start_col = self.column
         start_pos = self.position
-        has_decimal = False
 
         while (self.position < len(self.text) and
                self.text[self.position].isdigit()):
@@ -171,7 +162,6 @@ class LexicalAnalyzer:
 
         if (self.position < len(self.text) and
             self.text[self.position] == '.'):
-            has_decimal = True
             self._advance()
 
             while (self.position < len(self.text) and
@@ -179,7 +169,7 @@ class LexicalAnalyzer:
                 self._advance()
 
         lexeme = self.text[start_pos:self.position]
-        code = self.TOKEN_CODES['FLOAT'] if has_decimal else self.TOKEN_CODES['INTEGER']
+        code = self.TOKEN_CODES['FLOAT']
 
         self.tokens.append({
             'code': code,
