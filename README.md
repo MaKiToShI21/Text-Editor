@@ -66,21 +66,19 @@ A lexer was created based on it to parse the string "**`std::complex<double> my_
 
 **Objective:** Study the purpose and operating principles of a parser within a compiler. Design a grammar, construct a corresponding grammar analysis method, and implement a parser with Irons's method for eliminating syntax errors. Integrate the developed module into the previously created graphical interface of the language processor.
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/grammar.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/grammar.png" width="400">
+
 According to Chomsky's classification, the grammar G[‹Std›] is automata-based.
 
 Graph of automata grammar:
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/graph.png" width="550">
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/graph.png" width="500">
 
 Test examples:
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/no_errors.png" width="550">
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/some_errors.png" width="550">
-
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/lots_of_errors.png" width="550">
-
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/multi-line_errors.png" width="550">
-
+|  No errors   | Some errors  | multi-line errors |
+|--------------|--------------|-------------------|
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/no_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/lots_of_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/multi-line_errors.png" width="500"> |
 
 **Laboratory Work 4.** Implementation of a substring search algorithm using regular expressions
 
