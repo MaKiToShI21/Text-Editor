@@ -25,8 +25,8 @@ import shutil
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def __init__(self):
         super().__init__()
-        loadUi('text_editor.ui', self)
-        # self.setupUi(self)
+        # loadUi('text_editor.ui', self)
+        self.setupUi(self)
 
         self.setMinimumSize(500, 400)
 
@@ -526,8 +526,11 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         # РџР°СЂСЃРёРј: "[1:1-3] - code=1: keyword int"
         pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
-
         error_pattern = r'\[(\d+):(\d+)-(\d+)\] - ERROR:\s*(.+)'
+
+        current_error = None
+        prev_end_col = None
+        prev_line_num = None
 
         for line in lines:
             if not line.strip():
@@ -535,21 +538,43 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
             error_match = re.match(error_pattern, line)
             if error_match:
-                line_num = error_match.group(1)
-                start_col = error_match.group(2)
-                end_col = error_match.group(3)
+                line_num = int(error_match.group(1))
+                start_col = int(error_match.group(2))
+                end_col = int(error_match.group(3))
                 error_msg = error_match.group(4)
 
-                if " " in error_msg:
-                    parts = error_msg.split(' ')
+                parts = error_msg.split(' ')
+                lexeme = parts[-1] if " " in error_msg else error_msg
 
-                errors.append({
-                    'code': 'ERROR',
-                    'type': self.lang.translate('invalid_char'),
-                    'lexeme': parts[-1],
-                    'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
-                })
+                if (current_error and
+                    prev_line_num == line_num and
+                    prev_end_col and
+                    prev_end_col + 1 == start_col):
+                    current_error['lexeme'] += lexeme
+                    current_error['location'] = f"{self.lang.translate('line_num').format(line_num, 0)}, {current_error['start_col']}-{end_col}"
+                else:
+                    if current_error:
+                        del current_error['start_col']
+                        errors.append(current_error)
+
+                    current_error = {
+                        'code': 'ERROR',
+                        'type': self.lang.translate('invalid_char'),
+                        'lexeme': lexeme,
+                        'start_col': start_col,
+                        'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
+                    }
+
+                prev_end_col = end_col
+                prev_line_num = line_num
                 continue
+
+            if current_error:
+                del current_error['start_col']
+                errors.append(current_error)
+                current_error = None
+                prev_end_col = None
+                prev_line_num = None
 
             match = re.match(pattern, line)
             if match:
@@ -575,6 +600,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     'lexeme': lexeme,
                     'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
                 })
+
+        if current_error:
+            del current_error['start_col']
+            errors.append(current_error)
 
         return tokens, errors
 

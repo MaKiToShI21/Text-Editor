@@ -14,7 +14,8 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(851, 686)
         MainWindow.setMinimumSize(QtCore.QSize(0, 0))
-        MainWindow.setStyleSheet("font-size: 10pt;")
+        MainWindow.setStyleSheet("font-size: 10pt;\n"
+"background-color: rgb(40, 40, 40);")
         MainWindow.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonIconOnly)
         MainWindow.setDocumentMode(False)
         MainWindow.setDockNestingEnabled(False)
@@ -129,7 +130,7 @@ class Ui_MainWindow(object):
         self.statusBar.setObjectName("statusBar")
         MainWindow.setStatusBar(self.statusBar)
         self.menuBar = QtWidgets.QMenuBar(parent=MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 851, 44))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 851, 45))
         self.menuBar.setStyleSheet("QMenuBar {\n"
 "    background-color: rgb(32, 32, 32);\n"
 "    padding: 2px;\n"
@@ -315,6 +316,7 @@ class Ui_MainWindow(object):
         self.menuText.addAction(self.action_19)
         self.menuText.addAction(self.action_20)
         self.menuText.addAction(self.action_21)
+        self.menuRun.addAction(self.actionRun)
         self.menuSettings.addAction(self.actionLanguage)
         self.menuBar.addAction(self.menuFile.menuAction())
         self.menuBar.addAction(self.menuEdit.menuAction())
