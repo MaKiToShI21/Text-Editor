@@ -25,8 +25,8 @@ import shutil
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def __init__(self):
         super().__init__()
-        # loadUi('text_editor.ui', self)
-        self.setupUi(self)
+        loadUi('text_editor.ui', self)
+        # self.setupUi(self)
 
         self.setMinimumSize(500, 400)
 
@@ -340,12 +340,12 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         file_path, _ = QFileDialog.getSaveFileName(self,
                                                    self.lang.translate('actionSaveFileAs'),
                                                    "",
-                                                   "РўРµРєСЃС‚РѕРІС‹Рµ С„Р°Р№Р»С‹ (*.txt);;"
+                                                   "Текстовые файлы (*.txt);;"
                                                    "doc (*.doc);;"
                                                    "docx (*.docx);;"
                                                    "PDF (*.pdf);;"
                                                    "rtf (*.rtf);;"
-                                                   "Р’СЃРµ С„Р°Р№Р»С‹ (*.*)")
+                                                   "Все файлы (*.*)")
 
         if not file_path:
             self.status_bar.showMessage(self.lang.translate('save_cancelled'), 3000)
@@ -524,7 +524,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         errors = []
         lines = output.strip().split('\n')
 
-        # РџР°СЂСЃРёРј: "[1:1-3] - code=1: keyword int"
+        # Парсим: "[1:1-3] - code=1: keyword int"
         pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
         error_pattern = r'\[(\d+):(\d+)-(\d+)\] - ERROR:\s*(.+)'
 
@@ -844,7 +844,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         text_browser = QTextBrowser()
 
         if self.lang.current_language == 'ru':
-            dialog.setWindowTitle("Р СѓРєРѕРІРѕРґСЃС‚РІРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ")
+            dialog.setWindowTitle("Руководство пользователя")
             text_browser.setHtml("""
             <html>
             <head>
@@ -921,155 +921,155 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 </style>
             </head>
             <body>
-                <h1>РўРµРєСЃС‚РѕРІС‹Р№ СЂРµРґР°РєС‚РѕСЂ</h1>
-                <div class='version'>Р СѓРєРѕРІРѕРґСЃС‚РІРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ | Р’РµСЂСЃРёСЏ 1.0.0</div>
+                <h1>Текстовый редактор</h1>
+                <div class='version'>Руководство пользователя | Версия 1.0.0</div>
 
-                <h2 id='intro'>Р’РІРµРґРµРЅРёРµ</h2>
-                <p><b>РўРµРєСЃС‚РѕРІС‹Р№ СЂРµРґР°РєС‚РѕСЂ</b> вЂ” СЌС‚Рѕ РїСЂРёР»РѕР¶РµРЅРёРµ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ Рё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ С‚РµРєСЃС‚РѕРІС‹С… РґРѕРєСѓРјРµРЅС‚РѕРІ СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°. РџСЂРѕРіСЂР°РјРјР° РїСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ СѓРґРѕР±РЅС‹Р№ РёРЅС‚РµСЂС„РµР№СЃ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ С‚РµРєСЃС‚РѕРј Рё РїРѕРґРґРµСЂР¶РёРІР°РµС‚ РІСЃРµ РѕСЃРЅРѕРІРЅС‹Рµ РѕРїРµСЂР°С†РёРё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ.</p>
+                <h2 id='intro'>Введение</h2>
+                <p><b>Текстовый редактор</b> — это приложение для создания и редактирования текстовых документов с возможностью синтаксического анализа. Программа предоставляет удобный интерфейс для работы с текстом и поддерживает все основные операции редактирования.</p>
 
-                <h2 id='interface'>РРЅС‚РµСЂС„РµР№СЃ РїСЂРѕРіСЂР°РјРјС‹</h2>
-                <p>Р“Р»Р°РІРЅРѕРµ РѕРєРЅРѕ С‚РµРєСЃС‚РѕРІРѕРіРѕ СЂРµРґР°РєС‚РѕСЂР° СЃРѕСЃС‚РѕРёС‚ РёР· СЃР»РµРґСѓСЋС‰РёС… СЌР»РµРјРµРЅС‚РѕРІ:</p>
+                <h2 id='interface'>Интерфейс программы</h2>
+                <p>Главное окно текстового редактора состоит из следующих элементов:</p>
                 <ul>
-                    <li><b>Р—Р°РіРѕР»РѕРІРѕРє РѕРєРЅР°</b> вЂ” РѕС‚РѕР±СЂР°Р¶Р°РµС‚ РЅР°Р·РІР°РЅРёРµ РїСЂРѕРіСЂР°РјРјС‹ Рё РёРјСЏ С‚РµРєСѓС‰РµРіРѕ С„Р°Р№Р»Р°</li>
-                    <li><b>Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ</b> вЂ” СЃРѕРґРµСЂР¶РёС‚ РІСЃРµ РґРѕСЃС‚СѓРїРЅС‹Рµ РєРѕРјР°РЅРґС‹</li>
-                    <li><b>РџР°РЅРµР»СЊ РёРЅСЃС‚СЂСѓРјРµРЅС‚РѕРІ</b> вЂ” РєРЅРѕРїРєРё Р±С‹СЃС‚СЂРѕРіРѕ РґРѕСЃС‚СѓРїР°</li>
-                    <li><b>РћР±Р»Р°СЃС‚СЊ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ</b> вЂ” С‚РµРєСЃС‚РѕРІРѕРµ РїРѕР»Рµ РґР»СЏ РІРІРѕРґР° Рё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ С‚РµРєСЃС‚Р°</li>
-                    <li><b>РћР±Р»Р°СЃС‚СЊ РІС‹РІРѕРґР° СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ</b> вЂ” РѕР±Р»Р°СЃС‚СЊ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЂР°Р±РѕС‚С‹ Р°РЅР°Р»РёР·Р°С‚РѕСЂР°</li>
-                    <li><b>РЎС‚СЂРѕРєР° СЃРѕСЃС‚РѕСЏРЅРёСЏ</b> вЂ” РѕС‚РѕР±СЂР°Р¶Р°РµС‚ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ СЃРѕСЃС‚РѕСЏРЅРёРё СЂР°Р±РѕС‚С‹ РїСЂРёР»РѕР¶РµРЅРёСЏ</li>
+                    <li><b>Заголовок окна</b> — отображает название программы и имя текущего файла</li>
+                    <li><b>Главное меню</b> — содержит все доступные команды</li>
+                    <li><b>Панель инструментов</b> — кнопки быстрого доступа</li>
+                    <li><b>Область редактирования</b> — текстовое поле для ввода и редактирования текста</li>
+                    <li><b>Область вывода результатов</b> — область для отображения результатов работы анализатора</li>
+                    <li><b>Строка состояния</b> — отображает информацию о состоянии работы приложения</li>
                 </ul>
 
-                <h2 id='file-menu'>РњРµРЅСЋ В«Р¤Р°Р№Р»В»</h2>
+                <h2 id='file-menu'>Меню «Файл»</h2>
                 <table>
                     <tr>
-                        <th>РљРѕРјР°РЅРґР°</th>
-                        <th>Р“РѕСЂСЏС‡Р°СЏ РєР»Р°РІРёС€Р°</th>
-                        <th>РћРїРёСЃР°РЅРёРµ</th>
+                        <th>Команда</th>
+                        <th>Горячая клавиша</th>
+                        <th>Описание</th>
                     </tr>
                     <tr>
-                        <td><b>РЎРѕР·РґР°С‚СЊ</b></td>
+                        <td><b>Создать</b></td>
                         <td><span>Ctrl+N</span=></td>
-                        <td>РЎРѕР·РґР°РµС‚ РЅРѕРІС‹Р№ РґРѕРєСѓРјРµРЅС‚ РІ РЅРѕРІРѕР№ РІРєР»Р°РґРєРµ</td>
+                        <td>Создает новый документ в новой вкладке</td>
                     </tr>
                     <tr>
-                        <td><b>РћС‚РєСЂС‹С‚СЊ</b></td>
+                        <td><b>Открыть</b></td>
                         <td><span>Ctrl+O</span></td>
-                        <td>РћС‚РєСЂС‹РІР°РµС‚ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёР№ С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р»</td>
+                        <td>Открывает существующий текстовый файл</td>
                     </tr>
                     <tr>
-                        <td><b>РЎРѕС…СЂР°РЅРёС‚СЊ</b></td>
+                        <td><b>Сохранить</b></td>
                         <td><span>Ctrl+S</span></td>
-                        <td>РЎРѕС…СЂР°РЅСЏРµС‚ С‚РµРєСѓС‰РёР№ РґРѕРєСѓРјРµРЅС‚</td>
+                        <td>Сохраняет текущий документ</td>
                     </tr>
                     <tr>
-                        <td><b>РЎРѕС…СЂР°РЅРёС‚СЊ РєР°Рє</b></td>
+                        <td><b>Сохранить как</b></td>
                         <td><span>Ctrl+Shift+S</span></td>
-                        <td>РЎРѕС…СЂР°РЅСЏРµС‚ РґРѕРєСѓРјРµРЅС‚ РїРѕРґ РЅРѕРІС‹Рј РёРјРµРЅРµРј</td>
+                        <td>Сохраняет документ под новым именем</td>
                     </tr>
                     <tr>
-                        <td><b>Р’С‹С…РѕРґ</b></td>
+                        <td><b>Выход</b></td>
                         <td><span>Ctrl+Q</span></td>
-                        <td>Р—Р°РІРµСЂС€Р°РµС‚ СЂР°Р±РѕС‚Сѓ РїСЂРѕРіСЂР°РјРјС‹</td>
+                        <td>Завершает работу программы</td>
                     </tr>
                 </table>
 
-                <p>РџСЂРё РїРѕРїС‹С‚РєРµ Р·Р°РєСЂС‹С‚СЊ РЅРµСЃРѕС…СЂР°РЅРµРЅРЅС‹Р№ РґРѕРєСѓРјРµРЅС‚ РїСЂРѕРіСЂР°РјРјР° РїСЂРµРґР»РѕР¶РёС‚ СЃРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ.</p>
+                <p>При попытке закрыть несохраненный документ программа предложит сохранить изменения.</p>
 
-                <h2 id='edit-menu'>РњРµРЅСЋ В«РџСЂР°РІРєР°В»</h2>
+                <h2 id='edit-menu'>Меню «Правка»</h2>
                 <table>
                     <tr>
-                        <th>РљРѕРјР°РЅРґР°</th>
-                        <th>Р“РѕСЂСЏС‡Р°СЏ РєР»Р°РІРёС€Р°</th>
-                        <th>РћРїРёСЃР°РЅРёРµ</th>
+                        <th>Команда</th>
+                        <th>Горячая клавиша</th>
+                        <th>Описание</th>
                     </tr>
                     <tr>
-                        <td><b>РћС‚РјРµРЅРёС‚СЊ</b></td>
+                        <td><b>Отменить</b></td>
                         <td><span>Ctrl+Z</span></td>
-                        <td>РћС‚РјРµРЅСЏРµС‚ РїРѕСЃР»РµРґРЅРµРµ РґРµР№СЃС‚РІРёРµ</td>
+                        <td>Отменяет последнее действие</td>
                     </tr>
                     <tr>
-                        <td><b>РџРѕРІС‚РѕСЂРёС‚СЊ</b></td>
+                        <td><b>Повторить</b></td>
                         <td><span>Ctrl+Y</span></td>
-                        <td>РџРѕРІС‚РѕСЂСЏРµС‚ РѕС‚РјРµРЅРµРЅРЅРѕРµ РґРµР№СЃС‚РІРёРµ</td>
+                        <td>Повторяет отмененное действие</td>
                     </tr>
                     <tr>
-                        <td><b>Р’С‹СЂРµР·Р°С‚СЊ</b></td>
+                        <td><b>Вырезать</b></td>
                         <td><span>Ctrl+X</span></td>
-                        <td>РљРѕРїРёСЂСѓРµС‚ РІС‹РґРµР»РµРЅРЅС‹Р№ С‚РµРєСЃС‚ РІ Р±СѓС„РµСЂ Рё СѓРґР°Р»СЏРµС‚ РµРіРѕ</td>
+                        <td>Копирует выделенный текст в буфер и удаляет его</td>
                     </tr>
                     <tr>
-                        <td><b>РљРѕРїРёСЂРѕРІР°С‚СЊ</b></td>
+                        <td><b>Копировать</b></td>
                         <td><span>Ctrl+C</span></td>
-                        <td>РљРѕРїРёСЂСѓРµС‚ РІС‹РґРµР»РµРЅРЅС‹Р№ С‚РµРєСЃС‚ РІ Р±СѓС„РµСЂ РѕР±РјРµРЅР°</td>
+                        <td>Копирует выделенный текст в буфер обмена</td>
                     </tr>
                     <tr>
-                        <td><b>Р’СЃС‚Р°РІРёС‚СЊ</b></td>
+                        <td><b>Вставить</b></td>
                         <td><span>Ctrl+V</span></td>
-                        <td>Р’СЃС‚Р°РІР»СЏРµС‚ С‚РµРєСЃС‚ РёР· Р±СѓС„РµСЂР° РѕР±РјРµРЅР°</td>
+                        <td>Вставляет текст из буфера обмена</td>
                     </tr>
                     <tr>
-                        <td><b>РЈРґР°Р»РёС‚СЊ</b></td>
+                        <td><b>Удалить</b></td>
                         <td><span>Del</span></td>
-                        <td>РЈРґР°Р»СЏРµС‚ РІС‹РґРµР»РµРЅРЅС‹Р№ С‚РµРєСЃС‚</td>
+                        <td>Удаляет выделенный текст</td>
                     </tr>
                     <tr>
-                        <td><b>Р’С‹РґРµР»РёС‚СЊ РІСЃС‘</b></td>
+                        <td><b>Выделить всё</b></td>
                         <td><span>Ctrl+A</span></td>
-                        <td>Р’С‹РґРµР»СЏРµС‚ РІРµСЃСЊ С‚РµРєСЃС‚ РІ РґРѕРєСѓРјРµРЅС‚Рµ</td>
+                        <td>Выделяет весь текст в документе</td>
                     </tr>
                 </table>
 
-                <h2 id='text-menu'>РњРµРЅСЋ В«РўРµРєСЃС‚В»</h2>
-                <p>РњРµРЅСЋ В«РўРµРєСЃС‚В» СЃРѕРґРµСЂР¶РёС‚ РёРЅС„РѕСЂРјР°С†РёРѕРЅРЅС‹Рµ СЂР°Р·РґРµР»С‹ Рѕ СЏР·С‹РєРµ Рё РіСЂР°РјРјР°С‚РёРєРµ:</p>
+                <h2 id='text-menu'>Меню «Текст»</h2>
+                <p>Меню «Текст» содержит информационные разделы о языке и грамматике:</p>
                 <ul>
-                    <li><b>РџРѕСЃС‚Р°РЅРѕРІРєР° Р·Р°РґР°С‡Рё</b> вЂ” РѕРїРёСЃР°РЅРёРµ С†РµР»Рё Рё Р·Р°РґР°С‡ СЂР°Р±РѕС‚С‹</li>
-                    <li><b>Р“СЂР°РјРјР°С‚РёРєР°</b> вЂ” С„РѕСЂРјР°Р»СЊРЅРѕРµ РѕРїРёСЃР°РЅРёРµ РіСЂР°РјРјР°С‚РёРєРё СЏР·С‹РєР°</li>
-                    <li><b>РљР»Р°СЃСЃРёС„РёРєР°С†РёСЏ РіСЂР°РјРјР°С‚РёРєРё</b> вЂ” С‚РёРї РіСЂР°РјРјР°С‚РёРєРё РїРѕ РҐРѕРјСЃРєРѕРјСѓ</li>
-                    <li><b>РњРµС‚РѕРґ Р°РЅР°Р»РёР·Р°</b> вЂ” РѕРїРёСЃР°РЅРёРµ РјРµС‚РѕРґР° СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°</li>
-                    <li><b>РўРµСЃС‚РѕРІС‹Р№ РїСЂРёРјРµСЂ</b> вЂ” РїСЂРёРјРµСЂ СЂР°Р·Р±РѕСЂР° РІС…РѕРґРЅРѕР№ СЃС‚СЂРѕРєРё</li>
-                    <li><b>РЎРїРёСЃРѕРє Р»РёС‚РµСЂР°С‚СѓСЂС‹</b> вЂ” РёСЃРїРѕР»СЊР·РѕРІР°РЅРЅС‹Рµ РёСЃС‚РѕС‡РЅРёРєРё</li>
-                    <li><b>РСЃС…РѕРґРЅС‹Р№ РєРѕРґ РїСЂРѕРіСЂР°РјРјС‹</b> вЂ” РєРѕРґ РїСЂРёР»РѕР¶РµРЅРёСЏ</li>
+                    <li><b>Постановка задачи</b> — описание цели и задач работы</li>
+                    <li><b>Грамматика</b> — формальное описание грамматики языка</li>
+                    <li><b>Классификация грамматики</b> — тип грамматики по Хомскому</li>
+                    <li><b>Метод анализа</b> — описание метода синтаксического анализа</li>
+                    <li><b>Тестовый пример</b> — пример разбора входной строки</li>
+                    <li><b>Список литературы</b> — использованные источники</li>
+                    <li><b>Исходный код программы</b> — код приложения</li>
                 </ul>
-                <p>РџСЂРё РІС‹Р±РѕСЂРµ Р»СЋР±РѕРіРѕ РїСѓРЅРєС‚Р° РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ РѕРєРЅРѕ СЃ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµР№ РёРЅС„РѕСЂРјР°С†РёРµР№.</p>
+                <p>При выборе любого пункта открывается окно с соответствующей информацией.</p>
 
-                <h2 id='run-menu'>РњРµРЅСЋ В«РџСѓСЃРєВ»</h2>
-                <p><b>Р—Р°РїСѓСЃРє Р°РЅР°Р»РёР·Р°С‚РѕСЂР°</b> (<span>F5</span>) вЂ” Р·Р°РїСѓСЃРєР°РµС‚ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРёР№ Р°РЅР°Р»РёР· С‚РµРєСЃС‚Р° РёР· РѕР±Р»Р°СЃС‚Рё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ.</p>
+                <h2 id='run-menu'>Меню «Пуск»</h2>
+                <p><b>Запуск анализатора</b> (<span>F5</span>) — запускает синтаксический анализ текста из области редактирования.</p>
 
-                <p><b>Р РµР·СѓР»СЊС‚Р°С‚С‹ Р°РЅР°Р»РёР·Р°:</b></p>
+                <p><b>Результаты анализа:</b></p>
                 <ul>
-                    <li>РћС€РёР±РѕС‡РЅС‹Рµ СЃС‚СЂРѕРєРё РѕС‚РјРµС‡Р°СЋС‚СЃСЏ РєСЂР°СЃРЅС‹Рј С†РІРµС‚РѕРј СЃ СѓРєР°Р·Р°РЅРёРµРј РїРѕР·РёС†РёРё РѕС€РёР±РєРё</li>
-                    <li>РџСЂРё С‰РµР»С‡РєРµ РЅР° СЃРѕРѕР±С‰РµРЅРёРё РѕР± РѕС€РёР±РєРµ РєСѓСЂСЃРѕСЂ РїРµСЂРµС…РѕРґРёС‚ Рє РѕС€РёР±РѕС‡РЅРѕРјСѓ С„СЂР°РіРјРµРЅС‚Сѓ</li>
+                    <li>Ошибочные строки отмечаются красным цветом с указанием позиции ошибки</li>
+                    <li>При щелчке на сообщении об ошибке курсор переходит к ошибочному фрагменту</li>
                 </ul>
 
-                <h2 id='help-menu'>РњРµРЅСЋ В«РЎРїСЂР°РІРєР°В»</h2>
+                <h2 id='help-menu'>Меню «Справка»</h2>
                 <table>
                     <tr>
-                        <th>РљРѕРјР°РЅРґР°</th>
-                        <th>Р“РѕСЂСЏС‡Р°СЏ РєР»Р°РІРёС€Р°</th>
-                        <th>РћРїРёСЃР°РЅРёРµ</th>
+                        <th>Команда</th>
+                        <th>Горячая клавиша</th>
+                        <th>Описание</th>
                     </tr>
                     <tr>
-                        <td><b>Р’С‹Р·РѕРІ СЃРїСЂР°РІРєРё</b></td>
+                        <td><b>Вызов справки</b></td>
                         <td><span>F1</span></td>
-                        <td>РћС‚РєСЂС‹РІР°РµС‚ РґР°РЅРЅРѕРµ СЂСѓРєРѕРІРѕРґСЃС‚РІРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ</td>
+                        <td>Открывает данное руководство пользователя</td>
                     </tr>
                     <tr>
-                        <td><b>Рћ РїСЂРѕРіСЂР°РјРјРµ</b></td>
+                        <td><b>О программе</b></td>
                         <td>F2</td>
-                        <td>РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїСЂРѕРіСЂР°РјРјРµ Рё СЂР°Р·СЂР°Р±РѕС‚С‡РёРєРµ</td>
+                        <td>Информация о программе и разработчике</td>
                     </tr>
                 </table>
 
-                <h2>Р Р°Р±РѕС‚Р° СЃ РѕР±Р»Р°СЃС‚СЏРјРё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ Рё РІС‹РІРѕРґР°</h2>
-                <p><b>РћР±Р»Р°СЃС‚СЊ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ:</b> РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅР° РґР»СЏ РІРІРѕРґР° Рё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ С‚РµРєСЃС‚Р°. РџРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ РІСЃРµ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Рµ РѕРїРµСЂР°С†РёРё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ.</p>
-                <p><b>РћР±Р»Р°СЃС‚СЊ РІС‹РІРѕРґР° СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ:</b> РѕС‚РѕР±СЂР°Р¶Р°РµС‚ СЂРµР·СѓР»СЊС‚Р°С‚С‹ СЂР°Р±РѕС‚С‹ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°С‚РѕСЂР°. РћР±Р»Р°СЃС‚СЊ РґРѕСЃС‚СѓРїРЅР° С‚РѕР»СЊРєРѕ РґР»СЏ С‡С‚РµРЅРёСЏ.</p>
-                <p><b>РР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂРѕРІ РѕР±Р»Р°СЃС‚РµР№:</b> РїРµСЂРµС‚Р°СЃРєРёРІР°Р№С‚Рµ СЂР°Р·РґРµР»РёС‚РµР»СЊ РјРµР¶РґСѓ РѕР±Р»Р°СЃС‚СЏРјРё РјС‹С€СЊСЋ.</p>
+                <h2>Работа с областями редактирования и вывода</h2>
+                <p><b>Область редактирования:</b> предназначена для ввода и редактирования текста. Поддерживаются все стандартные операции редактирования.</p>
+                <p><b>Область вывода результатов:</b> отображает результаты работы синтаксического анализатора. Область доступна только для чтения.</p>
+                <p><b>Изменение размеров областей:</b> перетаскивайте разделитель между областями мышью.</p>
 
                 <div style="text-align: center; font-size: 16px; font-weight: bold;">
-                    <a href="https://github.com/MaKiToShI21/Text-Editor/blob/main/docs/ru/user_manual.md">РџРѕРґСЂРѕР±РЅРѕРµ СЂСѓРєРѕРІРѕРґСЃС‚РІРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ</a>
+                    <a href="https://github.com/MaKiToShI21/Text-Editor/blob/main/docs/ru/user_manual.md">Подробное руководство пользователя</a>
                 </div>
 
                 <div class='footer'>
-                    <p>Р Р°Р·СЂР°Р±РѕС‚Р°РЅРѕ СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј PyQt6</p>
+                    <p>Разработано с использованием PyQt6</p>
                     <p>В© 2026 MaKiToShI</p>
                 </div>
             </body>
@@ -1158,17 +1158,17 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     <div class='version'>User Manual | Version 1.0.0</div>
 
                     <h2 id='intro'>Introduction</h2>
-                    <p><b>Text editor</b> вЂ” This application is for creating and editing text documents with parsing capabilities. The program provides a user-friendly interface for working with text and supports all basic editing operations.</p>
+                    <p><b>Text editor</b> — This application is for creating and editing text documents with parsing capabilities. The program provides a user-friendly interface for working with text and supports all basic editing operations.</p>
 
                     <h2 id='interface'>Program interface</h2>
                     <p>The main window of the text editor consists of the following elements:</p>
                     <ul>
-                        <li><b>Window title</b> вЂ” displays the program name and the name of the current file</li>
-                        <li><b>Main menu</b> вЂ” contains all available commands</li>
-                        <li><b>Toolbar</b> вЂ” quick access buttons</li>
-                        <li><b>Editing area</b> вЂ” a text field for entering and editing text</li>
-                        <li><b>Results output area</b> вЂ” area for displaying the analyzer's results</li>
-                        <li><b>Status bar</b> вЂ” displays information about the application's running status</li>
+                        <li><b>Window title</b> — displays the program name and the name of the current file</li>
+                        <li><b>Main menu</b> — contains all available commands</li>
+                        <li><b>Toolbar</b> — quick access buttons</li>
+                        <li><b>Editing area</b> — a text field for entering and editing text</li>
+                        <li><b>Results output area</b> — area for displaying the analyzer's results</li>
+                        <li><b>Status bar</b> — displays information about the application's running status</li>
                     </ul>
 
                     <h2 id='file-menu'>Menu В«FileВ»</h2>
@@ -1254,18 +1254,18 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     <h2 id='text-menu'>Menu В«TextВ»</h2>
                     <p>Menu В«TextВ» contains information sections on language and grammar:</p>
                     <ul>
-                        <li><b>Statement of the problem</b> вЂ” description of the purpose and objectives of the work</li>
-                        <li><b>Grammar</b> вЂ” formal description of the grammar of a language</li>
-                        <li><b>Classification of grammar</b> вЂ” Chomsky's type of grammar</li>
-                        <li><b>Method of analysis</b> вЂ” description of the syntactic analysis method</li>
-                        <li><b>Test example</b> вЂ” example of parsing an input string</li>
-                        <li><b>Bibliography</b> вЂ” sources used</li>
-                        <li><b>Source code of the program</b> вЂ” program code</li>
+                        <li><b>Statement of the problem</b> — description of the purpose and objectives of the work</li>
+                        <li><b>Grammar</b> — formal description of the grammar of a language</li>
+                        <li><b>Classification of grammar</b> — Chomsky's type of grammar</li>
+                        <li><b>Method of analysis</b> — description of the syntactic analysis method</li>
+                        <li><b>Test example</b> — example of parsing an input string</li>
+                        <li><b>Bibliography</b> — sources used</li>
+                        <li><b>Source code of the program</b> — program code</li>
                     </ul>
                     <p>When you select any item, a window with the corresponding information opens.</p>
 
                     <h2 id='run-menu'>Menu В«RunВ»</h2>
-                    <p><b>Launching the analyzer</b> (<span>F5</span>) вЂ” starts parsing the text from the editing area.</p>
+                    <p><b>Launching the analyzer</b> (<span>F5</span>) — starts parsing the text from the editing area.</p>
 
                     <p><b>Results of the analysis:</b></p>
                     <ul>
@@ -1320,27 +1320,27 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         layout = QVBoxLayout(dialog)
         text_browser = QTextBrowser()
         if self.lang.current_language == 'ru':
-            dialog.setWindowTitle("Рћ РїСЂРѕРіСЂР°РјРјРµ")
+            dialog.setWindowTitle("О программе")
             text_browser.setHtml("""
                 <div style='text-align: center;'>
-                    <h1>РўРµРєСЃС‚РѕРІС‹Р№ СЂРµРґР°РєС‚РѕСЂ</h1>
-                    <p style='color: #868e94; font-size: 14px;'>Р’РµСЂСЃРёСЏ 1.0.0</p>
+                    <h1>Текстовый редактор</h1>
+                    <p style='color: #868e94; font-size: 14px;'>Версия 1.0.0</p>
 
                     <div style='padding: 5px;'>
                         <p style='font-size: 16px; line-height: 1;'>
-                            РџСЂРѕРіСЂР°РјРјР° РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ С‚РµРєСЃС‚РѕРІС‹С… С„Р°Р№Р»РѕРІ<br>
-                            СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ СЃРёРЅС‚Р°РєСЃРёС‡РµСЃРєРѕРіРѕ Р°РЅР°Р»РёР·Р°
+                            Программа для редактирования текстовых файлов<br>
+                            с возможностью синтаксического анализа
                         </p>
                     </div>
 
                     <div>
-                        <p><b>Р Р°Р·СЂР°Р±РѕС‚С‡РёРє:</b> MaKiToShI</p>
-                        <p><b>Р“РѕРґ:</b> 2026</p>
+                        <p><b>Разработчик:</b> MaKiToShI</p>
+                        <p><b>Год:</b> 2026</p>
                     </div>
 
                     <div style='border-top: 1px solid #dee2e6; padding-top: 15px;'>
                         <p style='color: #868e94; font-size: 12px;'>
-                            Р Р°Р·СЂР°Р±РѕС‚Р°РЅРѕ СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј PyQt6<br>
+                            Разработано с использованием PyQt6<br>
                             В© 2026 MaKiToShI
                         </p>
                     </div>
@@ -1361,7 +1361,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
                     <div>
                         <p><b>Developer:</b> MaKiToShI</p>
-                        <p><b>Р“РѕРґ:</b> 2026</p>
+                        <p><b>Год:</b> 2026</p>
                     </div>
 
                     <div style='border-top: 1px solid #dee2e6; padding-top: 15px;'>
