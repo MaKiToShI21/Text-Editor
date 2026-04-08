@@ -62,6 +62,26 @@ A lexer was created based on it to parse the string "**`std::complex<double> my_
 
 <h2 align="center">Title and Objective of the Laboratory Work 4</h2>
 
+**Laboratory Work 3.** Development of a syntactic analyzer (parser)
+
+**Objective:** Study the purpose and operating principles of a parser within a compiler. Design a grammar, construct a corresponding grammar analysis method, and implement a parser with Irons's method for eliminating syntax errors. Integrate the developed module into the previously created graphical interface of the language processor.
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/grammar.png" width="550">
+According to Chomsky's classification, the grammar G[‹Std›] is automata-based.
+
+Graph of automata grammar:
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/graph.png" width="550">
+
+Test examples:
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/no_errors.png" width="550">
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/some_errors.png" width="550">
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/lots_of_errors.png" width="550">
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/multi-line_errors.png" width="550">
+
+
 **Laboratory Work 4.** Implementation of a substring search algorithm using regular expressions
 
 **Objective:** Explore the theoretical foundations of regular expressions and their application to searching and extracting substrings from text. Develop practical skills in using library tools for working with regular expressions, as well as integrating search algorithms into the application's graphical interface.

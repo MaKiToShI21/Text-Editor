@@ -1,11 +1,9 @@
+﻿from lexer import LexicalAnalyzer
 import re
-
-from lexer import LexicalAnalyzer
 
 
 class MyParser:
     INVALID_LEXEME_CODE = 0
-    # Правильный порядок токенов для:
     # std::complex<double> my_complex(10.0, -2.0);
     EXPECTED_TOKEN_SEQUENCE = [
         "KEYWORD_STD",
@@ -14,13 +12,10 @@ class MyParser:
         "OPEN_ANGLE",
         "KEYWORD_DOUBLE",
         "CLOSE_ANGLE",
-        # "SPACE",
         "IDENTIFIER",
         "OPEN_PAREN",
         "FLOAT",
         "COMMA",
-        # "SPACE",
-        # "MINUS",
         "FLOAT",
         "CLOSE_PAREN",
         "SEMICOLON",
@@ -36,8 +31,6 @@ class MyParser:
         lexer = LexicalAnalyzer(self.lang)
         raw_tokens, lex_errors = lexer.analyze(text)
 
-        # Недопустимые фрагменты добавляем как отдельные лексемы в общий поток,
-        # чтобы они учитывались синтаксическим алгоритмом, а не отдельным типом ошибок.
         invalid_tokens = self._build_invalid_lexeme_tokens(lex_errors, text)
         self.tokens = self._merge_token_stream(raw_tokens, invalid_tokens)
         self.errors = []
@@ -45,30 +38,48 @@ class MyParser:
 
         cursor = 0
         space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
+
+        while cursor < len(self.tokens):
+            while cursor < len(self.tokens) and self.tokens[cursor]["code"] == space_code:
+                cursor += 1
+            if cursor >= len(self.tokens):
+                break
+
+            segment_end = self._find_line_end(cursor)
+            self._parse_segment(cursor, segment_end)
+            cursor = segment_end + 1
+
+        return self.tokens, self.errors
+
+    def _parse_segment(self, start, end):
+        cursor = start
+        space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
         float_code = LexicalAnalyzer.TOKEN_CODES["FLOAT"]
         minus_code = LexicalAnalyzer.TOKEN_CODES["MINUS"]
+
         for seq_index, token_name in enumerate(self.EXPECTED_TOKEN_SEQUENCE):
             expected_code = LexicalAnalyzer.TOKEN_CODES[token_name]
             check_spaces = expected_code == space_code
             ignore_minus = expected_code == float_code
-            found_index = self._find_from_cursor(
+
+            found_index = self._find_from_cursor_in_range(
                 expected_code,
                 cursor,
+                end,
                 skip_spaces=not check_spaces,
                 skip_minus=ignore_minus,
             )
 
             if found_index is None:
-                # Если токен вообще не найден, ошибочный фрагмент - первая
-                # рассматриваемая лексема от текущей позиции.
-                if cursor < len(self.tokens):
+                if cursor <= end:
                     wrong_fragment = self.tokens[cursor]["lexeme"]
                     location = self.tokens[cursor]["location"]
                 else:
                     wrong_fragment = ""
                     location = "EOF"
+
                 self._add_error(expected_code, wrong_fragment, location)
-                if self._should_advance_cursor(cursor, seq_index):
+                if self._should_advance_cursor_in_range(cursor, seq_index, end):
                     cursor += 1
                 continue
 
@@ -84,16 +95,26 @@ class MyParser:
                     ]
 
                 if wrong_indices:
-                    # В фрагменте сохраняем исходные пробелы из диапазона.
                     wrong_fragment = "".join(
-                        t["lexeme"] for t in self.tokens[wrong_indices[0]:wrong_indices[-1] + 1]
+                        t["lexeme"] for t in self.tokens[wrong_indices[0] : wrong_indices[-1] + 1]
                     )
                     location = self._range_location(wrong_indices[0], wrong_indices[-1])
                     self._add_error(expected_code, wrong_fragment, location)
 
             cursor = found_index + 1
 
-        return self.tokens, self.errors
+    def _find_line_end(self, start):
+        start_line, _, _ = self._extract_location(self.tokens[start].get("location", ""))
+        if start_line is None:
+            return len(self.tokens) - 1
+
+        for i in range(start, len(self.tokens)):
+            line, _, _ = self._extract_location(self.tokens[i].get("location", ""))
+            if line is None:
+                continue
+            if line != start_line:
+                return i - 1
+        return len(self.tokens) - 1
 
     def _build_invalid_lexeme_tokens(self, lex_errors, source_text):
         if not lex_errors:
@@ -125,8 +146,7 @@ class MyParser:
             between_text = ""
             if line == current["line"] and start_col > current["end_col"] + 1:
                 line_text = lines[line - 1] if 1 <= line <= len(lines) else ""
-                # Колонки в location 1-based и включительные.
-                between_text = line_text[current["end_col"]:start_col - 1]
+                between_text = line_text[current["end_col"] : start_col - 1]
                 is_separated_by_spaces = between_text != "" and all(ch == " " for ch in between_text)
 
             if is_adjacent:
@@ -178,10 +198,18 @@ class MyParser:
             return (10**9, 10**9)
         return (line, start_col)
 
-    def _find_from_cursor(self, expected_code, cursor, skip_spaces=False, skip_minus=False):
+    def _find_from_cursor_in_range(
+        self,
+        expected_code,
+        cursor,
+        end,
+        skip_spaces=False,
+        skip_minus=False,
+    ):
         space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
         minus_code = LexicalAnalyzer.TOKEN_CODES["MINUS"]
-        for i in range(cursor, len(self.tokens)):
+
+        for i in range(cursor, end + 1):
             if skip_spaces and self.tokens[i]["code"] == space_code:
                 continue
             if skip_minus and self.tokens[i]["code"] == minus_code:
@@ -190,13 +218,8 @@ class MyParser:
                 return i
         return None
 
-    def _should_advance_cursor(self, cursor, seq_index):
-        """Решаем, сдвигать ли cursor при пропуске токена.
-
-        Если текущая или следующая лексема понадобится на одном из будущих шагов шаблона,
-        не двигаем cursor, чтобы не потерять точку синхронизации.
-        """
-        if cursor >= len(self.tokens):
+    def _should_advance_cursor_in_range(self, cursor, seq_index, end):
+        if cursor > end or cursor >= len(self.tokens):
             return True
 
         future_expected_codes = {
@@ -206,11 +229,10 @@ class MyParser:
 
         current_code = self.tokens[cursor]["code"]
         identifier_code = LexicalAnalyzer.TOKEN_CODES["IDENTIFIER"]
-        # Недопустимый фрагмент всегда "поглощаем", иначе он может
-        # повторно триггерить последующие правила.
+
         if current_code == self.INVALID_LEXEME_CODE:
             return True
-        # Идентификатор также всегда поглощаем по вашему правилу.
+
         if current_code == identifier_code:
             return True
 
@@ -218,7 +240,7 @@ class MyParser:
             return False
 
         next_idx = cursor + 1
-        if next_idx < len(self.tokens):
+        if next_idx <= end and next_idx < len(self.tokens):
             next_code = self.tokens[next_idx]["code"]
             if next_code in future_expected_codes:
                 return False
@@ -230,7 +252,7 @@ class MyParser:
         self.errors.append(
             {
                 "code": "ERROR",
-                "type": f"Ожидалось: {expected_name}",
+                "type": f"{self.lang.translate('expected').format(expected_name)}",
                 "lexeme": wrong_fragment,
                 "location": location,
             }

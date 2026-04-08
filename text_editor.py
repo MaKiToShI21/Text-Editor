@@ -9,8 +9,6 @@ from code_editor import CodeEditor
 from PyQt6.QtCore import QProcess
 from lexer import LexicalAnalyzer
 from my_parser import MyParser
-from cs_parser import Parser as RecursiveParser
-from avt_parser import Parser as AutomaticParser
 from PyQt6.QtGui import QAction
 from PyQt6.uic import loadUi
 from PyQt6.QtCore import Qt
@@ -40,7 +38,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         self.current_tab_name = None
         self.current_file_path = None
         self.my_lexer = True
-        self.my_parser = False
 
         self.setAcceptDrops(True)
         self.setup_actions()
@@ -422,6 +419,11 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             return
         index = self.input_tab_widget.currentIndex()
         self.current_input_widget = self.input_tab_widget.widget(index)
+        text = self.current_input_widget.text()
+        if not text or not text.strip():
+            self.status_bar.showMessage(self.lang.translate('lexer_input_empty'), 5000)
+            return
+
         self.current_file_path = self.current_input_widget.file_path
 
         if not self.current_file_path or self.current_input_widget.isModified():
@@ -436,8 +438,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             output_widget = self.input_to_output_map[self.current_file_path]
             output_index = self.output_tab_widget.indexOf(output_widget)
             self.output_tab_widget.setCurrentIndex(output_index)
-
-        text = self.current_input_widget.text()
 
         if self.my_lexer:
             lexer = LexicalAnalyzer(self.lang)
@@ -460,6 +460,11 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             return
         index = self.input_tab_widget.currentIndex()
         self.current_input_widget = self.input_tab_widget.widget(index)
+        text = self.current_input_widget.text()
+        if not text or not text.strip():
+            self.status_bar.showMessage(self.lang.translate('parser_input_empty'), 5000)
+            return
+
         self.current_file_path = self.current_input_widget.file_path
 
         if not self.current_file_path or self.current_input_widget.isModified():
@@ -475,20 +480,14 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             output_index = self.output_tab_widget.indexOf(output_widget)
             self.output_tab_widget.setCurrentIndex(output_index)
 
-        text = self.current_input_widget.text()
-
-        if self.my_parser:
-            parser = MyParser(self.lang)
-            _, errors = parser.parse(text)
-        else:
-            # parser = RecursiveParser(self.lang)
-            # parser.parse_complex_declaration(text)
-            # errors = parser.errors
-            parser = AutomaticParser(self.lang)
-            _, errors = parser.parse(text)
+        parser = MyParser(self.lang)
+        _, errors = parser.parse(text)
 
         self.create_or_update_parser_table(errors)
-        self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0))
+        if len(errors) == 0:
+            self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
+        else:
+            self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
 
     def on_lexer_output(self):
         data = self.lexer_process.readAllStandardOutput()
@@ -524,7 +523,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         errors = []
         lines = output.strip().split('\n')
 
-        # Парсим: "[1:1-3] - code=1: keyword int"
+        # Parsing: "[1:1-3] - code=1: keyword int"
         pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
         error_pattern = r'\[(\d+):(\d+)-(\d+)\] - ERROR:\s*(.+)'
 
@@ -695,8 +694,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
         table.setColumnCount(3)
         table.setHorizontalHeaderLabels([
-            "Неверный фрагмент",
-            "Описание ошибки",
+            self.lang.translate('parser_wrong_fragment'),
+            self.lang.translate('parser_error_description'),
             self.lang.translate('location'),
         ])
 

@@ -44,6 +44,7 @@ class LexicalAnalyzer:
 
     def analyze(self, text):
         self.text = text
+        self._lines = text.splitlines() or [text]
         self.tokens = []
         self.errors = []
         self.position = 0
@@ -110,11 +111,37 @@ class LexicalAnalyzer:
         })
 
     def _add_error(self, lexeme):
+        start_col = self.column
+        end_col = start_col + len(lexeme) - 1
+
+        if self.errors:
+            last = self.errors[-1]
+            last_line = last.get('line')
+            last_end = last.get('end_col')
+            if last_line == self.line and isinstance(last_end, int) and start_col > last_end:
+                between_text = ''
+                line_text = self._lines[self.line - 1] if 1 <= self.line <= len(self._lines) else ''
+
+                if start_col > last_end + 1:
+                    between_text = line_text[last_end:start_col - 1]
+
+                if start_col == last_end + 1 or (between_text and all(ch == ' ' for ch in between_text)):
+                    last['lexeme'] += between_text + lexeme
+                    last['end_col'] = end_col
+                    last['location'] = (
+                        f"{self.lang.translate('line_num').format(self.line, 0)}, "
+                        f"{last['start_col']}-{last['end_col']}"
+                    )
+                    return
+
         self.errors.append({
             'code': 'ERROR',
             'type': self.lang.translate('invalid_char'),
             'lexeme': lexeme,
-            'location': f"{self.lang.translate('line_num').format(self.line, 0)}, {self.column}-{self.column}",
+            'location': f"{self.lang.translate('line_num').format(self.line, 0)}, {start_col}-{end_col}",
+            'line': self.line,
+            'start_col': start_col,
+            'end_col': end_col,
         })
 
     def _process_identifier_or_keyword(self):
@@ -122,7 +149,7 @@ class LexicalAnalyzer:
         start_col = self.column
         start_pos = self.position
 
-        while (self.position < len(self.text) and 
+        while (self.position < len(self.text) and
                (self.text[self.position].isalnum() or self.text[self.position] == '_')):
             self._advance()
 
@@ -182,7 +209,7 @@ class LexicalAnalyzer:
         start_line = self.line
         start_col = self.column
 
-        if (self.position + 1 < len(self.text) and 
+        if (self.position + 1 < len(self.text) and
             self.text[self.position + 1] == ':'):
             self._advance()
             self._advance()

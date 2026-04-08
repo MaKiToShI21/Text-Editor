@@ -83,6 +83,9 @@ class Language():
                 'save_cancelled': 'Сохранение отменено',
 
                 'total_errors': 'Количество ошибок: {}',
+                'no_errors': 'Ошибок нет',
+                'parser_input_empty': 'Введите текст перед запуском парсера',
+                'lexer_input_empty': 'Введите текст перед запуском лексера',
 
                 # Tab actions
                 'tab_saved_and_closed': 'Вкладка "{}" сохранена и закрыта',
@@ -122,6 +125,7 @@ class Language():
                 'error': 'Ошибка',
                 'opening_error': 'Не удалось открыть файл:\n{}',
                 'file_saving_error': 'Не удалось сохранить файл: {}',
+                'expected': 'Ожидалось: {}',
 
                 # For lexer
                 'kw_double': 'Ключевое слово double',
@@ -145,6 +149,8 @@ class Language():
                 'lexeme_type': 'Тип лексемы',
                 'lexeme': 'Лексема',
                 'location': 'Местоположение'
+                ,'parser_wrong_fragment': 'Неверный фрагмент'
+                ,'parser_error_description': 'Описание ошибки'
             },
             'en': {
                 # Window title
@@ -222,6 +228,9 @@ class Language():
                 'save_cancelled': 'Save cancelled',
 
                 'total_errors': 'Number of errors: {}',
+                'no_errors': 'No errors',
+                'parser_input_empty': 'Enter text before running parser',
+                'lexer_input_empty': 'Enter text before running lexer',
 
                 # Tab actions
                 'tab_saved_and_closed': 'Tab "{}" saved and closed',
@@ -261,6 +270,7 @@ class Language():
                 'error': 'Error',
                 'opening_error': 'Could not open file:\n{}',
                 'file_saving_error': 'Failed to save file: {}',
+                'expected': 'Expected: {}',
 
                 # For lexer
                 'kw_double': 'Keyword double',
@@ -283,6 +293,8 @@ class Language():
                 'lexeme_type': 'Lexeme type',
                 'lexeme': 'Lexeme',
                 'location': 'Location'
+                ,'parser_wrong_fragment': 'Wrong fragment'
+                ,'parser_error_description': 'Error description'
             }
         }
 
