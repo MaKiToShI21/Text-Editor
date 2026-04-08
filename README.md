@@ -61,7 +61,7 @@ A lexer was created based on it to parse the string "**`std::complex<double> my_
 |--------------|--------------|------------|
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/correct_line.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/invalid_char.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/multi-line.png" width="500"> |
 
-<h2 align="center">Title and Objective of the Laboratory Work 4</h2>
+<h2 align="center">Title and Objective of the Laboratory Work 3</h2>
 
 **Laboratory Work 3.** Development of a syntactic analyzer (parser)
 
@@ -80,6 +80,8 @@ Test examples:
 |  No errors   | Some errors  | multi-line errors |
 |--------------|--------------|-------------------|
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/no_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/lots_of_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/multi-line_errors.png" width="500"> |
+
+<h2 align="center">Title and Objective of the Laboratory Work 4</h2>
 
 **Laboratory Work 4.** Implementation of a substring search algorithm using regular expressions
 
