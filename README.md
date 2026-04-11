@@ -7,8 +7,9 @@
 4. **[Technologies Used](#technologies-used)**
 5. **[Build and Launch Instructions](#build-and-launch-instructions)**
 6. **[Title and Objective of the Laboratory Work 2](#title-and-objective-of-the-laboratory-work-2)**
-7. **[Title and Objective of the Laboratory Work 4](#title-and-objective-of-the-laboratory-work-4)**
-8. **[User Manual](#user-manual)**
+7. **[Title and Objective of the Laboratory Work 3](#title-and-objective-of-the-laboratory-work-3)**
+8. **[Title and Objective of the Laboratory Work 4](#title-and-objective-of-the-laboratory-work-4)**
+9. **[User Manual](#user-manual)**
 
 ___
 
@@ -60,7 +61,7 @@ A lexer was created based on it to parse the string "**`std::complex<double> my_
 |--------------|--------------|------------|
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/correct_line.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/invalid_char.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/multi-line.png" width="500"> |
 
-<h2 align="center">Title and Objective of the Laboratory Work 4</h2>
+<h2 align="center">Title and Objective of the Laboratory Work 3</h2>
 
 **Laboratory Work 3.** Development of a syntactic analyzer (parser)
 
@@ -79,6 +80,8 @@ Test examples:
 |  No errors   | Some errors  | multi-line errors |
 |--------------|--------------|-------------------|
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/no_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/lots_of_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/parser/images/multi-line_errors.png" width="500"> |
+
+<h2 align="center">Title and Objective of the Laboratory Work 4</h2>
 
 **Laboratory Work 4.** Implementation of a substring search algorithm using regular expressions
 
