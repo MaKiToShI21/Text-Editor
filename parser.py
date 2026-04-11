@@ -56,6 +56,7 @@ class MyParser:
         space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
         float_code = LexicalAnalyzer.TOKEN_CODES["FLOAT"]
         minus_code = LexicalAnalyzer.TOKEN_CODES["MINUS"]
+        last_error_anchor = None
 
         for seq_index, token_name in enumerate(self.EXPECTED_TOKEN_SEQUENCE):
             expected_code = LexicalAnalyzer.TOKEN_CODES[token_name]
@@ -74,11 +75,15 @@ class MyParser:
                 if cursor <= end:
                     wrong_fragment = self.tokens[cursor]["lexeme"]
                     location = self.tokens[cursor]["location"]
+                    error_anchor = cursor
                 else:
                     wrong_fragment = ""
                     location = "EOF"
+                    error_anchor = end + 1
 
-                self._add_error(expected_code, wrong_fragment, location)
+                if error_anchor != last_error_anchor:
+                    self._add_error(expected_code, wrong_fragment, location)
+                    last_error_anchor = error_anchor
                 if self._should_advance_cursor_in_range(cursor, seq_index, end):
                     cursor += 1
                 continue
@@ -99,7 +104,14 @@ class MyParser:
                         t["lexeme"] for t in self.tokens[wrong_indices[0] : wrong_indices[-1] + 1]
                     )
                     location = self._range_location(wrong_indices[0], wrong_indices[-1])
-                    self._add_error(expected_code, wrong_fragment, location)
+                    error_anchor = wrong_indices[0]
+                    if error_anchor != last_error_anchor:
+                        self._add_error(expected_code, wrong_fragment, location)
+                        last_error_anchor = error_anchor
+                else:
+                    last_error_anchor = None
+            else:
+                last_error_anchor = None
 
             cursor = found_index + 1
 

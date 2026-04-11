@@ -8,16 +8,16 @@ from ui_editor import Ui_MainWindow
 from code_editor import CodeEditor
 from PyQt6.QtCore import QProcess
 from lexer import LexicalAnalyzer
-from my_parser import MyParser
+from parser import MyParser
 from PyQt6.QtGui import QAction
 from PyQt6.uic import loadUi
 from PyQt6.QtCore import Qt
 import re
 import os
 import sys
-import os
 import tempfile
 import shutil
+
 
 # std::complex<double> my_complex(-10.0, 2.0);
 class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
