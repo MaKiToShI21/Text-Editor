@@ -1,30 +1,27 @@
 from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QFileDialog,
-                             QMessageBox, QListWidget, QDialog,
-                             QTextBrowser, QVBoxLayout, QTableWidget,
-                             QTableWidgetItem)
+                             QMessageBox, QDialog, QTextBrowser,
+                             QVBoxLayout, QTableWidget, QTableWidgetItem)
+from PyQt6.QtGui import QAction, QDesktopServices
 from PyQt6.QtWidgets import QDialog, QVBoxLayout
 from language import Language, LanguageDialog
-from ui_editor import Ui_MainWindow
 from code_editor import CodeEditor
-from PyQt6.QtCore import QProcess
 from lexer import LexicalAnalyzer
-from parser import MyParser
-from PyQt6.QtGui import QAction
+from PyQt6.QtCore import Qt, QUrl
+from ui import Ui_MainWindow
 from PyQt6.uic import loadUi
-from PyQt6.QtCore import Qt
+from parser import Parser
+from PyQt6 import QtGui
+import sys
 import re
 import os
-import sys
-import tempfile
-import shutil
 
 
-# std::complex<double> my_complex(-10.0, 2.0);
-class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
+class TextEditor(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        loadUi('text_editor.ui', self)
-        # self.setupUi(self)
+        # loadUi('text_editor.ui', self)
+        self.setupUi(self)
+        self.addIcons()
 
         self.setMinimumSize(500, 400)
 
@@ -37,10 +34,36 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         self.current_input_widget = None
         self.current_tab_name = None
         self.current_file_path = None
-        self.my_lexer = True
 
         self.setAcceptDrops(True)
         self.setup_actions()
+
+    @staticmethod
+    def resource_path(relative_path):
+        base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_dir, relative_path)
+
+    def addIcons(self):
+        self.actionNew.setIcon(QtGui.QIcon(self.resource_path("icons/new_file.png")))
+        self.actionOpen.setIcon(QtGui.QIcon(self.resource_path("icons/open_folder.png")))
+        self.actionSave.setIcon(QtGui.QIcon(self.resource_path("icons/save_file.png")))
+        self.actionSaveAs.setIcon(QtGui.QIcon(self.resource_path("icons/save_file_as.png")))
+        self.actionExit.setIcon(QtGui.QIcon(self.resource_path("icons/exit.png")))
+
+        self.actionUndo.setIcon(QtGui.QIcon(self.resource_path("icons/undo.png")))
+        self.actionRedo.setIcon(QtGui.QIcon(self.resource_path("icons/redo.png")))
+        self.actionCopy.setIcon(QtGui.QIcon(self.resource_path("icons/copy.png")))
+        self.actionPaste.setIcon(QtGui.QIcon(self.resource_path("icons/paste.png")))
+        self.actionCut.setIcon(QtGui.QIcon(self.resource_path("icons/cut.png")))
+        self.actionDelete.setIcon(QtGui.QIcon(self.resource_path("icons/delete.png")))
+        self.actionSelectAll.setIcon(QtGui.QIcon(self.resource_path("icons/select_all.png")))
+
+        self.actionHelp.setIcon(QtGui.QIcon(self.resource_path("icons/help.png")))
+        self.actionAbout.setIcon(QtGui.QIcon(self.resource_path("icons/about.png")))
+        self.actionLanguage.setIcon(QtGui.QIcon(self.resource_path("icons/language.png")))
+
+        self.actionRunLexer.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
+        self.actionRunParser.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
 
     def setup_actions(self):
         action_map = {
@@ -49,6 +72,15 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             'actionSave': self.save_file,
             'actionSaveAs': self.save_file_as,
             'actionExit': self.exit_app,
+            'actionOpenProblemStatement': self.open_problem_statement,
+            'actionOpenStateDiagram': self.open_state_diagram,
+            'actionOpenGrammar': self.open_grammar,
+            'actionOpenGrammarClass': self.open_grammar_class,
+            'actionOpenAnalysisMethod': self.open_analysis_method,
+            'actionDiagnosticsTroubleshooting': self.open_diagnostics_troubleshooting,
+            'actionOpenExample': self.open_example,
+            'actionOpenReferences': self.open_references,
+            'actionOpenSourceCode': self.open_source_code,
             'actionRunLexer': self.runLexer,
             'actionRunParser': self.runParser,
             'actionHelp': self.help,
@@ -73,7 +105,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             action = self.findChild(QAction, action_name)
             if action:
                 action.triggered.connect(
-                    lambda checked, an=action_name, mn=method_name: 
+                    lambda checked, an=action_name, mn=method_name:
                     self.edit_action(an, mn)
                 )
 
@@ -107,8 +139,11 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             'actionNew', 'actionOpen', 'actionSave', 'actionSaveAs',
             'actionExit', 'actionUndo', 'actionRedo', 'actionCut',
             'actionCopy', 'actionPaste', 'actionDelete', 'actionSelectAll',
-            'action_15', 'action_16', 'action_17', 'action_18', 'action_19',
-            'action_20', 'action_21', 'actionRunParser', 'actionRunLexer', 'actionHelp',
+            'actionOpenProblemStatement', 'actionOpenStateDiagram',
+            'actionOpenGrammar', 'actionOpenGrammarClass',
+            'actionOpenAnalysisMethod', 'actionDiagnosticsTroubleshooting',
+            'actionOpenExample', 'actionOpenReferences',
+            'actionOpenSourceCode', 'actionRunLexer', 'actionRunParser', 'actionHelp',
             'actionAbout', 'actionLanguage'
         ]
 
@@ -158,9 +193,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             self.create_new_tab(file_name, content, file_path)
             return True
         except Exception as e:
-            QMessageBox.critical(self, self.lang.translate('error'),
-                                 self.lang.translate('opening_error').
-                                 format(str(e), 0))
+            QMessageBox.critical(
+                self.lang.translate('error'),
+                self.lang.translate('opening_error').format(str(e), 0)
+            )
             return False
 
     def close_input_tab(self, index):
@@ -242,7 +278,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             reply = QMessageBox.question(
                 self,
                 self.lang.translate('unsaved_changes'),
-                self.lang.translate('save_changes').format(tab_name),
+                self.lang.translate('save_changes').format(tab_name, 0),
                 QMessageBox.StandardButton.Yes |
                 QMessageBox.StandardButton.No |
                 QMessageBox.StandardButton.Cancel
@@ -264,7 +300,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         self.close()
 
     def closeEvent(self, event):
-        self.cleanup_temp_files()
         if self.can_close():
             event.accept()
         else:
@@ -305,6 +340,65 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
     def new_file(self):
         self.create_new_tab()
 
+    def _open_info_html(self, filename):
+        info_dir = self.resource_path('information')
+
+        file_path = os.path.join(info_dir, filename)
+
+        if not os.path.isfile(file_path):
+            QMessageBox.critical(
+                self,
+                self.lang.translate('error'),
+                self.lang.translate('opening_error').format(file_path)
+            )
+            return
+
+        QDesktopServices.openUrl(QUrl.fromLocalFile(file_path))
+
+    def open_problem_statement(self):
+        self._open_info_html('problem_statement.html')
+
+    def open_state_diagram(self):
+        self._open_info_html('state_diagram.html')
+
+    def open_grammar(self):
+        self._open_info_html('grammar.html')
+
+    def open_grammar_class(self):
+        self._open_info_html('grammar_classification.html')
+
+    def open_analysis_method(self):
+        self._open_info_html('analysis_method.html')
+
+    def open_diagnostics_troubleshooting(self):
+        self._open_info_html('diagnostics_troubleshooting.html')
+
+    def open_example(self):
+        example_text = "std::complex<double> my_complex(-10.0, 2.0);"
+        example_path = self.resource_path('example.txt')
+        normalized_example_path = os.path.normcase(os.path.normpath(example_path))
+
+        for i in range(self.input_tab_widget.count()):
+            editor = self.input_tab_widget.widget(i)
+            tab_file_path = getattr(editor, 'file_path', None)
+            if not tab_file_path:
+                continue
+
+            normalized_tab_path = os.path.normcase(os.path.normpath(tab_file_path))
+            if normalized_tab_path == normalized_example_path:
+                editor.setText(example_text)
+                editor.setModified(False)
+                self.input_tab_widget.setCurrentIndex(i)
+                return
+
+        self.create_new_tab("example.txt", example_text, example_path)
+
+    def open_references(self):
+        self._open_info_html('references.html')
+
+    def open_source_code(self):
+        QDesktopServices.openUrl(QUrl("https://github.com/MaKiToShI21/Text-Editor"))
+
     def save_file(self):
         widget = self.input_tab_widget.currentWidget()
         if not widget:
@@ -324,9 +418,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 format(os.path.basename(file_path)), 3000)
             return True
         except Exception as e:
-            QMessageBox.critical(self, self.lang.translate('error'),
-                                 self.lang.translate('file_saving_error').
-                                 format(str(e)))
+            QMessageBox.critical(
+                self.lang.translate('error'),
+                self.lang.translate('file_saving_error').format(str(e))
+            )
             return False
 
     def save_file_as(self):
@@ -364,55 +459,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             return True
         except Exception as e:
             QMessageBox.critical(
-                self, self.lang.translate('error'),
-                self.lang.translate('file_saving_error').format(str(e), 0),
-                QMessageBox.StandardButton.Ok)
+                self.lang.translate('error'),
+                self.lang.translate('file_saving_error').format(str(e), 0)
+            )
             return False
-
-    def get_lexer_path(self):
-        if getattr(sys, 'frozen', False):
-            # app_dir = os.path.dirname(sys.executable)
-            # external_lexer = os.path.join(app_dir, 'lexer', 'lexer.exe')
-
-            # if os.path.exists(external_lexer):
-            #     return external_lexer
-
-            return self.extract_lexer_from_resources()
-        else:
-            return os.path.join(os.path.dirname(__file__), 'lexer', 'lexer.exe')
-
-    def extract_lexer_from_resources(self):
-        try:
-            if hasattr(self, 'temp_lexer_path') and self.temp_lexer_path:
-                if os.path.exists(self.temp_lexer_path):
-                    return self.temp_lexer_path
-
-            source = os.path.join(sys._MEIPASS, 'lexer', 'lexer.exe')
-
-            if not os.path.exists(source):
-                return None
-
-            temp_dir = tempfile.mkdtemp(prefix='texteditor_')
-            temp_path = os.path.join(temp_dir, 'lexer.exe')
-
-            shutil.copy2(source, temp_path)
-
-            self.temp_lexer_path = temp_path
-            self.temp_lexer_dir = temp_dir
-
-            return temp_path
-        except Exception as e:
-            return None
-
-    def cleanup_temp_files(self):
-        if hasattr(self, 'temp_lexer_path') and self.temp_lexer_path:
-            try:
-                if os.path.exists(self.temp_lexer_path):
-                    os.remove(self.temp_lexer_path)
-                if hasattr(self, 'temp_lexer_dir') and os.path.exists(self.temp_lexer_dir):
-                    os.rmdir(self.temp_lexer_dir)
-            except:
-                pass
 
     def runLexer(self):
         if not self.input_tab_widget:
@@ -439,21 +489,9 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             output_index = self.output_tab_widget.indexOf(output_widget)
             self.output_tab_widget.setCurrentIndex(output_index)
 
-        if self.my_lexer:
-            lexer = LexicalAnalyzer(self.lang)
-            tokens, errors = lexer.analyze(text)
-            self.create_or_update_table(tokens, errors)
-        else:
-            lexer_path = self.get_lexer_path()
-
-            self.lexer_process = QProcess()
-            self.lexer_process.readyReadStandardOutput.connect(self.on_lexer_output)
-            self.lexer_process.readyReadStandardError.connect(self.on_lexer_error)
-            self.lexer_process.finished.connect(self.on_lexer_finished)
-
-            self.lexer_process.start(lexer_path)
-            self.lexer_process.write(text.encode('utf-8'))
-            self.lexer_process.closeWriteChannel()
+        lexer = LexicalAnalyzer(self.lang)
+        tokens, errors = lexer.analyze(text)
+        self.create_or_update_table(tokens, errors)
 
     def runParser(self):
         if not self.input_tab_widget:
@@ -480,131 +518,20 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             output_index = self.output_tab_widget.indexOf(output_widget)
             self.output_tab_widget.setCurrentIndex(output_index)
 
-        parser = MyParser(self.lang)
+        parser = Parser(self.lang)
         _, errors = parser.parse(text)
 
-        self.create_or_update_parser_table(errors)
         if len(errors) == 0:
+            existing_table = self.input_to_output_map.get(self.current_file_path)
+            if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
+                output_index = self.output_tab_widget.indexOf(existing_table)
+                self.output_tab_widget.removeTab(output_index)
+                existing_table.deleteLater()
+                del self.input_to_output_map[self.current_file_path]
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
         else:
+            self.create_or_update_parser_table(errors)
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
-
-    def on_lexer_output(self):
-        data = self.lexer_process.readAllStandardOutput()
-
-        try:
-            output = bytes(data).decode('cp1251')
-        except:
-            try:
-                output = bytes(data).decode('utf-8')
-            except:
-                output = bytes(data).decode('cp866', errors='replace')
-
-        tokens, errors = self.parse_lexer_output(output)
-        self.create_or_update_table(tokens, errors)
-
-    def on_lexer_error(self):
-        error_data = self.lexer_process.readAllStandardError()
-        error = bytes(error_data).decode('utf-8')
-        table = self.create_or_update_table(None)
-        table.setRowCount(1)
-        table.setItem(0, 0, QTableWidgetItem("ERROR"))
-        table.setItem(0, 1, QTableWidgetItem("Lexer error"))
-        table.setItem(0, 2, QTableWidgetItem(error[:50]))
-        table.setItem(0, 3, QTableWidgetItem(""))
-
-        self.output_table_data(table)
-
-    def on_lexer_finished(self, exit_code, exit_status):
-        self.lexer_process = None
-
-    def parse_lexer_output(self, output):
-        tokens = []
-        errors = []
-        lines = output.strip().split('\n')
-
-        # Parsing: "[1:1-3] - code=1: keyword int"
-        pattern = r'\[(\d+):(\d+)-(\d+)\] - code=(\d+):\s*(.+)'
-        error_pattern = r'\[(\d+):(\d+)-(\d+)\] - ERROR:\s*(.+)'
-
-        current_error = None
-        prev_end_col = None
-        prev_line_num = None
-
-        for line in lines:
-            if not line.strip():
-                continue
-
-            error_match = re.match(error_pattern, line)
-            if error_match:
-                line_num = int(error_match.group(1))
-                start_col = int(error_match.group(2))
-                end_col = int(error_match.group(3))
-                error_msg = error_match.group(4)
-
-                parts = error_msg.split(' ')
-                lexeme = parts[-1] if " " in error_msg else error_msg
-
-                if (current_error and
-                    prev_line_num == line_num and
-                    prev_end_col and
-                    prev_end_col + 1 == start_col):
-                    current_error['lexeme'] += lexeme
-                    current_error['location'] = f"{self.lang.translate('line_num').format(line_num, 0)}, {current_error['start_col']}-{end_col}"
-                else:
-                    if current_error:
-                        del current_error['start_col']
-                        errors.append(current_error)
-
-                    current_error = {
-                        'code': 'ERROR',
-                        'type': self.lang.translate('invalid_char'),
-                        'lexeme': lexeme,
-                        'start_col': start_col,
-                        'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
-                    }
-
-                prev_end_col = end_col
-                prev_line_num = line_num
-                continue
-
-            if current_error:
-                del current_error['start_col']
-                errors.append(current_error)
-                current_error = None
-                prev_end_col = None
-                prev_line_num = None
-
-            match = re.match(pattern, line)
-            if match:
-                line_num = match.group(1)
-                start_col = match.group(2)
-                end_col = match.group(3)
-                code = match.group(4)
-                description = match.group(5)
-
-                token_type = self.get_token_type(int(code))
-
-                if " " in description:
-                    parts = description.split()
-                    lexeme = parts[-1]
-                elif description == 'space':
-                    lexeme = ' '
-                else:
-                    lexeme = description
-
-                tokens.append({
-                    'code': code,
-                    'type': token_type,
-                    'lexeme': lexeme,
-                    'location': f"{self.lang.translate('line_num').format(line_num, 0)}, {start_col}-{end_col}",
-                })
-
-        if current_error:
-            del current_error['start_col']
-            errors.append(current_error)
-
-        return tokens, errors
 
     def get_token_type(self, code):
         lexer = LexicalAnalyzer(self.lang)
@@ -633,36 +560,51 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             self.lang.translate('lexeme'),
             self.lang.translate('location')])
 
-        if tokens:
-            total_rows = len(tokens) + len(errors)
+        total_rows = len(errors) + len(tokens)
+        rowLables = []
+
+        if total_rows > 0:
             table.setRowCount(total_rows)
-            rowLables = []
-            for row, token in enumerate(tokens):
-                table.setItem(row, 0, QTableWidgetItem(str(token['code'])))
-                table.setItem(row, 1, QTableWidgetItem(token['type']))
-                table.setItem(row, 2, QTableWidgetItem(token['lexeme']))
-                table.setItem(row, 3, QTableWidgetItem(token['location']))
+
+            for row, error in enumerate(errors):
+                item_code = QTableWidgetItem(str(error['code']))
+                item_code.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 0, item_code)
+
+                item_type = QTableWidgetItem(error['type'])
+                item_type.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 1, item_type)
+
+                item_lexeme = QTableWidgetItem(error['lexeme'])
+                item_lexeme.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 2, item_lexeme)
+
+                item_loc = QTableWidgetItem(error['location'])
+                item_loc.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 3, item_loc)
+
                 rowLables.append(str(row + 1))
-            if errors:
-                for i, error in enumerate(errors):
-                    row = len(tokens) + i
-                    item_code = QTableWidgetItem(error['code'])
-                    item_code.setForeground(Qt.GlobalColor.red)
-                    table.setItem(row, 0, item_code)
 
-                    item_type = QTableWidgetItem(error['type'])
-                    item_type.setForeground(Qt.GlobalColor.red)
-                    table.setItem(row, 1, item_type)
+            token_start_row = len(errors)
+            for i, token in enumerate(tokens):
+                row = token_start_row + i
+                item_code = QTableWidgetItem(str(token['code']))
+                item_code.setForeground(Qt.GlobalColor.white)
+                table.setItem(row, 0, item_code)
 
-                    item_lexeme = QTableWidgetItem(error['lexeme'])
-                    item_lexeme.setForeground(Qt.GlobalColor.red)
-                    table.setItem(row, 2, item_lexeme)
+                item_type = QTableWidgetItem(token['type'])
+                item_type.setForeground(Qt.GlobalColor.white)
+                table.setItem(row, 1, item_type)
 
-                    item_loc = QTableWidgetItem(error['location'])
-                    item_loc.setForeground(Qt.GlobalColor.red)
-                    table.setItem(row, 3, item_loc)
+                item_lexeme = QTableWidgetItem(token['lexeme'])
+                item_lexeme.setForeground(Qt.GlobalColor.white)
+                table.setItem(row, 2, item_lexeme)
 
-                    rowLables.append(str(row))
+                item_loc = QTableWidgetItem(token['location'])
+                item_loc.setForeground(Qt.GlobalColor.white)
+                table.setItem(row, 3, item_loc)
+
+                rowLables.append(str(row + 1))
             self._rebind_table_click_handler(table, self.on_table_item_clicked)
         else:
             table.setRowCount(0)
@@ -755,9 +697,15 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
             editor = self.input_tab_widget.currentWidget()
             if editor:
-                line_start_pos = editor.SendScintilla(editor.SCI_POSITIONFROMLINE, line_num - 1)
-                start_pos = line_start_pos + start_col - 1
-                end_pos = line_start_pos + end_col
+                line_index = line_num - 1
+                line_start_pos = editor.SendScintilla(editor.SCI_POSITIONFROMLINE, line_index)
+                line_text = editor.text(line_index)
+
+                start_bytes = len(line_text[:max(start_col - 1, 0)].encode('utf-8'))
+                end_bytes = len(line_text[:max(end_col, 0)].encode('utf-8'))
+
+                start_pos = line_start_pos + start_bytes
+                end_pos = line_start_pos + end_bytes
 
                 editor.SendScintilla(editor.SCI_SETSEL, start_pos, end_pos)
                 editor.SendScintilla(editor.SCI_SCROLLCARET)
@@ -789,6 +737,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
         except Exception:
             pass
         table.itemClicked.connect(handler)
+
     def output_table_data(self, table):
         self.output_tab_widget.addTab(table, self.current_tab_name)
         self.input_to_output_map[self.current_file_path] = table
@@ -796,9 +745,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
     def edit_action(self, action_name, method_name):
         widget = self.get_current_input_tab_widget()
+        action = f"{action_name}_status_bar"
         if widget:
             getattr(widget, method_name)()
-            self.status_bar.showMessage(self.lang.translate(action_name), 3000)
+            self.status_bar.showMessage(self.lang.translate(action), 3000)
 
     def get_current_input_tab_widget(self):
         if not self.input_tab_widget:
@@ -921,21 +871,9 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             </head>
             <body>
                 <h1>Текстовый редактор</h1>
-                <div class='version'>Руководство пользователя | Версия 1.0.0</div>
+                <div class='version'>Руководство пользователя | Версия 1.1.0</div>
 
-                <h2 id='intro'>Введение</h2>
                 <p><b>Текстовый редактор</b> — это приложение для создания и редактирования текстовых документов с возможностью синтаксического анализа. Программа предоставляет удобный интерфейс для работы с текстом и поддерживает все основные операции редактирования.</p>
-
-                <h2 id='interface'>Интерфейс программы</h2>
-                <p>Главное окно текстового редактора состоит из следующих элементов:</p>
-                <ul>
-                    <li><b>Заголовок окна</b> — отображает название программы и имя текущего файла</li>
-                    <li><b>Главное меню</b> — содержит все доступные команды</li>
-                    <li><b>Панель инструментов</b> — кнопки быстрого доступа</li>
-                    <li><b>Область редактирования</b> — текстовое поле для ввода и редактирования текста</li>
-                    <li><b>Область вывода результатов</b> — область для отображения результатов работы анализатора</li>
-                    <li><b>Строка состояния</b> — отображает информацию о состоянии работы приложения</li>
-                </ul>
 
                 <h2 id='file-menu'>Меню «Файл»</h2>
                 <table>
@@ -970,8 +908,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                         <td>Завершает работу программы</td>
                     </tr>
                 </table>
-
-                <p>При попытке закрыть несохраненный документ программа предложит сохранить изменения.</p>
 
                 <h2 id='edit-menu'>Меню «Правка»</h2>
                 <table>
@@ -1018,26 +954,16 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 </table>
 
                 <h2 id='text-menu'>Меню «Текст»</h2>
-                <p>Меню «Текст» содержит информационные разделы о языке и грамматике:</p>
+                <p>Меню «Текст» содержит информационные разделы:</p>
                 <ul>
                     <li><b>Постановка задачи</b> — описание цели и задач работы</li>
-                    <li><b>Грамматика</b> — формальное описание грамматики языка</li>
-                    <li><b>Классификация грамматики</b> — тип грамматики по Хомскому</li>
-                    <li><b>Метод анализа</b> — описание метода синтаксического анализа</li>
                     <li><b>Тестовый пример</b> — пример разбора входной строки</li>
                     <li><b>Список литературы</b> — использованные источники</li>
                     <li><b>Исходный код программы</b> — код приложения</li>
                 </ul>
-                <p>При выборе любого пункта открывается окно с соответствующей информацией.</p>
 
                 <h2 id='run-menu'>Меню «Пуск»</h2>
                 <p><b>Запуск анализатора</b> (<span>F5</span>) — запускает синтаксический анализ текста из области редактирования.</p>
-
-                <p><b>Результаты анализа:</b></p>
-                <ul>
-                    <li>Ошибочные строки отмечаются красным цветом с указанием позиции ошибки</li>
-                    <li>При щелчке на сообщении об ошибке курсор переходит к ошибочному фрагменту</li>
-                </ul>
 
                 <h2 id='help-menu'>Меню «Справка»</h2>
                 <table>
@@ -1058,18 +984,13 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     </tr>
                 </table>
 
-                <h2>Работа с областями редактирования и вывода</h2>
-                <p><b>Область редактирования:</b> предназначена для ввода и редактирования текста. Поддерживаются все стандартные операции редактирования.</p>
-                <p><b>Область вывода результатов:</b> отображает результаты работы синтаксического анализатора. Область доступна только для чтения.</p>
-                <p><b>Изменение размеров областей:</b> перетаскивайте разделитель между областями мышью.</p>
-
                 <div style="text-align: center; font-size: 16px; font-weight: bold;">
                     <a href="https://github.com/MaKiToShI21/Text-Editor/blob/main/docs/ru/user_manual.md">Подробное руководство пользователя</a>
                 </div>
 
                 <div class='footer'>
                     <p>Разработано с использованием PyQt6</p>
-                    <p>В© 2026 MaKiToShI</p>
+                    <p>© 2026 MaKiToShI</p>
                 </div>
             </body>
             </html>
@@ -1154,23 +1075,11 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                 </head>
                 <body>
                     <h1>Text editor</h1>
-                    <div class='version'>User Manual | Version 1.0.0</div>
+                    <div class='version'>User Manual | Version 1.1.0</div>
 
-                    <h2 id='intro'>Introduction</h2>
-                    <p><b>Text editor</b> — This application is for creating and editing text documents with parsing capabilities. The program provides a user-friendly interface for working with text and supports all basic editing operations.</p>
+                    <p><b>Text editor</b> — is an application is for creating and editing text documents with parsing capabilities. The program provides a user-friendly interface for working with text and supports all basic editing operations.</p>
 
-                    <h2 id='interface'>Program interface</h2>
-                    <p>The main window of the text editor consists of the following elements:</p>
-                    <ul>
-                        <li><b>Window title</b> — displays the program name and the name of the current file</li>
-                        <li><b>Main menu</b> — contains all available commands</li>
-                        <li><b>Toolbar</b> — quick access buttons</li>
-                        <li><b>Editing area</b> — a text field for entering and editing text</li>
-                        <li><b>Results output area</b> — area for displaying the analyzer's results</li>
-                        <li><b>Status bar</b> — displays information about the application's running status</li>
-                    </ul>
-
-                    <h2 id='file-menu'>Menu В«FileВ»</h2>
+                    <h2 id='file-menu'>Menu «File»</h2>
                     <table>
                         <tr>
                             <th>Command</th>
@@ -1204,9 +1113,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                         </tr>
                     </table>
 
-                    <p>When you try to close an unsaved document, the program will prompt you to save changes.</p>
-
-                    <h2 id='edit-menu'>Menu В«EditВ»</h2>
+                    <h2 id='edit-menu'>Menu «Edit»</h2>
                     <table>
                         <tr>
                             <th>Command</th>
@@ -1250,29 +1157,19 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                         </tr>
                     </table>
 
-                    <h2 id='text-menu'>Menu В«TextВ»</h2>
-                    <p>Menu В«TextВ» contains information sections on language and grammar:</p>
+                    <h2 id='text-menu'>Menu «Text»</h2>
+                    <p>Menu «Text» contains information sections:</p>
                     <ul>
                         <li><b>Statement of the problem</b> — description of the purpose and objectives of the work</li>
-                        <li><b>Grammar</b> — formal description of the grammar of a language</li>
-                        <li><b>Classification of grammar</b> — Chomsky's type of grammar</li>
-                        <li><b>Method of analysis</b> — description of the syntactic analysis method</li>
                         <li><b>Test example</b> — example of parsing an input string</li>
                         <li><b>Bibliography</b> — sources used</li>
                         <li><b>Source code of the program</b> — program code</li>
                     </ul>
-                    <p>When you select any item, a window with the corresponding information opens.</p>
 
-                    <h2 id='run-menu'>Menu В«RunВ»</h2>
+                    <h2 id='run-menu'>Menu «Run»</h2>
                     <p><b>Launching the analyzer</b> (<span>F5</span>) — starts parsing the text from the editing area.</p>
 
-                    <p><b>Results of the analysis:</b></p>
-                    <ul>
-                        <li>Erroneous lines are marked in red with the position of the error indicated.</li>
-                        <li>Clicking on an error message moves the cursor to the erroneous section</li>
-                    </ul>
-
-                    <h2 id='help-menu'>Menu В«HelpВ»</h2>
+                    <h2 id='help-menu'>Menu «Help»</h2>
                     <table>
                         <tr>
                             <th>Command</th>
@@ -1291,18 +1188,13 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                         </tr>
                     </table>
 
-                    <h2>Working with editing and output areas</h2>
-                    <p><b>Editing area:</b> designed for entering and editing text. All standard editing operations are supported.</p>
-                    <p><b>Results output area:</b> Displays the results of the parser. This area is read-only.</p>
-                    <p><b>Resizing areas:</b> drag the divider between areas with the mouse.</p>
-
                     <div style="text-align: center; font-size: 16px; font-weight: bold;">
                         <a href="https://github.com/MaKiToShI21/Text-Editor/blob/main/docs/en/user_manual.md">Detailed user manual</a>
                     </div>
 
                     <div class='footer'>
                         <p>Developed using PyQt6</p>
-                        <p>В© 2026 MaKiToShI</p>
+                        <p>© 2026 MaKiToShI</p>
                     </div>
                 </body>
                 </html>
@@ -1314,7 +1206,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
 
     def about(self):
         dialog = QDialog(self)
-        dialog.setMinimumWidth(450)
+        dialog.setMinimumWidth(525)
         dialog.setMinimumHeight(300)
         layout = QVBoxLayout(dialog)
         text_browser = QTextBrowser()
@@ -1322,17 +1214,17 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             dialog.setWindowTitle("О программе")
             text_browser.setHtml("""
                 <div style='text-align: center;'>
-                    <h1>Текстовый редактор</h1>
-                    <p style='color: #868e94; font-size: 14px;'>Версия 1.0.0</p>
+                    <h1 style='color: #ffffff;'>Текстовый редактор</h1>
+                    <p style='color: #868e94; font-size: 14px;'>Версия 1.1.0</p>
 
                     <div style='padding: 5px;'>
-                        <p style='font-size: 16px; line-height: 1;'>
+                        <p style='color: #ffffff; font-size: 16px; line-height: 1;'>
                             Программа для редактирования текстовых файлов<br>
                             с возможностью синтаксического анализа
                         </p>
                     </div>
 
-                    <div>
+                    <div style='color: #ffffff;'>
                         <p><b>Разработчик:</b> MaKiToShI</p>
                         <p><b>Год:</b> 2026</p>
                     </div>
@@ -1340,7 +1232,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     <div style='border-top: 1px solid #dee2e6; padding-top: 15px;'>
                         <p style='color: #868e94; font-size: 12px;'>
                             Разработано с использованием PyQt6<br>
-                            В© 2026 MaKiToShI
+                            © 2026 MaKiToShI
                         </p>
                     </div>
                 </div>
@@ -1349,16 +1241,16 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
             dialog.setWindowTitle("About the program")
             text_browser.setHtml("""
                 <div style='text-align: center;'>
-                    <h1>Text editor</h1>
-                    <p style='color: #868e94; font-size: 14px;'>Version 1.0.0</p>
+                    <h1 style='color: #ffffff;'>Text editor</h1>
+                    <p style='color: #868e94; font-size: 14px;'>Version 1.1.0</p>
 
                     <div style='padding: 5px;'>
-                        <p style='font-size: 16px; line-height: 1;'>
+                        <p style='color: #ffffff; font-size: 16px; line-height: 1;'>
                             A program for editing text files with syntax analysis capabilities
                         </p>
                     </div>
 
-                    <div>
+                    <div style='color: #ffffff;>
                         <p><b>Developer:</b> MaKiToShI</p>
                         <p><b>Год:</b> 2026</p>
                     </div>
@@ -1366,7 +1258,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):  # , Ui_MainWindow
                     <div style='border-top: 1px solid #dee2e6; padding-top: 15px;'>
                         <p style='color: #868e94; font-size: 12px;'>
                             Developed using PyQt6<br>
-                            В© 2026 MaKiToShI
+                            © 2026 MaKiToShI
                         </p>
                     </div>
                 </div>

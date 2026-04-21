@@ -8,15 +8,16 @@ class LexicalAnalyzer:
             3: self.lang.translate('kw_complex'),
             4: self.lang.translate('identifier'),
             5: self.lang.translate('space'),
-            6: self.lang.translate('float'),
-            7: self.lang.translate('double_colon'),
-            8: self.lang.translate('open_angle'),
-            9: self.lang.translate('close_angle'),
-            10: self.lang.translate('open_paren'),
-            11: self.lang.translate('close_paren'),
-            12: self.lang.translate('minus'),
-            13: self.lang.translate('comma'),
-            14: self.lang.translate('semicolon')
+            6: self.lang.translate('integer'),
+            7: self.lang.translate('float'),
+            8: self.lang.translate('double_colon'),
+            9: self.lang.translate('open_angle'),
+            10: self.lang.translate('close_angle'),
+            11: self.lang.translate('open_paren'),
+            12: self.lang.translate('close_paren'),
+            13: self.lang.translate('minus'),
+            14: self.lang.translate('comma'),
+            15: self.lang.translate('semicolon')
         }
 
     TOKEN_CODES = {
@@ -25,15 +26,16 @@ class LexicalAnalyzer:
         'KEYWORD_COMPLEX': 3,
         'IDENTIFIER': 4,
         'SPACE': 5,
-        'FLOAT': 6,
-        'DOUBLE_COLON': 7,
-        'OPEN_ANGLE': 8,
-        'CLOSE_ANGLE': 9,
-        'OPEN_PAREN': 10,
-        'CLOSE_PAREN': 11,
-        'MINUS': 12,
-        'COMMA': 13,
-        'SEMICOLON': 14,
+        'INTEGER': 6,
+        'FLOAT': 7,
+        'DOUBLE_COLON': 8,
+        'OPEN_ANGLE': 9,
+        'CLOSE_ANGLE': 10,
+        'OPEN_PAREN': 11,
+        'CLOSE_PAREN': 12,
+        'MINUS': 13,
+        'COMMA': 14,
+        'SEMICOLON': 15,
     }
 
     KEYWORDS = {
@@ -182,6 +184,7 @@ class LexicalAnalyzer:
         start_line = self.line
         start_col = self.column
         start_pos = self.position
+        has_fraction = False
 
         while (self.position < len(self.text) and
                self.text[self.position].isdigit()):
@@ -189,6 +192,7 @@ class LexicalAnalyzer:
 
         if (self.position < len(self.text) and
             self.text[self.position] == '.'):
+            has_fraction = True
             self._advance()
 
             while (self.position < len(self.text) and
@@ -196,7 +200,7 @@ class LexicalAnalyzer:
                 self._advance()
 
         lexeme = self.text[start_pos:self.position]
-        code = self.TOKEN_CODES['FLOAT']
+        code = self.TOKEN_CODES['FLOAT'] if has_fraction else self.TOKEN_CODES['INTEGER']
 
         self.tokens.append({
             'code': code,
@@ -209,8 +213,12 @@ class LexicalAnalyzer:
         start_line = self.line
         start_col = self.column
 
-        if (self.position + 1 < len(self.text) and
-            self.text[self.position + 1] == ':'):
+        has_double_colon = (
+            self.position + 1 < len(self.text) and
+            self.text[self.position + 1] == ':'
+        )
+
+        if has_double_colon:
             self._advance()
             self._advance()
             self.tokens.append({
@@ -220,10 +228,11 @@ class LexicalAnalyzer:
                 'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{self.column - 1}",
             })
 
-            if (self.position < len(self.text) and
-                self.text[self.position] == ':'):
-                self._add_error(':')
-                self._advance()
-        else:
+        should_add_colon_error = (
+            not has_double_colon or
+            (self.position < len(self.text) and self.text[self.position] == ':')
+        )
+
+        if should_add_colon_error:
             self._add_error(':')
             self._advance()

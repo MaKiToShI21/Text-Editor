@@ -2,7 +2,7 @@
 import re
 
 
-class MyParser:
+class Parser:
     INVALID_LEXEME_CODE = 0
     # std::complex<double> my_complex(-10.0, 2.0);
     EXPECTED_TOKEN_SEQUENCE = [
@@ -56,12 +56,56 @@ class MyParser:
         space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
         float_code = LexicalAnalyzer.TOKEN_CODES["FLOAT"]
         minus_code = LexicalAnalyzer.TOKEN_CODES["MINUS"]
-        last_error_anchor = None
+        close_angle_code = LexicalAnalyzer.TOKEN_CODES["CLOSE_ANGLE"]
+        identifier_code = LexicalAnalyzer.TOKEN_CODES["IDENTIFIER"]
+        keyword_std_code = LexicalAnalyzer.TOKEN_CODES["KEYWORD_STD"]
+        double_colon_code = LexicalAnalyzer.TOKEN_CODES["DOUBLE_COLON"]
+        open_angle_code = LexicalAnalyzer.TOKEN_CODES["OPEN_ANGLE"]
+        integer_code = LexicalAnalyzer.TOKEN_CODES["INTEGER"]
+        keyword_double_code = LexicalAnalyzer.TOKEN_CODES["KEYWORD_DOUBLE"]
+        close_paren_code = LexicalAnalyzer.TOKEN_CODES["CLOSE_PAREN"]
+        comma_code = LexicalAnalyzer.TOKEN_CODES["COMMA"]
+        semicolon_code = LexicalAnalyzer.TOKEN_CODES["SEMICOLON"]
+        suppress_cascade_errors = False
+        recovery_matches = 0
+        previous_expected_code = None
+        previous_found_index = None
+        semicolon_index = None
 
         for seq_index, token_name in enumerate(self.EXPECTED_TOKEN_SEQUENCE):
             expected_code = LexicalAnalyzer.TOKEN_CODES[token_name]
             check_spaces = expected_code == space_code
             ignore_minus = expected_code == float_code
+
+            if expected_code == float_code:
+                first_idx = self._find_nearest_significant_token(
+                    cursor,
+                    end,
+                    skip_minus=False,
+                )
+                if first_idx is not None:
+                    token_code = self.tokens[first_idx]["code"]
+                    probe_idx = first_idx
+                    if token_code == minus_code:
+                        probe_idx = self._find_nearest_significant_token(
+                            first_idx + 1,
+                            end,
+                            skip_minus=False,
+                        )
+
+                    if probe_idx is not None and self.tokens[probe_idx]["code"] == integer_code:
+                        wrong_fragment = self.tokens[probe_idx]["lexeme"]
+                        location = self.tokens[probe_idx]["location"]
+                        if not suppress_cascade_errors:
+                            self._add_error(expected_code, wrong_fragment, location)
+
+                        previous_expected_code = expected_code
+                        previous_found_index = None
+                        recovery_matches = 0
+                        if not self._has_significant_tokens_after(probe_idx, end):
+                            break
+                        cursor = probe_idx + 1
+                        continue
 
             found_index = self._find_from_cursor_in_range(
                 expected_code,
@@ -73,20 +117,61 @@ class MyParser:
 
             if found_index is None:
                 if cursor <= end:
-                    wrong_fragment = self.tokens[cursor]["lexeme"]
-                    location = self.tokens[cursor]["location"]
-                    error_anchor = cursor
-                else:
-                    wrong_fragment = ""
-                    location = "EOF"
-                    error_anchor = end + 1
+                    offending_idx = cursor
+                    if self.tokens[cursor]["code"] == space_code and not check_spaces:
+                        nearest_idx = self._find_nearest_significant_token(
+                            cursor,
+                            end,
+                            skip_minus=ignore_minus,
+                        )
+                        if nearest_idx is not None:
+                            offending_idx = nearest_idx
 
-                if error_anchor != last_error_anchor:
+                    wrong_fragment = self.tokens[offending_idx]["lexeme"]
+                    location = self.tokens[offending_idx]["location"]
+
+                    # В начале разбора и при ожидании "::" хотим показывать весь хвост,
+                    # если строка больше не содержит структурного якоря "<".
+                    if (
+                        expected_code in (keyword_std_code, double_colon_code)
+                        and self.tokens[offending_idx]["code"] == identifier_code
+                        and self._tail_is_identifier_chain(offending_idx, end)
+                    ):
+                        wrong_fragment = "".join(t["lexeme"] for t in self.tokens[offending_idx : end + 1])
+                        location = self._range_location(offending_idx, end)
+                else:
+                    wrong_fragment = "EOF"
+                    location = "EOF"
+
+                if (
+                    expected_code == comma_code
+                    and cursor <= end
+                    and self.tokens[cursor]["code"] == close_paren_code
+                ):
+                    if self._should_advance_cursor_in_range(cursor, seq_index, end):
+                        cursor += 1
+                    continue
+
+                if not suppress_cascade_errors:
                     self._add_error(expected_code, wrong_fragment, location)
-                    last_error_anchor = error_anchor
+                suppress_cascade_errors = True
+                recovery_matches = 0
                 if self._should_advance_cursor_in_range(cursor, seq_index, end):
                     cursor += 1
                 continue
+
+            if (
+                expected_code == identifier_code
+                and previous_expected_code == close_angle_code
+                and previous_found_index is not None
+                and not self._has_space_between(previous_found_index, found_index)
+            ):
+                wrong_fragment = self.tokens[found_index]["lexeme"]
+                location = self.tokens[found_index]["location"]
+                if not suppress_cascade_errors:
+                    self._add_error(space_code, wrong_fragment, location)
+                suppress_cascade_errors = True
+                recovery_matches = 0
 
             if found_index > cursor:
                 if check_spaces:
@@ -104,16 +189,45 @@ class MyParser:
                         t["lexeme"] for t in self.tokens[wrong_indices[0] : wrong_indices[-1] + 1]
                     )
                     location = self._range_location(wrong_indices[0], wrong_indices[-1])
-                    error_anchor = wrong_indices[0]
-                    if error_anchor != last_error_anchor:
+                    if not suppress_cascade_errors:
                         self._add_error(expected_code, wrong_fragment, location)
-                        last_error_anchor = error_anchor
+                    suppress_cascade_errors = True
+                    recovery_matches = 0
+                    if expected_code == keyword_double_code:
+                        suppress_cascade_errors = False
                 else:
-                    last_error_anchor = None
+                    if suppress_cascade_errors:
+                        recovery_matches += 1
+                        if recovery_matches >= 2:
+                            suppress_cascade_errors = False
+                            recovery_matches = 0
             else:
-                last_error_anchor = None
+                if suppress_cascade_errors:
+                    if expected_code in (keyword_double_code, close_paren_code):
+                        suppress_cascade_errors = False
+                        recovery_matches = 0
+                    else:
+                        recovery_matches += 1
+                        if recovery_matches >= 2:
+                            suppress_cascade_errors = False
+                            recovery_matches = 0
 
+            previous_expected_code = expected_code
+            previous_found_index = found_index
+            if expected_code == semicolon_code:
+                semicolon_index = found_index
             cursor = found_index + 1
+
+        if semicolon_index is not None:
+            trailing_idx = self._find_nearest_significant_token(
+                semicolon_index + 1,
+                end,
+                skip_minus=False,
+            )
+            if trailing_idx is not None:
+                wrong_fragment = "".join(t["lexeme"] for t in self.tokens[trailing_idx : end + 1])
+                location = self._range_location(trailing_idx, end)
+                self._add_invalid_fragment_error(wrong_fragment, location)
 
     def _find_line_end(self, start):
         start_line, _, _ = self._extract_location(self.tokens[start].get("location", ""))
@@ -230,6 +344,58 @@ class MyParser:
                 return i
         return None
 
+    def _find_nearest_significant_token(self, cursor, end, skip_minus=False):
+        space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
+        minus_code = LexicalAnalyzer.TOKEN_CODES["MINUS"]
+
+        for i in range(cursor, end + 1):
+            code = self.tokens[i]["code"]
+            if code == space_code:
+                continue
+            if skip_minus and code == minus_code:
+                continue
+            return i
+        return None
+
+    def _contains_code_in_range(self, target_code, start, end):
+        if start > end:
+            return False
+        for i in range(start, end + 1):
+            if self.tokens[i]["code"] == target_code:
+                return True
+        return False
+
+    def _has_significant_tokens_after(self, idx, end):
+        space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
+        for i in range(idx + 1, end + 1):
+            if self.tokens[i]["code"] != space_code:
+                return True
+        return False
+
+    def _tail_is_identifier_chain(self, start, end):
+        space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
+        identifier_code = LexicalAnalyzer.TOKEN_CODES["IDENTIFIER"]
+        saw_identifier = False
+
+        for i in range(start, end + 1):
+            code = self.tokens[i]["code"]
+            if code == space_code:
+                continue
+            if code != identifier_code:
+                return False
+            saw_identifier = True
+        return saw_identifier
+
+    def _has_space_between(self, left_idx, right_idx):
+        if left_idx is None or right_idx is None or right_idx <= left_idx:
+            return False
+
+        space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
+        for i in range(left_idx + 1, right_idx):
+            if self.tokens[i]["code"] == space_code:
+                return True
+        return False
+
     def _should_advance_cursor_in_range(self, cursor, seq_index, end):
         if cursor > end or cursor >= len(self.tokens):
             return True
@@ -265,6 +431,16 @@ class MyParser:
             {
                 "code": "ERROR",
                 "type": f"{self.lang.translate('expected').format(expected_name)}",
+                "lexeme": wrong_fragment,
+                "location": location,
+            }
+        )
+
+    def _add_invalid_fragment_error(self, wrong_fragment, location):
+        self.errors.append(
+            {
+                "code": "ERROR",
+                "type": self.lang.translate("invalid_char"),
                 "lexeme": wrong_fragment,
                 "location": location,
             }

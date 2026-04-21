@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QRadioButton,
+﻿from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QRadioButton,
                              QDialogButtonBox, QButtonGroup)
 from PyQt6.QtCore import Qt
 
@@ -27,13 +27,13 @@ class Language():
                 'actionExit': 'Выход',
 
                 # Edit menu actions
-                'actionUndo': 'Действие отменено',
-                'actionRedo': 'Действие повторено',
-                'actionCut': 'Текст вырезан',
-                'actionCopy': 'Текст скопирован',
-                'actionPaste': 'Текст вставлен',
-                'actionDelete': 'Текст удалён',
-                'actionSelectAll': 'Весь текст выделен',
+                'actionUndo': 'Отменить',
+                'actionRedo': 'Повторить',
+                'actionCut': 'Вырезать',
+                'actionCopy': 'Копировать',
+                'actionPaste': 'Вставить',
+                'actionDelete': 'Удалить',
+                'actionSelectAll': 'Выделить всё',
 
                 # Action tooltips
                 'actionNew_toolTip': 'Создать',
@@ -50,13 +50,15 @@ class Language():
                 'actionSelectAll_toolTip': 'Выделить всё',
 
                 # Text menu actions
-                'action_15': 'Постановка задачи',
-                'action_16': 'Грамматика',
-                'action_17': 'Классификация грамматики',
-                'action_18': 'Метод анализа',
-                'action_19': 'Тестовый пример',
-                'action_20': 'Список литературы',
-                'action_21': 'Исходный код программы',
+                'actionOpenProblemStatement': 'Постановка задачи',
+                'actionOpenStateDiagram': 'Диаграмма состояний',
+                'actionOpenGrammar': 'Грамматика',
+                'actionOpenGrammarClass': 'Классификация грамматики',
+                'actionOpenAnalysisMethod': 'Метод анализа',
+                'actionDiagnosticsTroubleshooting': 'Диагностика и нейтрализация ошибок',
+                'actionOpenExample': 'Тестовый пример',
+                'actionOpenReferences': 'Список литературы',
+                'actionOpenSourceCode': 'Исходный код программы',
 
                 # Run menu actions
                 'actionRunParser': 'Запустить парсер',
@@ -87,6 +89,25 @@ class Language():
                 'parser_input_empty': 'Введите текст перед запуском парсера',
                 'lexer_input_empty': 'Введите текст перед запуском лексера',
 
+                'actionUndo_status_bar': 'Действие отменено',
+                'actionRedo_status_bar': 'Действие повторено',
+                'actionCut_status_bar': 'Текст вырезан',
+                'actionCopy_status_bar': 'Текст скопирован',
+                'actionPaste_status_bar': 'Текст вставлен',
+                'actionDelete_status_bar': 'Текст удалён',
+                'actionSelectAll_status_bar': 'Весь текст выделен',
+
+                'copied': 'Текст скопирован',
+                'pasted': 'Текст вставлен',
+                'cut': 'Текст вырезан',
+                'deleted': 'Текст удалён',
+                'selected_all': 'Весь текст выделен',
+                'undo': 'Действие отменено',
+                'redo': 'Действие повторено',
+                'language_changed': 'Язык изменён на русский',
+                'lang_not_changed': 'Язык не был изменён',
+                'lang_selection_cancelled': 'Выбор языка отменён',
+
                 # Tab actions
                 'tab_saved_and_closed': 'Вкладка "{}" сохранена и закрыта',
                 'tab_closed_without_saving': 'Вкладка "{}" закрыта без сохранения',
@@ -97,18 +118,6 @@ class Language():
 
                 # Drag and drop action
                 'drop_hint': 'Отпустите файл для открытия',
-
-                # Tool bar actions
-                'copied': 'Скопировано',
-                'pasted': 'Вставлено',
-                'cut': 'Вырезано',
-                'deleted': 'Удалено',
-                'selected_all': 'Выделено всё',
-                'undo': 'Отмена',
-                'redo': 'Повтор',
-                'language_changed': 'Язык изменён на русский',
-                'lang_not_changed': 'Язык не был изменён',
-                'lang_selection_cancelled': 'Выбор языка отменён',
 
                 # Dialog windows
                 # Titles
@@ -133,6 +142,7 @@ class Language():
                 'kw_complex': 'Ключевое слово complex',
                 'identifier': 'Идентификатор',
                 'space': 'Пробел',
+                'integer': 'Целое число',
                 'float': 'Число с плавающей точкой',
                 'double_colon': 'Двойное двоеточие',
                 'open_angle': 'Открывающая угловая скобка',
@@ -148,9 +158,9 @@ class Language():
                 'cond_code': 'Условный код',
                 'lexeme_type': 'Тип лексемы',
                 'lexeme': 'Лексема',
-                'location': 'Местоположение'
-                ,'parser_wrong_fragment': 'Неверный фрагмент'
-                ,'parser_error_description': 'Описание ошибки'
+                'location': 'Местоположение',
+                'parser_wrong_fragment': 'Неверный фрагмент',
+                'parser_error_description': 'Описание ошибки'
             },
             'en': {
                 # Window title
@@ -172,13 +182,13 @@ class Language():
                 'actionExit': 'Exit',
 
                 # Edit menu actions
-                'actionUndo': 'Action undone',
-                'actionRedo': 'Action redone',
-                'actionCut': 'Text cut',
-                'actionCopy': 'Text copied',
-                'actionPaste': 'Text pasted',
-                'actionDelete': 'Text deleted',
-                'actionSelectAll': 'All text selected',
+                'actionUndo': 'Undo',
+                'actionRedo': 'Redo',
+                'actionCut': 'Cut',
+                'actionCopy': 'Copy',
+                'actionPaste': 'Paste',
+                'actionDelete': 'Delete',
+                'actionSelectAll': 'Select All',
 
                 # Tooltip for actions
                 'actionNew_toolTip': 'Create',
@@ -195,13 +205,15 @@ class Language():
                 'actionSelectAll_toolTip': 'Select all',
 
                 # Text menu actions
-                'action_15': 'Problem statement',
-                'action_16': 'Grammar',
-                'action_17': 'Grammar classification',
-                'action_18': 'Analysis method',
-                'action_19': 'Test example',
-                'action_20': 'References',
-                'action_21': 'Source code',
+                'actionOpenProblemStatement': 'Problem statement',
+                'actionOpenStateDiagram': 'State diagram',
+                'actionOpenGrammar': 'Grammar',
+                'actionOpenGrammarClass': 'Grammar classification',
+                'actionOpenAnalysisMethod': 'Analysis method',
+                'actionDiagnosticsTroubleshooting': 'Diagnostics and troubleshooting',
+                'actionOpenExample': 'Test example',
+                'actionOpenReferences': 'References',
+                'actionOpenSourceCode': 'Source code',
 
                 # Run menu actions
                 'actionRunParser': 'Run parser',
@@ -232,6 +244,25 @@ class Language():
                 'parser_input_empty': 'Enter text before running parser',
                 'lexer_input_empty': 'Enter text before running lexer',
 
+                'actionUndo_status_bar': 'Action undone',
+                'actionRedo_status_bar': 'Action redone',
+                'actionCut_status_bar': 'Text cut',
+                'actionCopy_status_bar': 'Text copied',
+                'actionPaste_status_bar': 'Text pasted',
+                'actionDelete_status_bar': 'Text deleted',
+                'actionSelectAll_status_bar': 'All text selected',
+
+                'copied': 'Text copied',
+                'pasted': 'Text pasted',
+                'cut': 'Text cut',
+                'deleted': 'Text deleted',
+                'selected_all': 'All text selected',
+                'undo': 'Action undone',
+                'redo': 'Action redone',
+                'language_changed': 'Language changed to English',
+                'lang_not_changed': 'Language not changed',
+                'lang_selection_cancelled': 'Language selection canceled',
+
                 # Tab actions
                 'tab_saved_and_closed': 'Tab "{}" saved and closed',
                 'tab_closed_without_saving': 'Tab "{}" closed without saving',
@@ -242,18 +273,6 @@ class Language():
 
                 # Drag and drop action
                 'drop_hint': 'Drop files to open',
-
-                # Tool bar actions
-                'copied': 'Copied',
-                'pasted': 'Pasted',
-                'cut': 'Cut',
-                'deleted': 'Deleted',
-                'selected_all': 'Selected all',
-                'undo': 'Undo',
-                'redo': 'Redo',
-                'language_changed': 'Language changed to English',
-                'lang_not_changed': 'The language has not been changed',
-                'lang_selection_cancelled': 'Language selection cancelled',
 
                 # Dialog windows
                 # Titles
@@ -278,6 +297,7 @@ class Language():
                 'kw_complex': 'Keyword complex',
                 'identifier': 'Identifier',
                 'space': 'Space',
+                'integer': 'Integer',
                 'float': 'Floating point number',
                 'double_colon': 'Double colon',
                 'open_angle': 'Opening angle bracket',
@@ -292,9 +312,9 @@ class Language():
                 'cond_code': 'Conditional code',
                 'lexeme_type': 'Lexeme type',
                 'lexeme': 'Lexeme',
-                'location': 'Location'
-                ,'parser_wrong_fragment': 'Wrong fragment'
-                ,'parser_error_description': 'Error description'
+                'location': 'Location',
+                'parser_wrong_fragment': 'Wrong fragment',
+                'parser_error_description': 'Error description'
             }
         }
 
@@ -336,7 +356,7 @@ class LanguageDialog(QDialog):
 
         title_label = QLabel(lang.translate('select_interface_lang'))
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("font-weight: bold; font-size: 14px; margin: 10px;")
+        title_label.setStyleSheet("color: #ffffff; font-weight: bold; font-size: 14px; margin: 10px;")
         layout.addWidget(title_label)
 
         self.radio_group = QButtonGroup(self)
@@ -344,12 +364,14 @@ class LanguageDialog(QDialog):
         self.rb_russian = QRadioButton("Русский")
         self.rb_russian.setChecked(lang.current_language == 'ru')
         self.rb_russian.toggled.connect(lambda: self.set_language('ru'))
+        self.rb_russian.setStyleSheet("color: #ffffff;")
         layout.addWidget(self.rb_russian)
         self.radio_group.addButton(self.rb_russian)
 
         self.rb_english = QRadioButton("English")
         self.rb_english.setChecked(lang.current_language == 'en')
         self.rb_english.toggled.connect(lambda: self.set_language('en'))
+        self.rb_english.setStyleSheet("color: #ffffff;")
         layout.addWidget(self.rb_english)
         self.radio_group.addButton(self.rb_english)
 
@@ -361,6 +383,7 @@ class LanguageDialog(QDialog):
         )
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
+        button_box.setStyleSheet("QPushButton { color: #ffffff; }")
         layout.addWidget(button_box)
 
     def set_language(self, lang):

@@ -46,9 +46,7 @@ background-color: rgb(40, 40, 40);</string>
     <item>
      <widget class="QFrame" name="frame">
       <property name="styleSheet">
-       <string notr="true">QFrame {
-	background-color: rgb(42, 42, 42);
-}</string>
+       <string notr="true">background-color: rgb(42, 42, 42);</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::Shape::StyledPanel</enum>
@@ -62,9 +60,15 @@ background-color: rgb(40, 40, 40);</string>
          <property name="orientation">
           <enum>Qt::Orientation::Vertical</enum>
          </property>
+         <property name="handleWidth">
+          <number>7</number>
+         </property>
          <widget class="QTabWidget" name="inputTabWidget">
           <property name="autoFillBackground">
            <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(50, 50, 50);</string>
           </property>
           <property name="currentIndex">
            <number>-1</number>
@@ -88,6 +92,9 @@ background-color: rgb(40, 40, 40);</string>
           </property>
           <property name="autoFillBackground">
            <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(50, 50, 50);</string>
           </property>
           <property name="documentMode">
            <bool>false</bool>
@@ -211,12 +218,17 @@ QToolButton QIcon {
    <addaction name="actionPaste"/>
    <addaction name="actionDelete"/>
    <addaction name="separator"/>
-   <addaction name="actionRunLexer"/>
+   <addaction name="actionRunParser"/>
    <addaction name="separator"/>
    <addaction name="actionHelp"/>
    <addaction name="actionAbout"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QStatusBar" name="statusBar">
+   <property name="styleSheet">
+    <string notr="true">color: rgb(255, 255, 255);
+background-color: rgb(38, 38, 38);</string>
+   </property>
+  </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
@@ -230,6 +242,7 @@ QToolButton QIcon {
     <string notr="true">QMenuBar {
     background-color: rgb(32, 32, 32);
 	padding: 2px;
+	color: rgb(255, 255, 255);
 }
 
 QMenuBar::item {
@@ -316,20 +329,22 @@ QMenu::separator {
     <property name="title">
      <string>Текст</string>
     </property>
-    <addaction name="action_15"/>
-    <addaction name="action_16"/>
-    <addaction name="action_17"/>
-    <addaction name="action_18"/>
-    <addaction name="action_19"/>
-    <addaction name="action_20"/>
-    <addaction name="action_21"/>
+    <addaction name="actionOpenProblemStatement"/>
+    <addaction name="actionOpenStateDiagram"/>
+    <addaction name="actionOpenGrammar"/>
+    <addaction name="actionOpenGrammarClass"/>
+    <addaction name="actionOpenAnalysisMethod"/>
+    <addaction name="actionDiagnosticsTroubleshooting"/>
+    <addaction name="actionOpenExample"/>
+    <addaction name="actionOpenReferences"/>
+    <addaction name="actionOpenSourceCode"/>
    </widget>
    <widget class="QMenu" name="menuRun">
     <property name="title">
      <string>Пуск</string>
     </property>
-    <addaction name="actionRunLexer"/>
     <addaction name="actionRunParser"/>
+    <addaction name="actionRunLexer"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -410,37 +425,37 @@ QMenu::separator {
     <string>Ctrl+A</string>
    </property>
   </action>
-  <action name="action_15">
+  <action name="actionOpenProblemStatement">
    <property name="text">
     <string>Постановка задачи</string>
    </property>
   </action>
-  <action name="action_16">
+  <action name="actionOpenGrammar">
    <property name="text">
     <string>Грамматика</string>
    </property>
   </action>
-  <action name="action_17">
+  <action name="actionOpenGrammarClass">
    <property name="text">
     <string>Классификация грамматики</string>
    </property>
   </action>
-  <action name="action_18">
+  <action name="actionOpenAnalysisMethod">
    <property name="text">
     <string>Метод анализа</string>
    </property>
   </action>
-  <action name="action_19">
+  <action name="actionOpenExample">
    <property name="text">
     <string>Тестовый пример</string>
    </property>
   </action>
-  <action name="action_20">
+  <action name="actionOpenReferences">
    <property name="text">
     <string>Список литературы</string>
    </property>
   </action>
-  <action name="action_21">
+  <action name="actionOpenSourceCode">
    <property name="text">
     <string>Исходный код программы</string>
    </property>
@@ -603,6 +618,28 @@ QMenu::separator {
    </property>
    <property name="shortcut">
     <string>F5</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionOpenStateDiagram">
+   <property name="text">
+    <string>Диаграмма состояний</string>
+   </property>
+   <property name="toolTip">
+    <string>Диаграмма состояний</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionDiagnosticsTroubleshooting">
+   <property name="text">
+    <string>Диагностика и нейтрализация ошибок</string>
+   </property>
+   <property name="toolTip">
+    <string>Диагностика и нейтрализация ошибок</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

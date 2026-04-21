@@ -52,7 +52,7 @@ VS Code (Visual Studio Code)
 A state diagram was developed.
 
 <div align="center">
-  <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/state_diagram.png" width="450">
+  <img src="https://github.com/MaKiToShI21/Text-Editor/blob/showing-program/images/state_diagram.png" width="450">
 </div>
 
 A lexer was created based on it to parse the string "**`std::complex<double> my_complex(10.0, 2.0);`**" into tokens, which are then output as a table.
@@ -180,17 +180,12 @@ ___
 
 If you have changed `text_editor.ui`, you need to execute the following command:
 ```bash
-pyuic6 text_editor.ui -o ui_editor.py
+pyuic6 text_editor.ui -o ui.py
 ```
 
 To create an executable file, run the PyInstaller command:
 ```bash
-pyinstaller --onefile --windowed main.py
-```
-
-To create an executable file with flex lexer, run the PyInstaller command:
-```bash
-pyinstaller --onefile --windowed --add-data "lexer/lexer.exe;lexer" main.py
+pyinstaller --onefile --windowed --add-data "information;information" --add-data "icons;icons" --add-data "example.txt;." main.py
 ```
 
 After successful build, the executable file is located in the folder: `/dist/main.exe`
@@ -199,7 +194,7 @@ ___
 
 ### **Running Without Python Installation**
 
-Download [Text-Editor.exe](https://github.com/MaKiToShI21/Text-Editor/releases/tag/v1.1.0) and run it. No additional installations are required.
+Download [Text-Editor.exe](https://github.com/MaKiToShI21/Text-Editor/releases/tag/v2.0.0) and run it. No additional installations are required.
 
 <h2 align="center">User Manual</h2>
 
