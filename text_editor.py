@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QFileDialog,
+﻿from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QFileDialog,
                              QMessageBox, QDialog, QTextBrowser,
                              QVBoxLayout, QTableWidget, QTableWidgetItem)
 from PyQt6.QtGui import QAction, QDesktopServices
@@ -29,7 +29,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.lang = Language()
         self.apply_language()
 
-        self.input_to_output_map = {}
         self.status_bar = self.statusBar
         self.lexer_process = None
         self.current_input_widget = None
@@ -38,6 +37,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
 
         self.setAcceptDrops(True)
         self.setup_actions()
+        self.setup_output_panels()
 
     @staticmethod
     def resource_path(relative_path):
@@ -118,7 +118,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.input_tab_widget.tabCloseRequested.connect(self.close_input_tab)
 
         self.output_tab_widget = self.findChild(QTabWidget, 'outputTabWidget')
-        self.output_tab_widget.tabCloseRequested.connect(self.close_output_tab)
+        self.output_tab_widget.setTabsClosable(False)
 
     def read_file(self, file_path):
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -166,6 +166,58 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 widget = self.input_tab_widget.widget(i)
                 if not hasattr(widget, 'file_path') or not widget.file_path:
                     self.input_tab_widget.setTabText(i, t['new_document'])
+        self._update_output_tab_titles()
+
+    def setup_output_panels(self):
+        self.result_table = QTableWidget(self.resultTab)
+        self.errors_table = QTableWidget(self.ErrorTab)
+        self.ast_browser = QTextBrowser(self.astTab)
+        self.ast_browser.setReadOnly(True)
+
+        result_layout = QVBoxLayout(self.resultTab)
+        result_layout.setContentsMargins(0, 0, 0, 0)
+        result_layout.addWidget(self.result_table)
+
+        errors_layout = QVBoxLayout(self.ErrorTab)
+        errors_layout.setContentsMargins(0, 0, 0, 0)
+        errors_layout.addWidget(self.errors_table)
+
+        ast_layout = QVBoxLayout(self.astTab)
+        ast_layout.setContentsMargins(0, 0, 0, 0)
+        ast_layout.addWidget(self.ast_browser)
+
+        self._update_output_tab_titles()
+        self.clear_output_views()
+
+    def _update_output_tab_titles(self):
+        if not hasattr(self, 'output_tab_widget') or self.output_tab_widget is None:
+            return
+        self.output_tab_widget.setTabText(
+            self.output_tab_widget.indexOf(self.resultTab),
+            self.lang.translate('output_tab_result')
+        )
+        self.output_tab_widget.setTabText(
+            self.output_tab_widget.indexOf(self.ErrorTab),
+            self.lang.translate('output_tab_errors')
+        )
+        self.output_tab_widget.setTabText(
+            self.output_tab_widget.indexOf(self.astTab),
+            self.lang.translate('output_tab_ast')
+        )
+
+    def clear_output_views(self):
+        self._clear_table_widget(self.result_table)
+        self._clear_table_widget(self.errors_table)
+        self.ast_browser.setPlainText(self.lang.translate('ast_not_available'))
+
+    @staticmethod
+    def _clear_table_widget(table):
+        if table is None:
+            return
+        table.clear()
+        table.clearContents()
+        table.setRowCount(0)
+        table.setColumnCount(0)
 
     def dragEnterEvent(self, event):
         if event is None or event.mimeData() is None:
@@ -207,16 +259,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
     def close_input_tab(self, index):
         widget = self.input_tab_widget.widget(index)
         tab_name = self.input_tab_widget.tabText(index)
-        file_path = getattr(widget, 'file_path', None)
 
         def closing():
-            if file_path and file_path in self.input_to_output_map:
-                output_widget = self.input_to_output_map[file_path]
-                output_index = self.output_tab_widget.indexOf(output_widget)
-                if output_index >= 0:
-                    self.output_tab_widget.removeTab(output_index)
-                    output_widget.deleteLater()
-                del self.input_to_output_map[file_path]
             self.input_tab_widget.removeTab(index)
             widget.deleteLater()
 
@@ -260,18 +304,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         closing()
 
     def close_output_tab(self, index):
-        widget = self.output_tab_widget.widget(index)
-        tab_name = self.output_tab_widget.tabText(index)
-
-        for file_path, output_widget in list(self.input_to_output_map.items()):
-            if output_widget == widget:
-                del self.input_to_output_map[file_path]
-                break
-
-        widget.deleteLater()
-        self.output_tab_widget.removeTab(index)
-        self.status_bar.showMessage(self.lang.translate('tab_closed').
-                                    format(tab_name, 0), 3000)
+        _ = index
+        return
 
     def can_close(self):
         for i in range(self.input_tab_widget.count()):
@@ -488,15 +522,17 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 self.current_file_path = self.current_input_widget.file_path
 
         self.current_tab_name = self.input_tab_widget.tabText(index)
-
-        if self.current_file_path in self.input_to_output_map:
-            output_widget = self.input_to_output_map[self.current_file_path]
-            output_index = self.output_tab_widget.indexOf(output_widget)
-            self.output_tab_widget.setCurrentIndex(output_index)
+        self.clear_output_views()
 
         lexer = LexicalAnalyzer(self.lang)
         tokens, errors = lexer.analyze(text)
-        self.create_or_update_table(tokens, errors)
+        self.fill_table(tokens, [], self.result_table)
+        self.fill_table([], errors, self.errors_table)
+        self.output_tab_widget.setCurrentWidget(self.resultTab)
+        if len(errors) == 0:
+            self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
+        else:
+            self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
 
     def runParser(self):
         if not self.input_tab_widget:
@@ -517,25 +553,16 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 self.current_file_path = self.current_input_widget.file_path
 
         self.current_tab_name = self.input_tab_widget.tabText(index)
-
-        if self.current_file_path in self.input_to_output_map:
-            output_widget = self.input_to_output_map[self.current_file_path]
-            output_index = self.output_tab_widget.indexOf(output_widget)
-            self.output_tab_widget.setCurrentIndex(output_index)
+        self.clear_output_views()
 
         parser = Parser(self.lang)
         _, errors = parser.parse(text)
 
+        self.fill_parser_table(errors, self.errors_table)
+        self.output_tab_widget.setCurrentWidget(self.ErrorTab)
         if len(errors) == 0:
-            existing_table = self.input_to_output_map.get(self.current_file_path)
-            if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-                output_index = self.output_tab_widget.indexOf(existing_table)
-                self.output_tab_widget.removeTab(output_index)
-                existing_table.deleteLater()
-                del self.input_to_output_map[self.current_file_path]
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
         else:
-            self.create_or_update_parser_table(errors)
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
 
     def runSemanticAnalysis(self):
@@ -557,25 +584,16 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 self.current_file_path = self.current_input_widget.file_path
 
         self.current_tab_name = self.input_tab_widget.tabText(index)
-
-        if self.current_file_path in self.input_to_output_map:
-            output_widget = self.input_to_output_map[self.current_file_path]
-            output_index = self.output_tab_widget.indexOf(output_widget)
-            self.output_tab_widget.setCurrentIndex(output_index)
+        self.clear_output_views()
 
         analyzer = SemanticAnalyzer(self.lang)
         errors = analyzer.analyze(text)
 
+        self.fill_semantic_table(errors, self.errors_table)
+        self.output_tab_widget.setCurrentWidget(self.ErrorTab)
         if len(errors) == 0:
-            existing_table = self.input_to_output_map.get(self.current_file_path)
-            if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-                output_index = self.output_tab_widget.indexOf(existing_table)
-                self.output_tab_widget.removeTab(output_index)
-                existing_table.deleteLater()
-                del self.input_to_output_map[self.current_file_path]
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
         else:
-            self.create_or_update_semantic_table(errors)
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
 
     def openAST(self):

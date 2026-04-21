@@ -1,4 +1,4 @@
-﻿from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QRadioButton,
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QRadioButton,
                              QDialogButtonBox, QButtonGroup)
 from PyQt6.QtCore import Qt
 
@@ -42,6 +42,7 @@ class Language():
                 'actionRunParser_toolTip': 'Синтаксический анализ',
                 'actionRunLexer_toolTip': 'Лексический анализ',
                 'actionSemanticAnalysis_toolTip': 'Семантический анализ',
+                'actionOpenAST_toolTip': 'Построить AST',
                 'actionUndo_toolTip': 'Отменить',
                 'actionRedo_toolTip': 'Повторить',
                 'actionCut_toolTip': 'Вырезать',
@@ -65,6 +66,7 @@ class Language():
                 'actionRunParser': 'Синтаксический анализ',
                 'actionRunLexer': 'Лексический анализ',
                 'actionSemanticAnalysis': 'Семантический анализ',
+                'actionOpenAST': 'Построить AST',
 
                 # Help menu actions
                 'actionHelp': 'Вызов справки',
@@ -164,6 +166,10 @@ class Language():
                 'location': 'Местоположение',
                 'parser_wrong_fragment': 'Неверный фрагмент',
                 'parser_error_description': 'Описание ошибки',
+                'output_tab_result': 'Результат',
+                'output_tab_errors': 'Ошибки',
+                'output_tab_ast': 'AST',
+                'ast_not_available': 'AST пока не построено',
                 'semantic_message': 'Сообщение',
                 'semantic_position': 'Позиция',
                 'semantic_duplicate_identifier': 'Ошибка: идентификатор "{}" уже объявлен ранее (строка {})',
@@ -205,6 +211,7 @@ class Language():
                 'actionRunParser_toolTip': 'Syntactic analysis',
                 'actionRunLexer_toolTip': 'Lexical analysis',
                 'actionSemanticAnalysis_toolTip': 'Semantic analysis',
+                'actionOpenAST_toolTip': 'Build AST',
                 'actionUndo_toolTip': 'Undo',
                 'actionRedo_toolTip': 'Redo',
                 'actionCut_toolTip': 'Cut',
@@ -228,6 +235,7 @@ class Language():
                 'actionRunParser': 'Syntactic analysis',
                 'actionRunLexer': 'Lexical analysis',
                 'actionSemanticAnalysis': 'Semantic analysis',
+                'actionOpenAST': 'Build AST',
 
                 # Help menu actions
                 'actionHelp': 'Help',
@@ -326,6 +334,10 @@ class Language():
                 'location': 'Location',
                 'parser_wrong_fragment': 'Wrong fragment',
                 'parser_error_description': 'Error description',
+                'output_tab_result': 'Result',
+                'output_tab_errors': 'Errors',
+                'output_tab_ast': 'AST',
+                'ast_not_available': 'AST is not built yet',
                 'semantic_message': 'Message',
                 'semantic_position': 'Position',
                 'semantic_duplicate_identifier': 'Error: identifier "{}" was already declared before (line {})',

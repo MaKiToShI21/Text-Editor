@@ -64,6 +64,21 @@ background-color: rgb(40, 40, 40);</string>
           <number>7</number>
          </property>
          <widget class="QTabWidget" name="inputTabWidget">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="autoFillBackground">
            <bool>false</bool>
           </property>
@@ -72,6 +87,9 @@ background-color: rgb(40, 40, 40);</string>
           </property>
           <property name="currentIndex">
            <number>-1</number>
+          </property>
+          <property name="elideMode">
+           <enum>Qt::TextElideMode::ElideNone</enum>
           </property>
           <property name="documentMode">
            <bool>false</bool>
@@ -84,6 +102,12 @@ background-color: rgb(40, 40, 40);</string>
           </property>
          </widget>
          <widget class="QTabWidget" name="outputTabWidget">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
           <property name="sizeIncrement">
            <size>
             <width>0</width>
@@ -96,18 +120,36 @@ background-color: rgb(40, 40, 40);</string>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(50, 50, 50);</string>
           </property>
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
           <property name="documentMode">
            <bool>false</bool>
           </property>
           <property name="tabsClosable">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <property name="movable">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <property name="tabBarAutoHide">
            <bool>false</bool>
           </property>
+          <widget class="QWidget" name="resultTab">
+           <attribute name="title">
+            <string>Результат</string>
+           </attribute>
+          </widget>
+          <widget class="QWidget" name="ErrorTab">
+           <attribute name="title">
+            <string>Ошибки</string>
+           </attribute>
+          </widget>
+          <widget class="QWidget" name="astTab">
+           <attribute name="title">
+            <string>AST</string>
+           </attribute>
+          </widget>
          </widget>
         </widget>
        </item>
@@ -347,6 +389,7 @@ QMenu::separator {
     <addaction name="actionRunLexer"/>
     <addaction name="actionRunParser"/>
     <addaction name="actionSemanticAnalysis"/>
+    <addaction name="actionOpenAST"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
