@@ -42,7 +42,7 @@ class Language():
                 'actionRunParser_toolTip': 'Синтаксический анализ',
                 'actionRunLexer_toolTip': 'Лексический анализ',
                 'actionSemanticAnalysis_toolTip': 'Семантический анализ',
-                'actionOpenAST_toolTip': 'Построить AST',
+                'actionShowAST_toolTip': 'Показать AST',
                 'actionUndo_toolTip': 'Отменить',
                 'actionRedo_toolTip': 'Повторить',
                 'actionCut_toolTip': 'Вырезать',
@@ -66,7 +66,7 @@ class Language():
                 'actionRunParser': 'Синтаксический анализ',
                 'actionRunLexer': 'Лексический анализ',
                 'actionSemanticAnalysis': 'Семантический анализ',
-                'actionOpenAST': 'Построить AST',
+                'actionShowAST': 'Показать AST',
 
                 # Help menu actions
                 'actionHelp': 'Вызов справки',
@@ -214,7 +214,7 @@ class Language():
                 'actionRunParser_toolTip': 'Syntactic analysis',
                 'actionRunLexer_toolTip': 'Lexical analysis',
                 'actionSemanticAnalysis_toolTip': 'Semantic analysis',
-                'actionOpenAST_toolTip': 'Build AST',
+                'actionShowAST_toolTip': 'Show AST',
                 'actionUndo_toolTip': 'Undo',
                 'actionRedo_toolTip': 'Redo',
                 'actionCut_toolTip': 'Cut',
@@ -238,7 +238,7 @@ class Language():
                 'actionRunParser': 'Syntactic analysis',
                 'actionRunLexer': 'Lexical analysis',
                 'actionSemanticAnalysis': 'Semantic analysis',
-                'actionOpenAST': 'Build AST',
+                'actionShowAST': 'Show AST',
 
                 # Help menu actions
                 'actionHelp': 'Help',

@@ -66,6 +66,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.actionRunLexer.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
         self.actionRunParser.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
         self.actionSemanticAnalysis.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
+        self.actionShowAST.setIcon(QtGui.QIcon(self.resource_path("icons/show_AST.png")))
 
     def setup_actions(self):
         action_map = {
@@ -86,7 +87,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             'actionRunLexer': self.runLexer,
             'actionRunParser': self.runParser,
             'actionSemanticAnalysis': self.runSemanticAnalysis,
-            'actionOpenAST': self.openAST,
+            'actionShowAST': self.showAST,
             'actionHelp': self.help,
             'actionAbout': self.about,
             'actionLanguage': self.show_language_dialog
@@ -149,7 +150,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             'actionOpenExample', 'actionOpenReferences',
             'actionOpenSourceCode', 'actionRunLexer', 'actionRunParser',
             'actionSemanticAnalysis', 'actionHelp', 'actionAbout',
-            'actionLanguage', 'actionOpenAST'
+            'actionLanguage', 'actionShowAST'
         ]
 
         for action_name in action_names:
@@ -622,8 +623,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         else:
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
 
-    def openAST(self):
-        self.output_tab_widget.setCurrentWidget(self.astTab)
+    def showAST(self):
+        pass
 
     def _build_syntax_rows(self, syntax_errors):
         rows = []
