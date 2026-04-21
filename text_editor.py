@@ -770,7 +770,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         if not chain:
             return
 
-        pen = QPen(Qt.GlobalColor.black, 2.0)
+        pen = QPen(Qt.GlobalColor.white, 2.0)
         nonterm_font = QFont("Segoe UI", 18)
         term_font = QFont("Segoe UI", 18)
 
@@ -780,37 +780,80 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         y_bottom = 900
         y_top_start = 20
         y_top_step = 56
+        top_offset = 18
 
-        top_shift = 320
-        top_points = []
-        bottom_points = []
-
-        for i in range(n):
-            bx = x_start + i * x_step
-            tx = bx + top_shift
-            ty = y_top_start + i * y_top_step
-            top_points.append((tx, ty))
-            bottom_points.append((bx, y_bottom))
+        top_items = []
+        bottom_items = []
+        top_anchor_x = []
+        top_anchor_y = []
+        top_centers = []
+        top_half_widths = []
+        top_half_heights = []
 
         for i, (nonterm, term) in enumerate(chain):
-            tx, ty = top_points[i]
-            bx, by = bottom_points[i]
-
-            top_text = QGraphicsTextItem(nonterm)
-            top_text.setFont(nonterm_font)
-            top_text.setPos(tx, ty - 18)
-            scene.addItem(top_text)
+            bx = x_start + i * x_step
+            by = y_bottom
+            ty = y_top_start + i * y_top_step
 
             bottom_text = QGraphicsTextItem(term)
             bottom_text.setFont(term_font)
             bottom_text.setPos(bx, by + 8)
             scene.addItem(bottom_text)
+            bottom_items.append(bottom_text)
 
-            self._draw_arrow(scene, tx + 4, ty + 8, bx + 4, by, pen)
+            bottom_rect = bottom_text.boundingRect()
+            x_common = bottom_text.pos().x() + bottom_rect.width() / 2
+
+            top_text = QGraphicsTextItem(nonterm)
+            top_text.setFont(nonterm_font)
+            top_rect = top_text.boundingRect()
+            top_text.setPos(x_common - top_rect.width() / 2, ty - top_offset)
+            scene.addItem(top_text)
+            top_items.append(top_text)
+            top_anchor_x.append(x_common)
+            top_anchor_y.append(top_text.pos().y() + top_rect.height() + 6)
+            top_centers.append((x_common, top_text.pos().y() + top_rect.height() / 2))
+            top_half_widths.append(top_rect.width() / 2)
+            top_half_heights.append(top_rect.height() / 2)
+
+        for i in range(n):
+            bottom_text = bottom_items[i]
+            bottom_rect = bottom_text.boundingRect()
+
+            # Nonterminal -> terminal: strictly vertical (perpendicular to baseline)
+            x1 = top_anchor_x[i]
+            y1 = top_anchor_y[i]
+            x2 = top_anchor_x[i]
+            y2 = bottom_text.pos().y() - 10
+            self._draw_arrow(scene, x1, y1, x2, y2, pen)
 
             if i < n - 1:
-                ntx, nty = top_points[i + 1]
-                self._draw_arrow(scene, tx + 42, ty, ntx + 8, nty + 5, pen)
+                # Nonterminal -> nonterminal: keep one global angle and clip by text bounds.
+                c1x, c1y = top_centers[i]
+                c2x, c2y = top_centers[i + 1]
+                dx = c2x - c1x
+                dy = c2y - c1y
+                length = math.hypot(dx, dy)
+                if length == 0:
+                    continue
+                ux = dx / length
+                uy = dy / length
+
+                def exit_dist(hw, hh):
+                    tx = hw / abs(ux) if abs(ux) > 1e-9 else float("inf")
+                    ty = hh / abs(uy) if abs(uy) > 1e-9 else float("inf")
+                    return min(tx, ty)
+
+                pad = 10
+                tip_gap = 6
+                d1 = exit_dist(top_half_widths[i], top_half_heights[i]) + pad
+                d2 = exit_dist(top_half_widths[i + 1], top_half_heights[i + 1]) + pad + tip_gap
+
+                cx1 = c1x + ux * d1
+                cy1 = c1y + uy * d1
+                cx2 = c2x - ux * d2
+                cy2 = c2y - uy * d2
+                self._draw_arrow(scene, cx1, cy1, cx2, cy2, pen)
 
     @staticmethod
     def _draw_arrow(scene, x1, y1, x2, y2, pen):
