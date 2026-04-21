@@ -59,13 +59,16 @@ class Parser:
         close_angle_code = LexicalAnalyzer.TOKEN_CODES["CLOSE_ANGLE"]
         identifier_code = LexicalAnalyzer.TOKEN_CODES["IDENTIFIER"]
         keyword_std_code = LexicalAnalyzer.TOKEN_CODES["KEYWORD_STD"]
+        keyword_complex_code = LexicalAnalyzer.TOKEN_CODES["KEYWORD_COMPLEX"]
         double_colon_code = LexicalAnalyzer.TOKEN_CODES["DOUBLE_COLON"]
         open_angle_code = LexicalAnalyzer.TOKEN_CODES["OPEN_ANGLE"]
         integer_code = LexicalAnalyzer.TOKEN_CODES["INTEGER"]
         keyword_double_code = LexicalAnalyzer.TOKEN_CODES["KEYWORD_DOUBLE"]
+        open_paren_code = LexicalAnalyzer.TOKEN_CODES["OPEN_PAREN"]
         close_paren_code = LexicalAnalyzer.TOKEN_CODES["CLOSE_PAREN"]
         comma_code = LexicalAnalyzer.TOKEN_CODES["COMMA"]
         semicolon_code = LexicalAnalyzer.TOKEN_CODES["SEMICOLON"]
+        recovery_anchor_codes = {open_angle_code, open_paren_code}
         suppress_cascade_errors = False
         recovery_matches = 0
         previous_expected_code = None
@@ -152,12 +155,25 @@ class Parser:
                         cursor += 1
                     continue
 
-                if not suppress_cascade_errors:
+                force_emit = (
+                    expected_code == open_angle_code
+                    and previous_expected_code == keyword_complex_code
+                    and previous_found_index is not None
+                ) or (
+                    expected_code == open_paren_code
+                    and previous_expected_code == identifier_code
+                    and previous_found_index is not None
+                    and self._is_decl_identifier_context(previous_found_index)
+                )
+
+                if not suppress_cascade_errors or force_emit:
                     self._add_error(expected_code, wrong_fragment, location)
                 suppress_cascade_errors = True
                 recovery_matches = 0
                 if self._should_advance_cursor_in_range(cursor, seq_index, end):
                     cursor += 1
+                previous_expected_code = expected_code
+                previous_found_index = None
                 continue
 
             if (
@@ -197,13 +213,43 @@ class Parser:
                         suppress_cascade_errors = False
                 else:
                     if suppress_cascade_errors:
-                        recovery_matches += 1
-                        if recovery_matches >= 2:
+                        if expected_code in recovery_anchor_codes or expected_code in (
+                            keyword_double_code,
+                            close_paren_code,
+                        ):
                             suppress_cascade_errors = False
                             recovery_matches = 0
+                        elif (
+                            expected_code == keyword_complex_code
+                            and previous_expected_code == double_colon_code
+                            and found_index == cursor
+                        ) or (
+                            expected_code == identifier_code
+                            and previous_expected_code == close_angle_code
+                            and found_index == cursor
+                        ):
+                            suppress_cascade_errors = False
+                            recovery_matches = 0
+                        else:
+                            recovery_matches += 1
+                            if recovery_matches >= 2:
+                                suppress_cascade_errors = False
+                                recovery_matches = 0
             else:
                 if suppress_cascade_errors:
-                    if expected_code in (keyword_double_code, close_paren_code):
+                    if expected_code in recovery_anchor_codes or expected_code in (
+                        keyword_double_code,
+                        close_paren_code,
+                    ):
+                        suppress_cascade_errors = False
+                        recovery_matches = 0
+                    elif (
+                        expected_code == keyword_complex_code
+                        and previous_expected_code == double_colon_code
+                    ) or (
+                        expected_code == identifier_code
+                        and previous_expected_code == close_angle_code
+                    ):
                         suppress_cascade_errors = False
                         recovery_matches = 0
                     else:
@@ -395,6 +441,23 @@ class Parser:
             if self.tokens[i]["code"] == space_code:
                 return True
         return False
+
+    def _is_decl_identifier_context(self, idx):
+        if idx is None or idx <= 0 or idx >= len(self.tokens):
+            return False
+
+        prev_idx = idx - 1
+        space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
+        close_angle_code = LexicalAnalyzer.TOKEN_CODES["CLOSE_ANGLE"]
+        keyword_double_code = LexicalAnalyzer.TOKEN_CODES["KEYWORD_DOUBLE"]
+
+        while prev_idx >= 0 and self.tokens[prev_idx]["code"] == space_code:
+            prev_idx -= 1
+
+        if prev_idx < 0:
+            return False
+
+        return self.tokens[prev_idx]["code"] in (close_angle_code, keyword_double_code)
 
     def _should_advance_cursor_in_range(self, cursor, seq_index, end):
         if cursor > end or cursor >= len(self.tokens):
