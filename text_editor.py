@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt, QUrl
 from ui import Ui_MainWindow
 from PyQt6.uic import loadUi
 from parser import Parser
+from semantic_analyzer import SemanticAnalyzer
 from PyQt6 import QtGui
 import sys
 import re
@@ -64,6 +65,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
 
         self.actionRunLexer.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
         self.actionRunParser.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
+        self.actionSemanticAnalysis.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
 
     def setup_actions(self):
         action_map = {
@@ -83,6 +85,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             'actionOpenSourceCode': self.open_source_code,
             'actionRunLexer': self.runLexer,
             'actionRunParser': self.runParser,
+            'actionSemanticAnalysis': self.runSemanticAnalysis,
+            'actionOpenAST': self.openAST,
             'actionHelp': self.help,
             'actionAbout': self.about,
             'actionLanguage': self.show_language_dialog
@@ -143,8 +147,9 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             'actionOpenGrammar', 'actionOpenGrammarClass',
             'actionOpenAnalysisMethod', 'actionDiagnosticsTroubleshooting',
             'actionOpenExample', 'actionOpenReferences',
-            'actionOpenSourceCode', 'actionRunLexer', 'actionRunParser', 'actionHelp',
-            'actionAbout', 'actionLanguage'
+            'actionOpenSourceCode', 'actionRunLexer', 'actionRunParser',
+            'actionSemanticAnalysis', 'actionHelp', 'actionAbout',
+            'actionLanguage', 'actionOpenAST'
         ]
 
         for action_name in action_names:
@@ -533,6 +538,49 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             self.create_or_update_parser_table(errors)
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
 
+    def runSemanticAnalysis(self):
+        if not self.input_tab_widget:
+            return
+        index = self.input_tab_widget.currentIndex()
+        self.current_input_widget = self.input_tab_widget.widget(index)
+        text = self.current_input_widget.text()
+        if not text or not text.strip():
+            self.status_bar.showMessage(self.lang.translate('semantic_analysis_input_empty'), 5000)
+            return
+
+        self.current_file_path = self.current_input_widget.file_path
+
+        if not self.current_file_path or self.current_input_widget.isModified():
+            if not self.save_file():
+                return
+            if self.current_input_widget.file_path:
+                self.current_file_path = self.current_input_widget.file_path
+
+        self.current_tab_name = self.input_tab_widget.tabText(index)
+
+        if self.current_file_path in self.input_to_output_map:
+            output_widget = self.input_to_output_map[self.current_file_path]
+            output_index = self.output_tab_widget.indexOf(output_widget)
+            self.output_tab_widget.setCurrentIndex(output_index)
+
+        analyzer = SemanticAnalyzer(self.lang)
+        errors = analyzer.analyze(text)
+
+        if len(errors) == 0:
+            existing_table = self.input_to_output_map.get(self.current_file_path)
+            if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
+                output_index = self.output_tab_widget.indexOf(existing_table)
+                self.output_tab_widget.removeTab(output_index)
+                existing_table.deleteLater()
+                del self.input_to_output_map[self.current_file_path]
+            self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
+        else:
+            self.create_or_update_semantic_table(errors)
+            self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
+
+    def openAST(self):
+        pass
+
     def get_token_type(self, code):
         lexer = LexicalAnalyzer(self.lang)
         return lexer.TOKEN_TYPES.get(code, self.lang.translate('unknown_code').format(code, 0))
@@ -688,6 +736,15 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             return
         self._highlight_location(location_item.text())
 
+    def on_semantic_table_item_clicked(self, item):
+        row = item.row()
+        table = item.tableWidget()
+
+        location_item = self._get_location_item(table, row, fallback_col=1)
+        if not location_item:
+            return
+        self._highlight_location(location_item.text())
+
     def _highlight_location(self, location_text):
         match = re.match(r'.*?(\d+),\s*(\d+)-(\d+)', location_text or '')
         if match:
@@ -742,6 +799,53 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.output_tab_widget.addTab(table, self.current_tab_name)
         self.input_to_output_map[self.current_file_path] = table
         self.output_tab_widget.setCurrentWidget(table)
+
+    def create_or_update_semantic_table(self, errors):
+        existing_table = self.input_to_output_map.get(self.current_file_path)
+
+        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
+            self.fill_semantic_table(errors, existing_table)
+            self.output_tab_widget.setCurrentWidget(existing_table)
+        else:
+            table = self.fill_semantic_table(errors)
+            self.output_table_data(table)
+
+    def fill_semantic_table(self, errors, table=None):
+        if table:
+            table.clearContents()
+            table.setRowCount(0)
+        else:
+            table = QTableWidget(self)
+
+        table.setColumnCount(2)
+        table.setHorizontalHeaderLabels([
+            self.lang.translate('semantic_message'),
+            self.lang.translate('semantic_position'),
+        ])
+
+        row_labels = []
+        if errors:
+            table.setRowCount(len(errors))
+            for row, error in enumerate(errors):
+                message = QTableWidgetItem(error.get('message', ''))
+                message.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 0, message)
+
+                location = QTableWidgetItem(error.get('location', ''))
+                location.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 1, location)
+
+                row_labels.append(str(row + 1))
+            self._rebind_table_click_handler(table, self.on_semantic_table_item_clicked)
+        else:
+            table.setRowCount(0)
+
+        table.setVerticalHeaderLabels(row_labels)
+        table.resizeColumnsToContents()
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        return table
 
     def edit_action(self, action_name, method_name):
         widget = self.get_current_input_tab_widget()

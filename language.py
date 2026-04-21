@@ -39,8 +39,9 @@ class Language():
                 'actionNew_toolTip': 'Создать',
                 'actionOpen_toolTip': 'Открыть',
                 'actionRedo_toolTip': 'Повторить',
-                'actionRunParser_toolTip': 'Запустить парсер',
-                'actionRunLexer_toolTip': 'Запустить лексер',
+                'actionRunParser_toolTip': 'Синтаксический анализ',
+                'actionRunLexer_toolTip': 'Лексический анализ',
+                'actionSemanticAnalysis_toolTip': 'Семантический анализ',
                 'actionUndo_toolTip': 'Отменить',
                 'actionRedo_toolTip': 'Повторить',
                 'actionCut_toolTip': 'Вырезать',
@@ -61,8 +62,9 @@ class Language():
                 'actionOpenSourceCode': 'Исходный код программы',
 
                 # Run menu actions
-                'actionRunParser': 'Запустить парсер',
-                'actionRunLexer': 'Запустить лексер',
+                'actionRunParser': 'Синтаксический анализ',
+                'actionRunLexer': 'Лексический анализ',
+                'actionSemanticAnalysis': 'Семантический анализ',
 
                 # Help menu actions
                 'actionHelp': 'Вызов справки',
@@ -86,8 +88,9 @@ class Language():
 
                 'total_errors': 'Количество ошибок: {}',
                 'no_errors': 'Ошибок нет',
-                'parser_input_empty': 'Введите текст перед запуском парсера',
-                'lexer_input_empty': 'Введите текст перед запуском лексера',
+                'parser_input_empty': 'Введите текст перед запуском синтаксического анализатора',
+                'lexer_input_empty': 'Введите текст перед запуском лексического анализатора',
+                'semantic_analysis_input_empty': 'Введите текст перед запуском семантического анализатора',
 
                 'actionUndo_status_bar': 'Действие отменено',
                 'actionRedo_status_bar': 'Действие повторено',
@@ -160,7 +163,12 @@ class Language():
                 'lexeme': 'Лексема',
                 'location': 'Местоположение',
                 'parser_wrong_fragment': 'Неверный фрагмент',
-                'parser_error_description': 'Описание ошибки'
+                'parser_error_description': 'Описание ошибки',
+                'semantic_message': 'Сообщение',
+                'semantic_position': 'Позиция',
+                'semantic_duplicate_identifier': 'Ошибка: идентификатор "{}" уже объявлен ранее (строка {})',
+                'semantic_type_mismatch': 'Ошибка: значение "{}" имеет тип int, ожидался double',
+                'semantic_out_of_range': 'Ошибка: значение "{}" вне диапазона типа double'
             },
             'en': {
                 # Window title
@@ -194,8 +202,9 @@ class Language():
                 'actionNew_toolTip': 'Create',
                 'actionOpen_toolTip': 'Open',
                 'actionRedo_toolTip': 'Redo',
-                'actionRunParser_toolTip': 'Run parser',
-                'actionRunLexer_toolTip': 'Run lexer',
+                'actionRunParser_toolTip': 'Syntactic analysis',
+                'actionRunLexer_toolTip': 'Lexical analysis',
+                'actionSemanticAnalysis_toolTip': 'Semantic analysis',
                 'actionUndo_toolTip': 'Undo',
                 'actionRedo_toolTip': 'Redo',
                 'actionCut_toolTip': 'Cut',
@@ -216,8 +225,9 @@ class Language():
                 'actionOpenSourceCode': 'Source code',
 
                 # Run menu actions
-                'actionRunParser': 'Run parser',
-                'actionRunLexer': 'Run lexer',
+                'actionRunParser': 'Syntactic analysis',
+                'actionRunLexer': 'Lexical analysis',
+                'actionSemanticAnalysis': 'Semantic analysis',
 
                 # Help menu actions
                 'actionHelp': 'Help',
@@ -241,8 +251,9 @@ class Language():
 
                 'total_errors': 'Number of errors: {}',
                 'no_errors': 'No errors',
-                'parser_input_empty': 'Enter text before running parser',
-                'lexer_input_empty': 'Enter text before running lexer',
+                'parser_input_empty': 'Enter text before running the parser',
+                'lexer_input_empty': 'Enter text before running the lexical analyzer',
+                'semantic_analysis_input_empty': 'Enter text before running the semantic analyzer',
 
                 'actionUndo_status_bar': 'Action undone',
                 'actionRedo_status_bar': 'Action redone',
@@ -314,7 +325,12 @@ class Language():
                 'lexeme': 'Lexeme',
                 'location': 'Location',
                 'parser_wrong_fragment': 'Wrong fragment',
-                'parser_error_description': 'Error description'
+                'parser_error_description': 'Error description',
+                'semantic_message': 'Message',
+                'semantic_position': 'Position',
+                'semantic_duplicate_identifier': 'Error: identifier "{}" was already declared before (line {})',
+                'semantic_type_mismatch': 'Error: value "{}" has int type, expected double',
+                'semantic_out_of_range': 'Error: value "{}" is out of range for double'
             }
         }
 
