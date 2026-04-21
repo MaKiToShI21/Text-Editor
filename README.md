@@ -52,7 +52,7 @@ VS Code (Visual Studio Code)
 A state diagram was developed.
 
 <div align="center">
-  <img src="https://github.com/MaKiToShI21/Text-Editor/blob/showing-program/images/state_diagram.png" width="450">
+  <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/state_diagram.png" width="450">
 </div>
 
 A lexer was created based on it to parse the string "**`std::complex<double> my_complex(10.0, 2.0);`**" into tokens, which are then output as a table.
