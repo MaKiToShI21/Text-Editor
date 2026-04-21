@@ -527,7 +527,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         lexer = LexicalAnalyzer(self.lang)
         tokens, errors = lexer.analyze(text)
         self.fill_table(tokens, [], self.result_table)
-        self.fill_table([], errors, self.errors_table)
+        if errors:
+            self.fill_table([], errors, self.errors_table)
+        else:
+            self._clear_table_widget(self.errors_table)
         self.output_tab_widget.setCurrentWidget(self.resultTab)
         if len(errors) == 0:
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
@@ -558,7 +561,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         parser = Parser(self.lang)
         _, errors = parser.parse(text)
 
-        self.fill_parser_table(errors, self.errors_table)
+        if errors:
+            self.fill_parser_table(errors, self.errors_table)
+        else:
+            self._clear_table_widget(self.errors_table)
         self.output_tab_widget.setCurrentWidget(self.ErrorTab)
         if len(errors) == 0:
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
@@ -586,10 +592,30 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.current_tab_name = self.input_tab_widget.tabText(index)
         self.clear_output_views()
 
-        analyzer = SemanticAnalyzer(self.lang)
-        errors = analyzer.analyze(text)
+        parser = Parser(self.lang)
+        _, syntax_errors = parser.parse(text)
+        syntax_rows = self._build_syntax_rows(syntax_errors)
 
-        self.fill_semantic_table(errors, self.errors_table)
+        syntax_error_lines = self._extract_error_lines(syntax_errors)
+        analyzer = SemanticAnalyzer(self.lang)
+        semantic_rows, ast_text = analyzer.analyze(text, ast_blocked_lines=syntax_error_lines)
+
+        semantic_type_mismatch_locations = {
+            err.get("location", "")
+            for err in semantic_rows
+            if err.get("semantic_code") == "TYPE_MISMATCH"
+        }
+        filtered_syntax_rows = [
+            err for err in syntax_rows
+            if err.get("location", "") not in semantic_type_mismatch_locations
+        ]
+        errors = filtered_syntax_rows + semantic_rows
+
+        if errors:
+            self.fill_parser_table(errors, self.errors_table)
+        else:
+            self._clear_table_widget(self.errors_table)
+        self.ast_browser.setPlainText(ast_text)
         self.output_tab_widget.setCurrentWidget(self.ErrorTab)
         if len(errors) == 0:
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
@@ -597,21 +623,43 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
 
     def openAST(self):
-        pass
+        self.output_tab_widget.setCurrentWidget(self.astTab)
+
+    def _build_syntax_rows(self, syntax_errors):
+        rows = []
+        for err in syntax_errors:
+            rows.append(
+                {
+                    "analysis_type": "syntax",
+                    "lexeme": err.get("lexeme", ""),
+                    "description": err.get("description", err.get("type", "")),
+                    "location": err.get("location", ""),
+                }
+            )
+        return rows
+
+    def _extract_error_lines(self, errors):
+        lines = set()
+        for err in errors:
+            line, _, _ = self._extract_location(err.get("location", ""))
+            if line is not None:
+                lines.add(line)
+        return lines
+
+    @staticmethod
+    def _extract_location(location):
+        numbers = re.findall(r"\d+", location or "")
+        if len(numbers) < 3:
+            return None, None, None
+        return int(numbers[0]), int(numbers[1]), int(numbers[2])
 
     def get_token_type(self, code):
         lexer = LexicalAnalyzer(self.lang)
         return lexer.TOKEN_TYPES.get(code, self.lang.translate('unknown_code').format(code, 0))
 
     def create_or_update_table(self, tokens, errors):
-        existing_table = self.input_to_output_map.get(self.current_file_path)
-
-        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-            self.fill_table(tokens, errors, existing_table)
-            self.output_tab_widget.setCurrentWidget(existing_table)
-        else:
-            table = self.fill_table(tokens, errors)
-            self.output_table_data(table)
+        self.fill_table(tokens, errors, self.result_table)
+        self.output_tab_widget.setCurrentWidget(self.resultTab)
 
     def fill_table(self, tokens, errors, table=None):
         if table:
@@ -684,14 +732,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         return table
 
     def create_or_update_parser_table(self, errors):
-        existing_table = self.input_to_output_map.get(self.current_file_path)
-
-        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-            self.fill_parser_table(errors, existing_table)
-            self.output_tab_widget.setCurrentWidget(existing_table)
-        else:
-            table = self.fill_parser_table(errors)
-            self.output_table_data(table)
+        self.fill_parser_table(errors, self.errors_table)
+        self.output_tab_widget.setCurrentWidget(self.ErrorTab)
 
     def fill_parser_table(self, errors, table=None):
         if table:
@@ -700,9 +742,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         else:
             table = QTableWidget(self)
 
-        table.setColumnCount(3)
+        table.setColumnCount(4)
         table.setHorizontalHeaderLabels([
             self.lang.translate('parser_wrong_fragment'),
+            self.lang.translate('analysis_type'),
             self.lang.translate('parser_error_description'),
             self.lang.translate('location'),
         ])
@@ -715,14 +758,20 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 fragment.setForeground(Qt.GlobalColor.red)
                 table.setItem(row, 0, fragment)
 
+                error_kind = error.get('analysis_type', 'syntax')
+                type_text = self.lang.translate('semantic_kind') if error_kind == 'semantic' else self.lang.translate('syntax_kind')
+                kind_item = QTableWidgetItem(type_text)
+                kind_item.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 1, kind_item)
+
                 description_text = error.get('description', error.get('type', ''))
                 description = QTableWidgetItem(description_text)
                 description.setForeground(Qt.GlobalColor.red)
-                table.setItem(row, 1, description)
+                table.setItem(row, 2, description)
 
                 location = QTableWidgetItem(error.get('location', ''))
                 location.setForeground(Qt.GlobalColor.red)
-                table.setItem(row, 2, location)
+                table.setItem(row, 3, location)
 
                 row_labels.append(str(row + 1))
             self._rebind_table_click_handler(table, self.on_parser_table_item_clicked)
@@ -740,7 +789,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         row = item.row()
         table = item.tableWidget()
 
-        location_item = self._get_location_item(table, row, fallback_col=2)
+        location_item = self._get_location_item(table, row, fallback_col=3)
         if not location_item:
             return
         self._highlight_location(location_item.text())
@@ -814,19 +863,12 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         table.itemClicked.connect(handler)
 
     def output_table_data(self, table):
-        self.output_tab_widget.addTab(table, self.current_tab_name)
-        self.input_to_output_map[self.current_file_path] = table
-        self.output_tab_widget.setCurrentWidget(table)
+        _ = table
+        return
 
     def create_or_update_semantic_table(self, errors):
-        existing_table = self.input_to_output_map.get(self.current_file_path)
-
-        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-            self.fill_semantic_table(errors, existing_table)
-            self.output_tab_widget.setCurrentWidget(existing_table)
-        else:
-            table = self.fill_semantic_table(errors)
-            self.output_table_data(table)
+        self.fill_parser_table(errors, self.errors_table)
+        self.output_tab_widget.setCurrentWidget(self.ErrorTab)
 
     def fill_semantic_table(self, errors, table=None):
         if table:
