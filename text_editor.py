@@ -1,20 +1,24 @@
 ﻿from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QFileDialog,
                              QMessageBox, QDialog, QTextBrowser,
-                             QVBoxLayout, QTableWidget, QTableWidgetItem)
-from PyQt6.QtGui import QAction, QDesktopServices
+                             QVBoxLayout, QTableWidget, QTableWidgetItem,
+                             QHBoxLayout, QPushButton, QGraphicsScene,
+                             QGraphicsTextItem)
+from PyQt6.QtGui import QAction, QDesktopServices, QPen, QFont
 from PyQt6.QtWidgets import QDialog, QVBoxLayout
+from semantic_analyzer import SemanticAnalyzer
 from language import Language, LanguageDialog
+from zoom_AST_graph import ZoomGraphicsView
 from code_editor import CodeEditor
 from lexer import LexicalAnalyzer
 from PyQt6.QtCore import Qt, QUrl
 from ui import Ui_MainWindow
 from PyQt6.uic import loadUi
 from parser import Parser
-from semantic_analyzer import SemanticAnalyzer
 from PyQt6 import QtGui
 import sys
 import re
 import os
+import math
 
 
 class TextEditor(QMainWindow, Ui_MainWindow):
@@ -624,7 +628,203 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
 
     def showAST(self):
-        pass
+        editor = self.input_tab_widget.currentWidget() if self.input_tab_widget else None
+        if editor is None:
+            return
+
+        text = editor.text()
+        if not text or not text.strip():
+            QMessageBox.information(
+                self,
+                self.lang.translate('actionShowAST'),
+                self.lang.translate('ast_not_available')
+            )
+            return
+
+        chain = self._build_first_correct_syntactic_chain(text)
+        if not chain:
+            QMessageBox.information(
+                self,
+                self.lang.translate('actionShowAST'),
+                self.lang.translate('ast_not_available')
+            )
+            return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self.lang.translate('actionShowAST'))
+        dialog.resize(1400, 920)
+
+        layout = QVBoxLayout(dialog)
+        toolbar_layout = QHBoxLayout()
+        btn_zoom_in = QPushButton("+", dialog)
+        btn_zoom_out = QPushButton("-", dialog)
+        btn_zoom_reset = QPushButton("100%", dialog)
+        toolbar_layout.addWidget(btn_zoom_in)
+        toolbar_layout.addWidget(btn_zoom_out)
+        toolbar_layout.addWidget(btn_zoom_reset)
+        toolbar_layout.addStretch()
+        layout.addLayout(toolbar_layout)
+
+        view = ZoomGraphicsView(dialog)
+        scene = QGraphicsScene(view)
+        view.setScene(scene)
+        view.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        view.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        view.setFocus()
+        layout.addWidget(view)
+
+        btn_zoom_in.clicked.connect(view.zoom_in)
+        btn_zoom_out.clicked.connect(view.zoom_out)
+        btn_zoom_reset.clicked.connect(view.zoom_reset)
+
+        self._draw_chain_tree(scene, chain)
+        rect = scene.itemsBoundingRect().adjusted(-80, -80, 80, 80)
+        scene.setSceneRect(rect)
+        view.fitInView(rect, Qt.AspectRatioMode.KeepAspectRatio)
+        view.zoom_reset()
+
+        dialog.exec()
+
+    def _build_first_correct_syntactic_chain(self, text):
+        parser = Parser(self.lang)
+        tokens, syntax_errors = parser.parse(text)
+        syntax_error_lines = self._extract_error_lines(syntax_errors)
+
+        analyzer = SemanticAnalyzer(self.lang)
+        semantic_errors, _ = analyzer.analyze(text, ast_blocked_lines=syntax_error_lines)
+        semantic_error_lines = self._extract_error_lines(semantic_errors)
+        blocked_lines = syntax_error_lines.union(semantic_error_lines)
+
+        line_tokens = {}
+        space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
+        for token in tokens:
+            line, _, _ = self._extract_location(token.get("location", ""))
+            if line is None or line in blocked_lines:
+                continue
+            line_tokens.setdefault(line, []).append(token)
+
+        for line_no in sorted(line_tokens.keys()):
+            significant = [t for t in line_tokens[line_no] if t.get("code") != space_code]
+            if self._is_valid_chain_line(significant):
+                return self._to_chain_items(significant)
+        return []
+
+    @staticmethod
+    def _is_valid_chain_line(significant):
+        code = LexicalAnalyzer.TOKEN_CODES
+        required_prefix = [
+            code["KEYWORD_STD"],
+            code["DOUBLE_COLON"],
+            code["KEYWORD_COMPLEX"],
+            code["OPEN_ANGLE"],
+            code["KEYWORD_DOUBLE"],
+            code["CLOSE_ANGLE"],
+            code["IDENTIFIER"],
+            code["OPEN_PAREN"],
+        ]
+        if len(significant) < len(required_prefix) + 5:
+            return False
+
+        for i, expected_code in enumerate(required_prefix):
+            if significant[i]["code"] != expected_code:
+                return False
+
+        tail = [t["code"] for t in significant[len(required_prefix):]]
+        valid_tails = [
+            [code["FLOAT"], code["COMMA"], code["FLOAT"], code["CLOSE_PAREN"], code["SEMICOLON"]],
+            [code["MINUS"], code["FLOAT"], code["COMMA"], code["FLOAT"], code["CLOSE_PAREN"], code["SEMICOLON"]],
+            [code["FLOAT"], code["COMMA"], code["MINUS"], code["FLOAT"], code["CLOSE_PAREN"], code["SEMICOLON"]],
+            [code["MINUS"], code["FLOAT"], code["COMMA"], code["MINUS"], code["FLOAT"], code["CLOSE_PAREN"], code["SEMICOLON"]],
+        ]
+        return tail in valid_tails
+
+    @staticmethod
+    def _to_chain_items(significant):
+        code_to_nonterm = {
+            LexicalAnalyzer.TOKEN_CODES["KEYWORD_STD"]: "Std",
+            LexicalAnalyzer.TOKEN_CODES["DOUBLE_COLON"]: "DoubleColon",
+            LexicalAnalyzer.TOKEN_CODES["KEYWORD_COMPLEX"]: "Complex",
+            LexicalAnalyzer.TOKEN_CODES["OPEN_ANGLE"]: "OpenAngle",
+            LexicalAnalyzer.TOKEN_CODES["KEYWORD_DOUBLE"]: "Double",
+            LexicalAnalyzer.TOKEN_CODES["CLOSE_ANGLE"]: "CloseAngle",
+            LexicalAnalyzer.TOKEN_CODES["IDENTIFIER"]: "Identifier",
+            LexicalAnalyzer.TOKEN_CODES["OPEN_PAREN"]: "OpenParenth",
+            LexicalAnalyzer.TOKEN_CODES["MINUS"]: "Minus",
+            LexicalAnalyzer.TOKEN_CODES["FLOAT"]: "Float",
+            LexicalAnalyzer.TOKEN_CODES["COMMA"]: "Comma",
+            LexicalAnalyzer.TOKEN_CODES["CLOSE_PAREN"]: "CloseParenth",
+            LexicalAnalyzer.TOKEN_CODES["SEMICOLON"]: "Semicolon",
+        }
+        chain = []
+        for token in significant:
+            code = token["code"]
+            if code not in code_to_nonterm:
+                continue
+            terminal = token["lexeme"]
+            if code == LexicalAnalyzer.TOKEN_CODES["IDENTIFIER"]:
+                terminal = "name"
+            chain.append((code_to_nonterm[code], terminal))
+        return chain
+
+    def _draw_chain_tree(self, scene, chain):
+        if not chain:
+            return
+
+        pen = QPen(Qt.GlobalColor.black, 2.0)
+        nonterm_font = QFont("Segoe UI", 18)
+        term_font = QFont("Segoe UI", 18)
+
+        n = len(chain)
+        x_start = 30
+        x_step = 165
+        y_bottom = 900
+        y_top_start = 20
+        y_top_step = 56
+
+        top_shift = 320
+        top_points = []
+        bottom_points = []
+
+        for i in range(n):
+            bx = x_start + i * x_step
+            tx = bx + top_shift
+            ty = y_top_start + i * y_top_step
+            top_points.append((tx, ty))
+            bottom_points.append((bx, y_bottom))
+
+        for i, (nonterm, term) in enumerate(chain):
+            tx, ty = top_points[i]
+            bx, by = bottom_points[i]
+
+            top_text = QGraphicsTextItem(nonterm)
+            top_text.setFont(nonterm_font)
+            top_text.setPos(tx, ty - 18)
+            scene.addItem(top_text)
+
+            bottom_text = QGraphicsTextItem(term)
+            bottom_text.setFont(term_font)
+            bottom_text.setPos(bx, by + 8)
+            scene.addItem(bottom_text)
+
+            self._draw_arrow(scene, tx + 4, ty + 8, bx + 4, by, pen)
+
+            if i < n - 1:
+                ntx, nty = top_points[i + 1]
+                self._draw_arrow(scene, tx + 42, ty, ntx + 8, nty + 5, pen)
+
+    @staticmethod
+    def _draw_arrow(scene, x1, y1, x2, y2, pen):
+        scene.addLine(x1, y1, x2, y2, pen)
+        angle = math.atan2(y2 - y1, x2 - x1)
+        arrow = 10
+        a1 = angle - math.pi / 7
+        a2 = angle + math.pi / 7
+        p1x = x2 - arrow * math.cos(a1)
+        p1y = y2 - arrow * math.sin(a1)
+        p2x = x2 - arrow * math.cos(a2)
+        p2y = y2 - arrow * math.sin(a2)
+        scene.addLine(x2, y2, p1x, p1y, pen)
+        scene.addLine(x2, y2, p2x, p2y, pen)
 
     def _build_syntax_rows(self, syntax_errors):
         rows = []
@@ -1433,3 +1633,9 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         text_browser.setReadOnly(True)
         layout.addWidget(text_browser)
         dialog.exec()
+
+
+
+
+
+

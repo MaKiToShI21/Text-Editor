@@ -121,7 +121,7 @@ background-color: rgb(40, 40, 40);</string>
            <string notr="true">background-color: rgb(50, 50, 50);</string>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <property name="documentMode">
            <bool>false</bool>
