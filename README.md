@@ -60,7 +60,7 @@ A lexer was created based on it to parse the string "**`std::complex<double> my_
 
 | Correct line | Invalid char | multi-line |
 |--------------|--------------|------------|
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab2/correct_line.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/semantic-analysis/main/images/lab2/invalid_char.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab2/multi-line.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab2/correct_line.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/semantic-analysis/semantic-analysis/images/lab2/invalid_char.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab2/multi-line.png" width="500"> |
 
 <h2 align="center">Title and Objective of the Laboratory Work 3</h2>
 
