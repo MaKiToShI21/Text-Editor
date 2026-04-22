@@ -203,6 +203,15 @@ AST graph:
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/no_errors_1.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/name_uniqueness.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/type_compatibility.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/valid_values.png" width="500"> |
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/no_errors_2.png" width="500"> |
 
+The `PyQt6 Graphics View Framework` is used to display the AST:
+
+- `QDialog` — a separate AST window
+- `QGraphicsScene` — a scene for the graph
+- `QGraphicsView` — displaying the scene
+- `QGraphicsTextItem` — node/terminal labels
+- `QPen + scene.addLine(...)` — edges and arrows
+- `fitInView(...), wheel/key zoom, and + / - / 100% buttons` — scaling the image.
+
 <h2 align="center">Build and Launch Instructions</h2>
 
 **Installing Python**
