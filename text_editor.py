@@ -536,7 +536,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             self.fill_table([], errors, self.errors_table)
         else:
             self._clear_table_widget(self.errors_table)
-        self.output_tab_widget.setCurrentWidget(self.resultTab)
         if len(errors) == 0:
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
         else:
@@ -563,6 +562,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.current_tab_name = self.input_tab_widget.tabText(index)
         self.clear_output_views()
 
+        lexer = LexicalAnalyzer(self.lang)
+        tokens, _ = lexer.analyze(text)
+        self.fill_table(tokens, [], self.result_table)
+
         parser = Parser(self.lang)
         _, errors = parser.parse(text)
 
@@ -570,7 +573,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             self.fill_parser_table(errors, self.errors_table)
         else:
             self._clear_table_widget(self.errors_table)
-        self.output_tab_widget.setCurrentWidget(self.ErrorTab)
         if len(errors) == 0:
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
         else:
@@ -597,11 +599,16 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.current_tab_name = self.input_tab_widget.tabText(index)
         self.clear_output_views()
 
+        lexer = LexicalAnalyzer(self.lang)
+        tokens, _ = lexer.analyze(text)
+        self.fill_table(tokens, [], self.result_table)
+
         parser = Parser(self.lang)
         _, syntax_errors = parser.parse(text)
         syntax_rows = self._build_syntax_rows(syntax_errors)
 
-        syntax_error_lines = self._extract_error_lines(syntax_errors)
+        # Reliable line blocking for AST: detect syntax errors per source line.
+        syntax_error_lines = self._collect_syntax_error_lines_by_source_line(text)
         analyzer = SemanticAnalyzer(self.lang)
         semantic_rows, ast_text = analyzer.analyze(text, ast_blocked_lines=syntax_error_lines)
 
@@ -621,7 +628,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         else:
             self._clear_table_widget(self.errors_table)
         self.ast_browser.setPlainText(ast_text)
-        self.output_tab_widget.setCurrentWidget(self.ErrorTab)
         if len(errors) == 0:
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
         else:
@@ -688,18 +694,14 @@ class TextEditor(QMainWindow, Ui_MainWindow):
     def _build_first_correct_syntactic_chain(self, text):
         parser = Parser(self.lang)
         tokens, syntax_errors = parser.parse(text)
-        syntax_error_lines = self._extract_error_lines(syntax_errors)
-
-        analyzer = SemanticAnalyzer(self.lang)
-        semantic_errors, _ = analyzer.analyze(text, ast_blocked_lines=syntax_error_lines)
-        semantic_error_lines = self._extract_error_lines(semantic_errors)
-        blocked_lines = syntax_error_lines.union(semantic_error_lines)
+        syntax_error_lines = self._collect_syntax_error_lines_by_source_line(text)
+        syntax_error_lines.update(self._extract_error_lines(syntax_errors))
 
         line_tokens = {}
         space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
         for token in tokens:
             line, _, _ = self._extract_location(token.get("location", ""))
-            if line is None or line in blocked_lines:
+            if line is None or line in syntax_error_lines:
                 continue
             line_tokens.setdefault(line, []).append(token)
 
@@ -708,6 +710,17 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             if self._is_valid_chain_line(significant):
                 return self._to_chain_items(significant)
         return []
+
+    def _collect_syntax_error_lines_by_source_line(self, text):
+        error_lines = set()
+        parser = Parser(self.lang)
+        for line_no, raw_line in enumerate(text.splitlines(), start=1):
+            if not raw_line.strip():
+                continue
+            _, line_errors = parser.parse(raw_line)
+            if line_errors:
+                error_lines.add(line_no)
+        return error_lines
 
     @staticmethod
     def _is_valid_chain_line(significant):
@@ -903,7 +916,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
 
     def create_or_update_table(self, tokens, errors):
         self.fill_table(tokens, errors, self.result_table)
-        self.output_tab_widget.setCurrentWidget(self.resultTab)
 
     def fill_table(self, tokens, errors, table=None):
         if table:
@@ -977,7 +989,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
 
     def create_or_update_parser_table(self, errors):
         self.fill_parser_table(errors, self.errors_table)
-        self.output_tab_widget.setCurrentWidget(self.ErrorTab)
 
     def fill_parser_table(self, errors, table=None):
         if table:
@@ -1112,7 +1123,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
 
     def create_or_update_semantic_table(self, errors):
         self.fill_parser_table(errors, self.errors_table)
-        self.output_tab_widget.setCurrentWidget(self.ErrorTab)
 
     def fill_semantic_table(self, errors, table=None):
         if table:
@@ -1676,9 +1686,3 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         text_browser.setReadOnly(True)
         layout.addWidget(text_browser)
         dialog.exec()
-
-
-
-
-
-
