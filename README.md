@@ -195,9 +195,11 @@ AST nodes with attributes and child elements are used. The basic idea is:
 `DoubleLiteralNode` — initialization values.
 
 Example:
+
 ![output AST](https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/output_AST.png)
 
 AST graph:
+
 ![show AST](https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/show_AST.png)
 
 |  No errors   | Name uniqueness  | Type compatibility | Valid values |
