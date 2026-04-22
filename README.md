@@ -161,17 +161,14 @@ Example:
 std::complex<double> my_complex(-10.0, 2.0);
 std::complex<double> my_complex(-1.0, 3.0);
 ```
-Expected message:
-
-Error: `identifier "my_complex" was already declared before (line 1)`.
+Expected message: `Error: identifier "my_complex" was already declared before (line 1)`.
 
 2. Type compatibility (expected double)
 Example:
 ```bash
 std::complex<double> my_complex(-10.0, 2);
 ```
-Expected message:
-Error: `The value "2" has int type, expected double`.
+Expected message: `Error: The value "2" has int type, expected double`.
 
 3. Valid values ​​(double range, C++)
 Checked for values ​​within the double range (including subnormal values ​​except 0).
@@ -183,16 +180,15 @@ std::complex<double> my_complex(1.7*10^309, 2.0);
 >[!NOTE]
 >1.7*10^309 is used to show an example of a large number, in reality such a line would be incorrect.
 
-Expected message:
-Error: `value "17000..." is out of range for double`.
+Expected message: `Error: value "17000..." is out of range for double`.
 
 **AST structure**
 AST nodes with attributes and child elements are used. The basic idea is:
 
-`AstNode` — base node (`node_type`, `attributes`, `children`).
-`ComplexDeclNode` — complex variable declaration.
-`DoubleNode` — type `double`.
-`DoubleLiteralNode` — initialization values.
+-  `AstNode` — base node (`node_type`, `attributes`, `children`).
+-  `ComplexDeclNode` — complex variable declaration.
+-  `DoubleNode` — type `double`.
+-  `DoubleLiteralNode` — initialization values.
 
 Example:
 
