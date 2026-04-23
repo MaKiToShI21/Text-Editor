@@ -4,7 +4,6 @@
                              QHBoxLayout, QPushButton, QGraphicsScene,
                              QGraphicsTextItem)
 from PyQt6.QtGui import QAction, QDesktopServices, QPen, QFont
-from PyQt6.QtWidgets import QDialog, QVBoxLayout
 from semantic_analyzer import SemanticAnalyzer
 from language import Language, LanguageDialog
 from zoom_AST_graph import ZoomGraphicsView
