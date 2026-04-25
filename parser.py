@@ -90,6 +90,28 @@ class Parser:
                     token_code = self.tokens[first_idx]["code"]
                     probe_idx = first_idx
                     if token_code == minus_code:
+                        scan_idx = first_idx + 1
+                        while scan_idx <= end and self.tokens[scan_idx]["code"] == space_code:
+                            scan_idx += 1
+
+                        extra_start_idx = None
+                        extra_end_idx = None
+                        while scan_idx <= end and self.tokens[scan_idx]["code"] == minus_code:
+                            if extra_start_idx is None:
+                                extra_start_idx = scan_idx
+                            extra_end_idx = scan_idx
+                            scan_idx += 1
+
+                        if extra_start_idx is not None and extra_end_idx is not None:
+                            wrong_fragment = "".join(
+                                t["lexeme"] for t in self.tokens[extra_start_idx : extra_end_idx + 1]
+                            )
+                            location = self._range_location(extra_start_idx, extra_end_idx)
+                            # Лишние минусы после первого корректного считаем одной ошибкой-диапазоном.
+                            self._add_error(expected_code, wrong_fragment, location)
+                            # Остаёмся в шаге FLOAT, чтобы текущее число (например, 10.0)
+                            # распозналось как значение после лишних минусов.
+                            suppress_cascade_errors = False
                         probe_idx = self._find_nearest_significant_token(
                             first_idx + 1,
                             end,
@@ -209,7 +231,11 @@ class Parser:
                         self._add_error(expected_code, wrong_fragment, location)
                     suppress_cascade_errors = True
                     recovery_matches = 0
+                    if expected_code == keyword_std_code:
+                        suppress_cascade_errors = False
                     if expected_code == keyword_double_code:
+                        suppress_cascade_errors = False
+                    if expected_code == close_paren_code:
                         suppress_cascade_errors = False
                 else:
                     if suppress_cascade_errors:
@@ -249,6 +275,9 @@ class Parser:
                     ) or (
                         expected_code == identifier_code
                         and previous_expected_code == close_angle_code
+                    ) or (
+                        expected_code == double_colon_code
+                        and previous_expected_code == keyword_std_code
                     ):
                         suppress_cascade_errors = False
                         recovery_matches = 0
