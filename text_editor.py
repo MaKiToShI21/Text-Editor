@@ -2,7 +2,7 @@
                              QMessageBox, QDialog, QTextBrowser,
                              QVBoxLayout, QTableWidget, QTableWidgetItem,
                              QHBoxLayout, QPushButton, QGraphicsScene,
-                             QGraphicsTextItem)
+                             QGraphicsTextItem, QWidget)
 from PyQt6.QtGui import QAction, QDesktopServices, QPen, QFont
 from semantic_analyzer import SemanticAnalyzer
 from language import Language, LanguageDialog
@@ -37,10 +37,15 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.current_input_widget = None
         self.current_tab_name = None
         self.current_file_path = None
+        self.result_table = None
+        self.errors_table = None
+        self.ast_browser = None
+        self.resultTab = getattr(self, 'resultTab', None)
+        self.ErrorTab = getattr(self, 'ErrorTab', None)
+        self.astTab = getattr(self, 'astTab', None)
 
         self.setAcceptDrops(True)
         self.setup_actions()
-        self.setup_output_panels()
 
     @staticmethod
     def resource_path(relative_path):
@@ -173,46 +178,80 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self._update_output_tab_titles()
 
     def setup_output_panels(self):
-        self.result_table = QTableWidget(self.resultTab)
-        self.errors_table = QTableWidget(self.ErrorTab)
-        self.ast_browser = QTextBrowser(self.astTab)
-        self.ast_browser.setReadOnly(True)
+        self._ensure_output_tabs()
 
-        result_layout = QVBoxLayout(self.resultTab)
-        result_layout.setContentsMargins(0, 0, 0, 0)
-        result_layout.addWidget(self.result_table)
+        if self.result_table is None:
+            self.result_table = QTableWidget(self.resultTab)
+            result_layout = QVBoxLayout(self.resultTab)
+            result_layout.setContentsMargins(0, 0, 0, 0)
+            result_layout.addWidget(self.result_table)
 
-        errors_layout = QVBoxLayout(self.ErrorTab)
-        errors_layout.setContentsMargins(0, 0, 0, 0)
-        errors_layout.addWidget(self.errors_table)
+        if self.errors_table is None:
+            self.errors_table = QTableWidget(self.ErrorTab)
+            errors_layout = QVBoxLayout(self.ErrorTab)
+            errors_layout.setContentsMargins(0, 0, 0, 0)
+            errors_layout.addWidget(self.errors_table)
 
-        ast_layout = QVBoxLayout(self.astTab)
-        ast_layout.setContentsMargins(0, 0, 0, 0)
-        ast_layout.addWidget(self.ast_browser)
+        if self.ast_browser is None:
+            self.ast_browser = QTextBrowser(self.astTab)
+            self.ast_browser.setReadOnly(True)
+            ast_layout = QVBoxLayout(self.astTab)
+            ast_layout.setContentsMargins(0, 0, 0, 0)
+            ast_layout.addWidget(self.ast_browser)
 
         self._update_output_tab_titles()
-        self.clear_output_views()
+
+    def _ensure_output_tabs(self):
+        if not hasattr(self, 'output_tab_widget') or self.output_tab_widget is None:
+            return
+
+        if not hasattr(self, 'resultTab') or self.resultTab is None:
+            self.resultTab = QWidget()
+            self.resultTab.setObjectName("resultTab")
+            self.output_tab_widget.addTab(self.resultTab, "")
+
+        if not hasattr(self, 'ErrorTab') or self.ErrorTab is None:
+            self.ErrorTab = QWidget()
+            self.ErrorTab.setObjectName("ErrorTab")
+            self.output_tab_widget.addTab(self.ErrorTab, "")
+
+        if not hasattr(self, 'astTab') or self.astTab is None:
+            self.astTab = QWidget()
+            self.astTab.setObjectName("astTab")
+            self.output_tab_widget.addTab(self.astTab, "")
 
     def _update_output_tab_titles(self):
         if not hasattr(self, 'output_tab_widget') or self.output_tab_widget is None:
             return
-        self.output_tab_widget.setTabText(
-            self.output_tab_widget.indexOf(self.resultTab),
-            self.lang.translate('output_tab_result')
-        )
-        self.output_tab_widget.setTabText(
-            self.output_tab_widget.indexOf(self.ErrorTab),
-            self.lang.translate('output_tab_errors')
-        )
-        self.output_tab_widget.setTabText(
-            self.output_tab_widget.indexOf(self.astTab),
-            self.lang.translate('output_tab_ast')
-        )
+        if self.resultTab is None or self.ErrorTab is None or self.astTab is None:
+            return
+
+        result_index = self.output_tab_widget.indexOf(self.resultTab)
+        if result_index >= 0:
+            self.output_tab_widget.setTabText(
+                result_index,
+                self.lang.translate('output_tab_result')
+            )
+
+        errors_index = self.output_tab_widget.indexOf(self.ErrorTab)
+        if errors_index >= 0:
+            self.output_tab_widget.setTabText(
+                errors_index,
+                self.lang.translate('output_tab_errors')
+            )
+
+        ast_index = self.output_tab_widget.indexOf(self.astTab)
+        if ast_index >= 0:
+            self.output_tab_widget.setTabText(
+                ast_index,
+                self.lang.translate('output_tab_ast')
+            )
 
     def clear_output_views(self):
         self._clear_table_widget(self.result_table)
         self._clear_table_widget(self.errors_table)
-        self.ast_browser.setPlainText(self.lang.translate('ast_not_available'))
+        if self.ast_browser is not None:
+            self.ast_browser.setPlainText(self.lang.translate('ast_not_available'))
 
     @staticmethod
     def _clear_table_widget(table):
@@ -510,6 +549,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
     def runLexer(self):
         if not self.input_tab_widget:
             return
+        self.setup_output_panels()
         index = self.input_tab_widget.currentIndex()
         self.current_input_widget = self.input_tab_widget.widget(index)
         text = self.current_input_widget.text()
@@ -543,6 +583,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
     def runParser(self):
         if not self.input_tab_widget:
             return
+        self.setup_output_panels()
         index = self.input_tab_widget.currentIndex()
         self.current_input_widget = self.input_tab_widget.widget(index)
         text = self.current_input_widget.text()
@@ -580,6 +621,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
     def runSemanticAnalysis(self):
         if not self.input_tab_widget:
             return
+        self.setup_output_panels()
         index = self.input_tab_widget.currentIndex()
         self.current_input_widget = self.input_tab_widget.widget(index)
         text = self.current_input_widget.text()

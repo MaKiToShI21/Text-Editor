@@ -168,16 +168,20 @@ class LexicalAnalyzer:
     def _process_space(self):
         start_line = self.line
         start_col = self.column
+        start_pos = self.position
 
         while (self.position < len(self.text) and
                self.text[self.position] == ' '):
             self._advance()
 
+        lexeme = self.text[start_pos:self.position]
+        end_col = self.column - 1
+
         self.tokens.append({
             'code': self.TOKEN_CODES['SPACE'],
             'type': self.TOKEN_TYPES[self.TOKEN_CODES['SPACE']],
-            'lexeme': ' ',
-            'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{start_col}",
+            'lexeme': lexeme,
+            'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{end_col}",
         })
 
     def _process_number(self):

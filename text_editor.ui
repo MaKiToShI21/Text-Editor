@@ -121,7 +121,7 @@ background-color: rgb(40, 40, 40);</string>
            <string notr="true">background-color: rgb(50, 50, 50);</string>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>-1</number>
           </property>
           <property name="documentMode">
            <bool>false</bool>
@@ -135,30 +135,6 @@ background-color: rgb(40, 40, 40);</string>
           <property name="tabBarAutoHide">
            <bool>false</bool>
           </property>
-          <widget class="QWidget" name="resultTab">
-           <property name="cursor">
-            <cursorShape>PointingHandCursor</cursorShape>
-           </property>
-           <attribute name="title">
-            <string>Результат</string>
-           </attribute>
-          </widget>
-          <widget class="QWidget" name="ErrorTab">
-           <property name="cursor">
-            <cursorShape>PointingHandCursor</cursorShape>
-           </property>
-           <attribute name="title">
-            <string>Ошибки</string>
-           </attribute>
-          </widget>
-          <widget class="QWidget" name="astTab">
-           <property name="cursor">
-            <cursorShape>PointingHandCursor</cursorShape>
-           </property>
-           <attribute name="title">
-            <string>AST</string>
-           </attribute>
-          </widget>
          </widget>
         </widget>
        </item>
