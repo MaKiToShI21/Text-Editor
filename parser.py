@@ -143,6 +143,19 @@ class Parser:
             if found_index is None:
                 if cursor <= end:
                     offending_idx = cursor
+                    if expected_code == keyword_complex_code:
+                        merged = self._collect_adjacent_identifier_invalid_fragment(cursor, end)
+                        if merged is not None:
+                            offending_idx, merged_end, merged_lexeme = merged
+                            wrong_fragment = merged_lexeme
+                            location = self._range_location(offending_idx, merged_end)
+                        else:
+                            wrong_fragment = self.tokens[offending_idx]["lexeme"]
+                            location = self.tokens[offending_idx]["location"]
+                    else:
+                        wrong_fragment = self.tokens[offending_idx]["lexeme"]
+                        location = self.tokens[offending_idx]["location"]
+
                     if self.tokens[cursor]["code"] == space_code and not check_spaces:
                         nearest_idx = self._find_nearest_significant_token(
                             cursor,
@@ -151,9 +164,9 @@ class Parser:
                         )
                         if nearest_idx is not None:
                             offending_idx = nearest_idx
-
-                    wrong_fragment = self.tokens[offending_idx]["lexeme"]
-                    location = self.tokens[offending_idx]["location"]
+                            if expected_code != keyword_complex_code:
+                                wrong_fragment = self.tokens[offending_idx]["lexeme"]
+                                location = self.tokens[offending_idx]["location"]
 
                     # В начале разбора и при ожидании "::" хотим показывать весь хвост,
                     # если строка больше не содержит структурного якоря "<".
@@ -182,6 +195,10 @@ class Parser:
                     and previous_expected_code == keyword_complex_code
                     and previous_found_index is not None
                 ) or (
+                    expected_code == identifier_code
+                    and previous_expected_code == close_angle_code
+                    and previous_found_index is not None
+                ) or (
                     expected_code == open_paren_code
                     and previous_expected_code == identifier_code
                     and previous_found_index is not None
@@ -206,7 +223,7 @@ class Parser:
             ):
                 wrong_fragment = self.tokens[found_index]["lexeme"]
                 location = self.tokens[found_index]["location"]
-                if not suppress_cascade_errors:
+                if not suppress_cascade_errors or expected_code == identifier_code:
                     self._add_error(space_code, wrong_fragment, location)
                 suppress_cascade_errors = True
                 recovery_matches = 0
@@ -231,6 +248,8 @@ class Parser:
                         self._add_error(expected_code, wrong_fragment, location)
                     suppress_cascade_errors = True
                     recovery_matches = 0
+                    if expected_code == open_angle_code:
+                        suppress_cascade_errors = False
                     if expected_code == keyword_std_code:
                         suppress_cascade_errors = False
                     if expected_code == keyword_double_code:
@@ -431,6 +450,37 @@ class Parser:
                 continue
             return i
         return None
+
+    def _collect_adjacent_identifier_invalid_fragment(self, start_idx, end_idx):
+        if start_idx > end_idx or start_idx >= len(self.tokens):
+            return None
+
+        identifier_code = LexicalAnalyzer.TOKEN_CODES["IDENTIFIER"]
+        if self.tokens[start_idx]["code"] != identifier_code:
+            return None
+
+        current_end = start_idx
+        parts = [self.tokens[start_idx]["lexeme"]]
+        _, _, prev_end_col = self._extract_location(self.tokens[start_idx].get("location", ""))
+
+        for i in range(start_idx + 1, end_idx + 1):
+            code = self.tokens[i]["code"]
+            if code not in (identifier_code, self.INVALID_LEXEME_CODE):
+                break
+
+            _, next_start_col, next_end_col = self._extract_location(self.tokens[i].get("location", ""))
+            if prev_end_col is None or next_start_col is None:
+                break
+            if next_start_col != prev_end_col + 1:
+                break
+
+            parts.append(self.tokens[i]["lexeme"])
+            current_end = i
+            prev_end_col = next_end_col
+
+        if current_end == start_idx:
+            return None
+        return start_idx, current_end, "".join(parts)
 
     def _contains_code_in_range(self, target_code, start, end):
         if start > end:
