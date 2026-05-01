@@ -53,14 +53,14 @@ VS Code (Visual Studio Code)
 A state diagram was developed.
 
 <div align="center">
-  <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab2/state_diagram.png" width="450">
+  <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab2/state_diagram.png" width="450">
 </div>
 
 A lexer was created based on it to parse the string "**`std::complex<double> my_complex(10.0, 2.0);`**" into tokens, which are then output as a table.
 
 | Correct line | Invalid char | multi-line |
 |--------------|--------------|------------|
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab2/correct_line.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab2/invalid_char.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab2/multi-line.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab2/correct_line.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab2/invalid_char.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab2/multi-line.png" width="500"> |
 
 <h2 align="center">Title and Objective of the Laboratory Work 3</h2>
 
@@ -70,21 +70,21 @@ A lexer was created based on it to parse the string "**`std::complex<double> my_
 
 Let us define a grammar of complex numbers in the C++ language G[‹Std›] in Chomsky notation with productions P:
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab3/grammar.png" width="500">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab3/grammar.png" width="500">
 
 According to Chomsky's classification, the grammar G[‹Std›] is automata-based.
 
 Graph of automata grammar:
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab3/graph.png" width="500">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab3/graph.png" width="500">
 
 Test examples:
 
 |  No errors   | Some errors  | multi-line errors |
 |--------------|--------------|-------------------|
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab3/no_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab3/lots_of_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab3/multi-line_errors.png" width="500"> |
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab3/no_errors2.png" width="500"> |
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab3/no_errors3.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab3/no_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab3/lots_of_errors.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab3/multi-line_errors.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab3/no_errors2.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab3/no_errors3.png" width="500"> |
 
 <h2 align="center">Title and Objective of the Laboratory Work 4</h2>
 
@@ -190,20 +190,20 @@ AST nodes with attributes and child elements are used. The basic idea is:
 -  `DoubleNode` — type `double`.
 -  `DoubleLiteralNode` — initialization values.
 
-![output AST](https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/ast_graph.png)
+![output AST](https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab5/ast_graph.png)
 
 Example:
 
-![output AST](https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/output_AST.png)
+![output AST](https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab5/output_AST.png)
 
 AST graph:
 
-![show AST](https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/show_AST.png)
+![show AST](https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab5/show_AST.png)
 
 |  No errors   | Name uniqueness  | Type compatibility | Valid values |
 |--------------|------------------|--------------------|--------------|
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/no_errors_1.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/name_uniqueness.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/type_compatibility.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/valid_values.png" width="500"> |
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/semantic-analysis/images/lab5/no_errors_2.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab5/no_errors_1.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab5/name_uniqueness.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab5/type_compatibility.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab5/valid_values.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/main/images/lab5/no_errors_2.png" width="500"> |
 
 The `PyQt6 Graphics View Framework` is used to display the AST:
 
