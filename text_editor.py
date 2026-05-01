@@ -8,6 +8,7 @@ from code_editor import CodeEditor
 from lexer import LexicalAnalyzer
 from PyQt6.QtCore import Qt, QUrl
 from ui import Ui_MainWindow
+from PyQt6.uic import loadUi
 from parser import Parser
 from PyQt6 import QtGui
 import sys
