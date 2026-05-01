@@ -64,6 +64,56 @@ background-color: rgb(40, 40, 40);</string>
           <number>7</number>
          </property>
          <widget class="QTabWidget" name="inputTabWidget">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(50, 50, 50);</string>
+          </property>
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <property name="elideMode">
+           <enum>Qt::TextElideMode::ElideNone</enum>
+          </property>
+          <property name="documentMode">
+           <bool>false</bool>
+          </property>
+          <property name="tabsClosable">
+           <bool>true</bool>
+          </property>
+          <property name="movable">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QTabWidget" name="outputTabWidget">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="sizeIncrement">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="autoFillBackground">
            <bool>false</bool>
           </property>
@@ -77,33 +127,10 @@ background-color: rgb(40, 40, 40);</string>
            <bool>false</bool>
           </property>
           <property name="tabsClosable">
-           <bool>true</bool>
-          </property>
-          <property name="movable">
-           <bool>true</bool>
-          </property>
-         </widget>
-         <widget class="QTabWidget" name="outputTabWidget">
-          <property name="sizeIncrement">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="autoFillBackground">
            <bool>false</bool>
           </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: rgb(50, 50, 50);</string>
-          </property>
-          <property name="documentMode">
-           <bool>false</bool>
-          </property>
-          <property name="tabsClosable">
-           <bool>true</bool>
-          </property>
           <property name="movable">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <property name="tabBarAutoHide">
            <bool>false</bool>
@@ -219,6 +246,7 @@ QToolButton QIcon {
    <addaction name="actionDelete"/>
    <addaction name="separator"/>
    <addaction name="actionRunParser"/>
+   <addaction name="actionShowAST"/>
    <addaction name="separator"/>
    <addaction name="actionHelp"/>
    <addaction name="actionAbout"/>
@@ -343,8 +371,10 @@ QMenu::separator {
     <property name="title">
      <string>Пуск</string>
     </property>
-    <addaction name="actionRunParser"/>
     <addaction name="actionRunLexer"/>
+    <addaction name="actionRunParser"/>
+    <addaction name="actionSemanticAnalysis"/>
+    <addaction name="actionShowAST"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -583,13 +613,13 @@ QMenu::separator {
     <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
    </property>
    <property name="text">
-    <string>Запустить лексер</string>
+    <string>Лексический анализ</string>
    </property>
    <property name="toolTip">
-    <string>Запустить лексер</string>
+    <string>Лексический анализ</string>
    </property>
    <property name="shortcut">
-    <string>F6</string>
+    <string>F5</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
@@ -611,13 +641,13 @@ QMenu::separator {
     <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
    </property>
    <property name="text">
-    <string>Запустить парсер</string>
+    <string>Синтаксический анализ</string>
    </property>
    <property name="toolTip">
-    <string>Запустить парсер</string>
+    <string>Синтаксический анализ</string>
    </property>
    <property name="shortcut">
-    <string>F5</string>
+    <string>F6</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
@@ -640,6 +670,37 @@ QMenu::separator {
    </property>
    <property name="toolTip">
     <string>Диагностика и нейтрализация ошибок</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionSemanticAnalysis">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
+   </property>
+   <property name="text">
+    <string>Семантический анализ</string>
+   </property>
+   <property name="toolTip">
+    <string>Семантический анализ</string>
+   </property>
+   <property name="shortcut">
+    <string>F7</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionShowAST">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::WindowNew"/>
+   </property>
+   <property name="text">
+    <string>Показать AST</string>
+   </property>
+   <property name="toolTip">
+    <string>Показать AST</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

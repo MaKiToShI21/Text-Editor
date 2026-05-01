@@ -1,9 +1,12 @@
-from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QFileDialog,
+﻿from PyQt6.QtWidgets import (QMainWindow, QTabWidget, QFileDialog,
                              QMessageBox, QDialog, QTextBrowser,
-                             QVBoxLayout, QTableWidget, QTableWidgetItem)
-from PyQt6.QtGui import QAction, QDesktopServices
-from PyQt6.QtWidgets import QDialog, QVBoxLayout
+                             QVBoxLayout, QTableWidget, QTableWidgetItem,
+                             QHBoxLayout, QPushButton, QGraphicsScene,
+                             QGraphicsTextItem, QWidget)
+from PyQt6.QtGui import QAction, QDesktopServices, QPen, QFont
+from semantic_analyzer import SemanticAnalyzer
 from language import Language, LanguageDialog
+from zoom_AST_graph import ZoomGraphicsView
 from code_editor import CodeEditor
 from lexer import LexicalAnalyzer
 from PyQt6.QtCore import Qt, QUrl
@@ -14,6 +17,7 @@ from PyQt6 import QtGui
 import sys
 import re
 import os
+import math
 
 
 class TextEditor(QMainWindow, Ui_MainWindow):
@@ -28,12 +32,17 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.lang = Language()
         self.apply_language()
 
-        self.input_to_output_map = {}
         self.status_bar = self.statusBar
         self.lexer_process = None
         self.current_input_widget = None
         self.current_tab_name = None
         self.current_file_path = None
+        self.result_table = None
+        self.errors_table = None
+        self.ast_browser = None
+        self.astTab = None
+        self.resultTab = None
+        self.ErrorTab = None
 
         self.setAcceptDrops(True)
         self.setup_actions()
@@ -64,6 +73,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
 
         self.actionRunLexer.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
         self.actionRunParser.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
+        self.actionSemanticAnalysis.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
+        self.actionShowAST.setIcon(QtGui.QIcon(self.resource_path("icons/show_AST.png")))
 
     def setup_actions(self):
         action_map = {
@@ -83,6 +94,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             'actionOpenSourceCode': self.open_source_code,
             'actionRunLexer': self.runLexer,
             'actionRunParser': self.runParser,
+            'actionSemanticAnalysis': self.runSemanticAnalysis,
+            'actionShowAST': self.showAST,
             'actionHelp': self.help,
             'actionAbout': self.about,
             'actionLanguage': self.show_language_dialog
@@ -114,7 +127,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.input_tab_widget.tabCloseRequested.connect(self.close_input_tab)
 
         self.output_tab_widget = self.findChild(QTabWidget, 'outputTabWidget')
-        self.output_tab_widget.tabCloseRequested.connect(self.close_output_tab)
+        self.output_tab_widget.setTabsClosable(False)
 
     def read_file(self, file_path):
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -143,8 +156,9 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             'actionOpenGrammar', 'actionOpenGrammarClass',
             'actionOpenAnalysisMethod', 'actionDiagnosticsTroubleshooting',
             'actionOpenExample', 'actionOpenReferences',
-            'actionOpenSourceCode', 'actionRunLexer', 'actionRunParser', 'actionHelp',
-            'actionAbout', 'actionLanguage'
+            'actionOpenSourceCode', 'actionRunLexer', 'actionRunParser',
+            'actionSemanticAnalysis', 'actionHelp', 'actionAbout',
+            'actionLanguage', 'actionShowAST'
         ]
 
         for action_name in action_names:
@@ -161,6 +175,92 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 widget = self.input_tab_widget.widget(i)
                 if not hasattr(widget, 'file_path') or not widget.file_path:
                     self.input_tab_widget.setTabText(i, t['new_document'])
+        self._update_output_tab_titles()
+
+    def setup_output_panels(self):
+        self._ensure_output_tabs()
+
+        if self.result_table is None:
+            self.result_table = QTableWidget(self.resultTab)
+            result_layout = QVBoxLayout(self.resultTab)
+            result_layout.setContentsMargins(0, 0, 0, 0)
+            result_layout.addWidget(self.result_table)
+
+        if self.errors_table is None:
+            self.errors_table = QTableWidget(self.ErrorTab)
+            errors_layout = QVBoxLayout(self.ErrorTab)
+            errors_layout.setContentsMargins(0, 0, 0, 0)
+            errors_layout.addWidget(self.errors_table)
+
+        if self.ast_browser is None:
+            self.ast_browser = QTextBrowser(self.astTab)
+            self.ast_browser.setReadOnly(True)
+            ast_layout = QVBoxLayout(self.astTab)
+            ast_layout.setContentsMargins(0, 0, 0, 0)
+            ast_layout.addWidget(self.ast_browser)
+
+        self._update_output_tab_titles()
+
+    def _ensure_output_tabs(self):
+        if not hasattr(self, 'output_tab_widget') or self.output_tab_widget is None:
+            return
+
+        if not hasattr(self, 'resultTab') or self.resultTab is None:
+            self.resultTab = QWidget()
+            self.resultTab.setObjectName("resultTab")
+            self.output_tab_widget.addTab(self.resultTab, "")
+
+        if not hasattr(self, 'ErrorTab') or self.ErrorTab is None:
+            self.ErrorTab = QWidget()
+            self.ErrorTab.setObjectName("ErrorTab")
+            self.output_tab_widget.addTab(self.ErrorTab, "")
+
+        if not hasattr(self, 'astTab') or self.astTab is None:
+            self.astTab = QWidget()
+            self.astTab.setObjectName("astTab")
+            self.output_tab_widget.addTab(self.astTab, "")
+
+    def _update_output_tab_titles(self):
+        if not hasattr(self, 'output_tab_widget') or self.output_tab_widget is None:
+            return
+        if self.resultTab is None or self.ErrorTab is None or self.astTab is None:
+            return
+
+        result_index = self.output_tab_widget.indexOf(self.resultTab)
+        if result_index >= 0:
+            self.output_tab_widget.setTabText(
+                result_index,
+                self.lang.translate('output_tab_result')
+            )
+
+        errors_index = self.output_tab_widget.indexOf(self.ErrorTab)
+        if errors_index >= 0:
+            self.output_tab_widget.setTabText(
+                errors_index,
+                self.lang.translate('output_tab_errors')
+            )
+
+        ast_index = self.output_tab_widget.indexOf(self.astTab)
+        if ast_index >= 0:
+            self.output_tab_widget.setTabText(
+                ast_index,
+                self.lang.translate('output_tab_ast')
+            )
+
+    def clear_output_views(self):
+        self._clear_table_widget(self.result_table)
+        self._clear_table_widget(self.errors_table)
+        if self.ast_browser is not None:
+            self.ast_browser.setPlainText(self.lang.translate('ast_not_available'))
+
+    @staticmethod
+    def _clear_table_widget(table):
+        if table is None:
+            return
+        table.clear()
+        table.clearContents()
+        table.setRowCount(0)
+        table.setColumnCount(0)
 
     def dragEnterEvent(self, event):
         if event is None or event.mimeData() is None:
@@ -194,6 +294,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             return True
         except Exception as e:
             QMessageBox.critical(
+                self,
                 self.lang.translate('error'),
                 self.lang.translate('opening_error').format(str(e), 0)
             )
@@ -202,16 +303,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
     def close_input_tab(self, index):
         widget = self.input_tab_widget.widget(index)
         tab_name = self.input_tab_widget.tabText(index)
-        file_path = getattr(widget, 'file_path', None)
 
         def closing():
-            if file_path and file_path in self.input_to_output_map:
-                output_widget = self.input_to_output_map[file_path]
-                output_index = self.output_tab_widget.indexOf(output_widget)
-                if output_index >= 0:
-                    self.output_tab_widget.removeTab(output_index)
-                    output_widget.deleteLater()
-                del self.input_to_output_map[file_path]
             self.input_tab_widget.removeTab(index)
             widget.deleteLater()
 
@@ -255,18 +348,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         closing()
 
     def close_output_tab(self, index):
-        widget = self.output_tab_widget.widget(index)
-        tab_name = self.output_tab_widget.tabText(index)
-
-        for file_path, output_widget in list(self.input_to_output_map.items()):
-            if output_widget == widget:
-                del self.input_to_output_map[file_path]
-                break
-
-        widget.deleteLater()
-        self.output_tab_widget.removeTab(index)
-        self.status_bar.showMessage(self.lang.translate('tab_closed').
-                                    format(tab_name, 0), 3000)
+        _ = index
+        return
 
     def can_close(self):
         for i in range(self.input_tab_widget.count()):
@@ -419,6 +502,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             return True
         except Exception as e:
             QMessageBox.critical(
+                self,
                 self.lang.translate('error'),
                 self.lang.translate('file_saving_error').format(str(e))
             )
@@ -459,16 +543,34 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             return True
         except Exception as e:
             QMessageBox.critical(
+                self,
                 self.lang.translate('error'),
                 self.lang.translate('file_saving_error').format(str(e), 0)
             )
             return False
 
+    def _get_active_editor_for_analysis(self):
+        if not self.input_tab_widget:
+            return None
+
+        index = self.input_tab_widget.currentIndex()
+        if index < 0:
+            return None
+
+        widget = self.input_tab_widget.widget(index)
+        if not isinstance(widget, CodeEditor):
+            return None
+        return widget
+
     def runLexer(self):
         if not self.input_tab_widget:
             return
+        self.setup_output_panels()
         index = self.input_tab_widget.currentIndex()
-        self.current_input_widget = self.input_tab_widget.widget(index)
+        self.current_input_widget = self._get_active_editor_for_analysis()
+        if self.current_input_widget is None:
+            self.status_bar.showMessage(self.lang.translate('text_edit_inactive'), 3000)
+            return
         text = self.current_input_widget.text()
         if not text or not text.strip():
             self.status_bar.showMessage(self.lang.translate('lexer_input_empty'), 5000)
@@ -483,21 +585,29 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 self.current_file_path = self.current_input_widget.file_path
 
         self.current_tab_name = self.input_tab_widget.tabText(index)
-
-        if self.current_file_path in self.input_to_output_map:
-            output_widget = self.input_to_output_map[self.current_file_path]
-            output_index = self.output_tab_widget.indexOf(output_widget)
-            self.output_tab_widget.setCurrentIndex(output_index)
+        self.clear_output_views()
 
         lexer = LexicalAnalyzer(self.lang)
         tokens, errors = lexer.analyze(text)
-        self.create_or_update_table(tokens, errors)
+        self.fill_table(tokens, [], self.result_table)
+        if errors:
+            self.fill_table([], errors, self.errors_table)
+        else:
+            self._clear_table_widget(self.errors_table)
+        if len(errors) == 0:
+            self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
+        else:
+            self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
 
     def runParser(self):
         if not self.input_tab_widget:
             return
+        self.setup_output_panels()
         index = self.input_tab_widget.currentIndex()
-        self.current_input_widget = self.input_tab_widget.widget(index)
+        self.current_input_widget = self._get_active_editor_for_analysis()
+        if self.current_input_widget is None:
+            self.status_bar.showMessage(self.lang.translate('text_edit_inactive'), 3000)
+            return
         text = self.current_input_widget.text()
         if not text or not text.strip():
             self.status_bar.showMessage(self.lang.translate('parser_input_empty'), 5000)
@@ -512,40 +622,366 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 self.current_file_path = self.current_input_widget.file_path
 
         self.current_tab_name = self.input_tab_widget.tabText(index)
+        self.clear_output_views()
 
-        if self.current_file_path in self.input_to_output_map:
-            output_widget = self.input_to_output_map[self.current_file_path]
-            output_index = self.output_tab_widget.indexOf(output_widget)
-            self.output_tab_widget.setCurrentIndex(output_index)
+        lexer = LexicalAnalyzer(self.lang)
+        tokens, _ = lexer.analyze(text)
+        self.fill_table(tokens, [], self.result_table)
 
         parser = Parser(self.lang)
         _, errors = parser.parse(text)
 
+        if errors:
+            self.fill_parser_table(errors, self.errors_table)
+        else:
+            self._clear_table_widget(self.errors_table)
         if len(errors) == 0:
-            existing_table = self.input_to_output_map.get(self.current_file_path)
-            if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-                output_index = self.output_tab_widget.indexOf(existing_table)
-                self.output_tab_widget.removeTab(output_index)
-                existing_table.deleteLater()
-                del self.input_to_output_map[self.current_file_path]
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
         else:
-            self.create_or_update_parser_table(errors)
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
+
+    def runSemanticAnalysis(self):
+        if not self.input_tab_widget:
+            return
+        self.setup_output_panels()
+        index = self.input_tab_widget.currentIndex()
+        self.current_input_widget = self._get_active_editor_for_analysis()
+        if self.current_input_widget is None:
+            self.status_bar.showMessage(self.lang.translate('text_edit_inactive'), 3000)
+            return
+        text = self.current_input_widget.text()
+        if not text or not text.strip():
+            self.status_bar.showMessage(self.lang.translate('semantic_analysis_input_empty'), 5000)
+            return
+
+        self.current_file_path = self.current_input_widget.file_path
+
+        if not self.current_file_path or self.current_input_widget.isModified():
+            if not self.save_file():
+                return
+            if self.current_input_widget.file_path:
+                self.current_file_path = self.current_input_widget.file_path
+
+        self.current_tab_name = self.input_tab_widget.tabText(index)
+        self.clear_output_views()
+
+        lexer = LexicalAnalyzer(self.lang)
+        tokens, _ = lexer.analyze(text)
+        self.fill_table(tokens, [], self.result_table)
+
+        parser = Parser(self.lang)
+        _, syntax_errors = parser.parse(text)
+        syntax_rows = self._build_syntax_rows(syntax_errors)
+
+        # Reliable line blocking for AST: detect syntax errors per source line.
+        syntax_error_lines = self._collect_syntax_error_lines_by_source_line(text)
+        analyzer = SemanticAnalyzer(self.lang)
+        semantic_rows, ast_text = analyzer.analyze(text, ast_blocked_lines=syntax_error_lines)
+
+        semantic_type_mismatch_locations = {
+            err.get("location", "")
+            for err in semantic_rows
+            if err.get("semantic_code") == "TYPE_MISMATCH"
+        }
+        filtered_syntax_rows = [
+            err for err in syntax_rows
+            if err.get("location", "") not in semantic_type_mismatch_locations
+        ]
+        errors = filtered_syntax_rows + semantic_rows
+
+        if errors:
+            self.fill_parser_table(errors, self.errors_table)
+        else:
+            self._clear_table_widget(self.errors_table)
+        self.ast_browser.setPlainText(ast_text)
+        if len(errors) == 0:
+            self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
+        else:
+            self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
+
+    def showAST(self):
+        editor = self.input_tab_widget.currentWidget() if self.input_tab_widget else None
+        if editor is None:
+            return
+
+        text = editor.text()
+        if not text or not text.strip():
+            QMessageBox.information(
+                self,
+                self.lang.translate('actionShowAST'),
+                self.lang.translate('ast_not_available')
+            )
+            return
+
+        chain = self._build_first_correct_syntactic_chain(text)
+        if not chain:
+            QMessageBox.information(
+                self,
+                self.lang.translate('actionShowAST'),
+                self.lang.translate('ast_not_available')
+            )
+            return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self.lang.translate('actionShowAST'))
+        dialog.resize(1400, 920)
+
+        layout = QVBoxLayout(dialog)
+        toolbar_layout = QHBoxLayout()
+        btn_zoom_in = QPushButton("+", dialog)
+        btn_zoom_out = QPushButton("-", dialog)
+        btn_zoom_reset = QPushButton("100%", dialog)
+        toolbar_layout.addWidget(btn_zoom_in)
+        toolbar_layout.addWidget(btn_zoom_out)
+        toolbar_layout.addWidget(btn_zoom_reset)
+        toolbar_layout.addStretch()
+        layout.addLayout(toolbar_layout)
+
+        view = ZoomGraphicsView(dialog)
+        scene = QGraphicsScene(view)
+        view.setScene(scene)
+        view.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        view.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        view.setFocus()
+        layout.addWidget(view)
+
+        btn_zoom_in.clicked.connect(view.zoom_in)
+        btn_zoom_out.clicked.connect(view.zoom_out)
+        btn_zoom_reset.clicked.connect(view.zoom_reset)
+
+        self._draw_chain_tree(scene, chain)
+        rect = scene.itemsBoundingRect().adjusted(-80, -80, 80, 80)
+        scene.setSceneRect(rect)
+        view.fitInView(rect, Qt.AspectRatioMode.KeepAspectRatio)
+        view.zoom_reset()
+
+        dialog.exec()
+
+    def _build_first_correct_syntactic_chain(self, text):
+        parser = Parser(self.lang)
+        tokens, syntax_errors = parser.parse(text)
+        syntax_error_lines = self._collect_syntax_error_lines_by_source_line(text)
+        syntax_error_lines.update(self._extract_error_lines(syntax_errors))
+
+        line_tokens = {}
+        space_code = LexicalAnalyzer.TOKEN_CODES["SPACE"]
+        for token in tokens:
+            line, _, _ = self._extract_location(token.get("location", ""))
+            if line is None or line in syntax_error_lines:
+                continue
+            line_tokens.setdefault(line, []).append(token)
+
+        for line_no in sorted(line_tokens.keys()):
+            significant = [t for t in line_tokens[line_no] if t.get("code") != space_code]
+            if self._is_valid_chain_line(significant):
+                return self._to_chain_items(significant)
+        return []
+
+    def _collect_syntax_error_lines_by_source_line(self, text):
+        error_lines = set()
+        parser = Parser(self.lang)
+        for line_no, raw_line in enumerate(text.splitlines(), start=1):
+            if not raw_line.strip():
+                continue
+            _, line_errors = parser.parse(raw_line)
+            if line_errors:
+                error_lines.add(line_no)
+        return error_lines
+
+    @staticmethod
+    def _is_valid_chain_line(significant):
+        code = LexicalAnalyzer.TOKEN_CODES
+        required_prefix = [
+            code["KEYWORD_STD"],
+            code["DOUBLE_COLON"],
+            code["KEYWORD_COMPLEX"],
+            code["OPEN_ANGLE"],
+            code["KEYWORD_DOUBLE"],
+            code["CLOSE_ANGLE"],
+            code["IDENTIFIER"],
+            code["OPEN_PAREN"],
+        ]
+        if len(significant) < len(required_prefix) + 5:
+            return False
+
+        for i, expected_code in enumerate(required_prefix):
+            if significant[i]["code"] != expected_code:
+                return False
+
+        tail = [t["code"] for t in significant[len(required_prefix):]]
+        valid_tails = [
+            [code["FLOAT"], code["COMMA"], code["FLOAT"], code["CLOSE_PAREN"], code["SEMICOLON"]],
+            [code["MINUS"], code["FLOAT"], code["COMMA"], code["FLOAT"], code["CLOSE_PAREN"], code["SEMICOLON"]],
+            [code["FLOAT"], code["COMMA"], code["MINUS"], code["FLOAT"], code["CLOSE_PAREN"], code["SEMICOLON"]],
+            [code["MINUS"], code["FLOAT"], code["COMMA"], code["MINUS"], code["FLOAT"], code["CLOSE_PAREN"], code["SEMICOLON"]],
+        ]
+        return tail in valid_tails
+
+    @staticmethod
+    def _to_chain_items(significant):
+        code_to_nonterm = {
+            LexicalAnalyzer.TOKEN_CODES["KEYWORD_STD"]: "Std",
+            LexicalAnalyzer.TOKEN_CODES["DOUBLE_COLON"]: "DoubleColon",
+            LexicalAnalyzer.TOKEN_CODES["KEYWORD_COMPLEX"]: "Complex",
+            LexicalAnalyzer.TOKEN_CODES["OPEN_ANGLE"]: "OpenAngle",
+            LexicalAnalyzer.TOKEN_CODES["KEYWORD_DOUBLE"]: "Double",
+            LexicalAnalyzer.TOKEN_CODES["CLOSE_ANGLE"]: "CloseAngle",
+            LexicalAnalyzer.TOKEN_CODES["IDENTIFIER"]: "Identifier",
+            LexicalAnalyzer.TOKEN_CODES["OPEN_PAREN"]: "OpenParenth",
+            LexicalAnalyzer.TOKEN_CODES["MINUS"]: "Minus",
+            LexicalAnalyzer.TOKEN_CODES["FLOAT"]: "Float",
+            LexicalAnalyzer.TOKEN_CODES["COMMA"]: "Comma",
+            LexicalAnalyzer.TOKEN_CODES["CLOSE_PAREN"]: "CloseParenth",
+            LexicalAnalyzer.TOKEN_CODES["SEMICOLON"]: "Semicolon",
+        }
+        chain = []
+        for token in significant:
+            code = token["code"]
+            if code not in code_to_nonterm:
+                continue
+            terminal = token["lexeme"]
+            if code == LexicalAnalyzer.TOKEN_CODES["IDENTIFIER"]:
+                terminal = "name"
+            chain.append((code_to_nonterm[code], terminal))
+        return chain
+
+    def _draw_chain_tree(self, scene, chain):
+        if not chain:
+            return
+
+        pen = QPen(Qt.GlobalColor.white, 2.0)
+        nonterm_font = QFont("Segoe UI", 18)
+        term_font = QFont("Segoe UI", 18)
+
+        n = len(chain)
+        x_start = 30
+        x_step = 165
+        y_bottom = 900
+        y_top_start = 20
+        y_top_step = 56
+        top_offset = 18
+
+        top_items = []
+        bottom_items = []
+        top_anchor_x = []
+        top_anchor_y = []
+        top_centers = []
+        top_half_widths = []
+        top_half_heights = []
+
+        for i, (nonterm, term) in enumerate(chain):
+            bx = x_start + i * x_step
+            by = y_bottom
+            ty = y_top_start + i * y_top_step
+
+            bottom_text = QGraphicsTextItem(term)
+            bottom_text.setFont(term_font)
+            bottom_text.setPos(bx, by + 8)
+            scene.addItem(bottom_text)
+            bottom_items.append(bottom_text)
+
+            bottom_rect = bottom_text.boundingRect()
+            x_common = bottom_text.pos().x() + bottom_rect.width() / 2
+
+            top_text = QGraphicsTextItem(nonterm)
+            top_text.setFont(nonterm_font)
+            top_rect = top_text.boundingRect()
+            top_text.setPos(x_common - top_rect.width() / 2, ty - top_offset)
+            scene.addItem(top_text)
+            top_items.append(top_text)
+            top_anchor_x.append(x_common)
+            top_anchor_y.append(top_text.pos().y() + top_rect.height() + 6)
+            top_centers.append((x_common, top_text.pos().y() + top_rect.height() / 2))
+            top_half_widths.append(top_rect.width() / 2)
+            top_half_heights.append(top_rect.height() / 2)
+
+        for i in range(n):
+            bottom_text = bottom_items[i]
+            bottom_rect = bottom_text.boundingRect()
+
+            # Nonterminal -> terminal: strictly vertical (perpendicular to baseline)
+            x1 = top_anchor_x[i]
+            y1 = top_anchor_y[i]
+            x2 = top_anchor_x[i]
+            y2 = bottom_text.pos().y() - 10
+            self._draw_arrow(scene, x1, y1, x2, y2, pen)
+
+            if i < n - 1:
+                # Nonterminal -> nonterminal: keep one global angle and clip by text bounds.
+                c1x, c1y = top_centers[i]
+                c2x, c2y = top_centers[i + 1]
+                dx = c2x - c1x
+                dy = c2y - c1y
+                length = math.hypot(dx, dy)
+                if length == 0:
+                    continue
+                ux = dx / length
+                uy = dy / length
+
+                def exit_dist(hw, hh):
+                    tx = hw / abs(ux) if abs(ux) > 1e-9 else float("inf")
+                    ty = hh / abs(uy) if abs(uy) > 1e-9 else float("inf")
+                    return min(tx, ty)
+
+                pad = 10
+                tip_gap = 6
+                d1 = exit_dist(top_half_widths[i], top_half_heights[i]) + pad
+                d2 = exit_dist(top_half_widths[i + 1], top_half_heights[i + 1]) + pad + tip_gap
+
+                cx1 = c1x + ux * d1
+                cy1 = c1y + uy * d1
+                cx2 = c2x - ux * d2
+                cy2 = c2y - uy * d2
+                self._draw_arrow(scene, cx1, cy1, cx2, cy2, pen)
+
+    @staticmethod
+    def _draw_arrow(scene, x1, y1, x2, y2, pen):
+        scene.addLine(x1, y1, x2, y2, pen)
+        angle = math.atan2(y2 - y1, x2 - x1)
+        arrow = 10
+        a1 = angle - math.pi / 7
+        a2 = angle + math.pi / 7
+        p1x = x2 - arrow * math.cos(a1)
+        p1y = y2 - arrow * math.sin(a1)
+        p2x = x2 - arrow * math.cos(a2)
+        p2y = y2 - arrow * math.sin(a2)
+        scene.addLine(x2, y2, p1x, p1y, pen)
+        scene.addLine(x2, y2, p2x, p2y, pen)
+
+    def _build_syntax_rows(self, syntax_errors):
+        rows = []
+        for err in syntax_errors:
+            rows.append(
+                {
+                    "analysis_type": "syntax",
+                    "lexeme": err.get("lexeme", ""),
+                    "description": err.get("description", err.get("type", "")),
+                    "location": err.get("location", ""),
+                }
+            )
+        return rows
+
+    def _extract_error_lines(self, errors):
+        lines = set()
+        for err in errors:
+            line, _, _ = self._extract_location(err.get("location", ""))
+            if line is not None:
+                lines.add(line)
+        return lines
+
+    @staticmethod
+    def _extract_location(location):
+        numbers = re.findall(r"\d+", location or "")
+        if len(numbers) < 3:
+            return None, None, None
+        return int(numbers[0]), int(numbers[1]), int(numbers[2])
 
     def get_token_type(self, code):
         lexer = LexicalAnalyzer(self.lang)
         return lexer.TOKEN_TYPES.get(code, self.lang.translate('unknown_code').format(code, 0))
 
     def create_or_update_table(self, tokens, errors):
-        existing_table = self.input_to_output_map.get(self.current_file_path)
-
-        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-            self.fill_table(tokens, errors, existing_table)
-            self.output_tab_widget.setCurrentWidget(existing_table)
-        else:
-            table = self.fill_table(tokens, errors)
-            self.output_table_data(table)
+        self.fill_table(tokens, errors, self.result_table)
 
     def fill_table(self, tokens, errors, table=None):
         if table:
@@ -618,14 +1054,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         return table
 
     def create_or_update_parser_table(self, errors):
-        existing_table = self.input_to_output_map.get(self.current_file_path)
-
-        if existing_table and self.output_tab_widget.indexOf(existing_table) >= 0:
-            self.fill_parser_table(errors, existing_table)
-            self.output_tab_widget.setCurrentWidget(existing_table)
-        else:
-            table = self.fill_parser_table(errors)
-            self.output_table_data(table)
+        self.fill_parser_table(errors, self.errors_table)
 
     def fill_parser_table(self, errors, table=None):
         if table:
@@ -634,9 +1063,10 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         else:
             table = QTableWidget(self)
 
-        table.setColumnCount(3)
+        table.setColumnCount(4)
         table.setHorizontalHeaderLabels([
             self.lang.translate('parser_wrong_fragment'),
+            self.lang.translate('analysis_type'),
             self.lang.translate('parser_error_description'),
             self.lang.translate('location'),
         ])
@@ -649,14 +1079,20 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 fragment.setForeground(Qt.GlobalColor.red)
                 table.setItem(row, 0, fragment)
 
+                error_kind = error.get('analysis_type', 'syntax')
+                type_text = self.lang.translate('semantic_kind') if error_kind == 'semantic' else self.lang.translate('syntax_kind')
+                kind_item = QTableWidgetItem(type_text)
+                kind_item.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 1, kind_item)
+
                 description_text = error.get('description', error.get('type', ''))
                 description = QTableWidgetItem(description_text)
                 description.setForeground(Qt.GlobalColor.red)
-                table.setItem(row, 1, description)
+                table.setItem(row, 2, description)
 
                 location = QTableWidgetItem(error.get('location', ''))
                 location.setForeground(Qt.GlobalColor.red)
-                table.setItem(row, 2, location)
+                table.setItem(row, 3, location)
 
                 row_labels.append(str(row + 1))
             self._rebind_table_click_handler(table, self.on_parser_table_item_clicked)
@@ -674,7 +1110,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         row = item.row()
         table = item.tableWidget()
 
-        location_item = self._get_location_item(table, row, fallback_col=2)
+        location_item = self._get_location_item(table, row, fallback_col=3)
         if not location_item:
             return
         self._highlight_location(location_item.text())
@@ -684,6 +1120,15 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         table = item.tableWidget()
 
         location_item = self._get_location_item(table, row, fallback_col=3)
+        if not location_item:
+            return
+        self._highlight_location(location_item.text())
+
+    def on_semantic_table_item_clicked(self, item):
+        row = item.row()
+        table = item.tableWidget()
+
+        location_item = self._get_location_item(table, row, fallback_col=1)
         if not location_item:
             return
         self._highlight_location(location_item.text())
@@ -739,9 +1184,48 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         table.itemClicked.connect(handler)
 
     def output_table_data(self, table):
-        self.output_tab_widget.addTab(table, self.current_tab_name)
-        self.input_to_output_map[self.current_file_path] = table
-        self.output_tab_widget.setCurrentWidget(table)
+        _ = table
+        return
+
+    def create_or_update_semantic_table(self, errors):
+        self.fill_parser_table(errors, self.errors_table)
+
+    def fill_semantic_table(self, errors, table=None):
+        if table:
+            table.clearContents()
+            table.setRowCount(0)
+        else:
+            table = QTableWidget(self)
+
+        table.setColumnCount(2)
+        table.setHorizontalHeaderLabels([
+            self.lang.translate('semantic_message'),
+            self.lang.translate('semantic_position'),
+        ])
+
+        row_labels = []
+        if errors:
+            table.setRowCount(len(errors))
+            for row, error in enumerate(errors):
+                message = QTableWidgetItem(error.get('message', ''))
+                message.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 0, message)
+
+                location = QTableWidgetItem(error.get('location', ''))
+                location.setForeground(Qt.GlobalColor.red)
+                table.setItem(row, 1, location)
+
+                row_labels.append(str(row + 1))
+            self._rebind_table_click_handler(table, self.on_semantic_table_item_clicked)
+        else:
+            table.setRowCount(0)
+
+        table.setVerticalHeaderLabels(row_labels)
+        table.resizeColumnsToContents()
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        return table
 
     def edit_action(self, action_name, method_name):
         widget = self.get_current_input_tab_widget()
@@ -871,7 +1355,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             </head>
             <body>
                 <h1>Текстовый редактор</h1>
-                <div class='version'>Руководство пользователя | Версия 1.1.0</div>
+                <div class='version'>Руководство пользователя | Версия 2.0.0</div>
 
                 <p><b>Текстовый редактор</b> — это приложение для создания и редактирования текстовых документов с возможностью синтаксического анализа. Программа предоставляет удобный интерфейс для работы с текстом и поддерживает все основные операции редактирования.</p>
 
@@ -963,7 +1447,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 </ul>
 
                 <h2 id='run-menu'>Меню «Пуск»</h2>
-                <p><b>Запуск анализатора</b> (<span>F5</span>) — запускает синтаксический анализ текста из области редактирования.</p>
+                <p><b>Запуск лексического анализатора</b> (<span>F5</span>) — запускает лексический анализ текста из области редактирования.</p>
+                <p><b>Запуск парсера анализатора</b> (<span>F6</span>) — запускает синтаксический анализ текста из области редактирования.</p>
 
                 <h2 id='help-menu'>Меню «Справка»</h2>
                 <table>
@@ -1075,7 +1560,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 </head>
                 <body>
                     <h1>Text editor</h1>
-                    <div class='version'>User Manual | Version 1.1.0</div>
+                    <div class='version'>User Manual | Version 2.0.0</div>
 
                     <p><b>Text editor</b> — is an application is for creating and editing text documents with parsing capabilities. The program provides a user-friendly interface for working with text and supports all basic editing operations.</p>
 
@@ -1167,7 +1652,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                     </ul>
 
                     <h2 id='run-menu'>Menu «Run»</h2>
-                    <p><b>Launching the analyzer</b> (<span>F5</span>) — starts parsing the text from the editing area.</p>
+                    <p><b>Launching the lexical analyzer</b> (<span>F5</span>) — starts lexical analysis of the text in the editing area.</p>
+                    <p><b>Launching the syntax analyzer</b> (<span>F6</span>) — starts parsing the text from the editing area.</p>
 
                     <h2 id='help-menu'>Menu «Help»</h2>
                     <table>
@@ -1215,7 +1701,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             text_browser.setHtml("""
                 <div style='text-align: center;'>
                     <h1 style='color: #ffffff;'>Текстовый редактор</h1>
-                    <p style='color: #868e94; font-size: 14px;'>Версия 1.1.0</p>
+                    <p style='color: #868e94; font-size: 14px;'>Версия 2.0.0</p>
 
                     <div style='padding: 5px;'>
                         <p style='color: #ffffff; font-size: 16px; line-height: 1;'>
@@ -1242,7 +1728,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             text_browser.setHtml("""
                 <div style='text-align: center;'>
                     <h1 style='color: #ffffff;'>Text editor</h1>
-                    <p style='color: #868e94; font-size: 14px;'>Version 1.1.0</p>
+                    <p style='color: #868e94; font-size: 14px;'>Version 2.0.0</p>
 
                     <div style='padding: 5px;'>
                         <p style='color: #ffffff; font-size: 16px; line-height: 1;'>
