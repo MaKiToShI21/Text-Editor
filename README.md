@@ -227,9 +227,12 @@ The `PyQt6 Graphics View Framework` is used to display the AST:
 3. Convert the expression to POLIZ (Polish inverse notation) and evaluate it (only for arithmetic expressions consisting of integers).
 
 **Task option:**
+
 Programming language: `C/C++`
+
 Complete definition of the KS grammar for the programming language:
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/grammar.png" width="500">
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/grammar.png" width="400">
 
 Examples of correct strings:
 1. (17 + 3 * 5) % 7 - 2
@@ -237,17 +240,18 @@ Examples of correct strings:
 3. 8 / 2 + 10 % 3
 
 Lexer diagram:
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/state_diagram.png" width="500">
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/state_diagram.png" width="400">
 
 Recursive descent scheme for a parser:
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/graph.png" width="500">
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/graph.png" width="400">
 
 Test lexer:
 | Without errors | With errors |
 |----------------|-------------|
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_lexer_example_1.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_lexer_example_1.png" width="500"> |
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_lexer_example_2.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_lexer_example_1.png" width="500"> |
-
 
 Test parser:
 | Without errors | With errors |
