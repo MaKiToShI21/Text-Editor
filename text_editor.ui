@@ -246,7 +246,6 @@ QToolButton QIcon {
    <addaction name="actionDelete"/>
    <addaction name="separator"/>
    <addaction name="actionRunParser"/>
-   <addaction name="actionShowAST"/>
    <addaction name="separator"/>
    <addaction name="actionHelp"/>
    <addaction name="actionAbout"/>
@@ -373,8 +372,6 @@ QMenu::separator {
     </property>
     <addaction name="actionRunLexer"/>
     <addaction name="actionRunParser"/>
-    <addaction name="actionSemanticAnalysis"/>
-    <addaction name="actionShowAST"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -641,10 +638,10 @@ QMenu::separator {
     <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
    </property>
    <property name="text">
-    <string>Синтаксический анализ</string>
+    <string>Разбор и внутреннее представление</string>
    </property>
    <property name="toolTip">
-    <string>Синтаксический анализ</string>
+    <string>Лексический и синтаксический анализ, тетрады и ПОЛИЗ</string>
    </property>
    <property name="shortcut">
     <string>F6</string>
@@ -670,37 +667,6 @@ QMenu::separator {
    </property>
    <property name="toolTip">
     <string>Диагностика и нейтрализация ошибок</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::NoRole</enum>
-   </property>
-  </action>
-  <action name="actionSemanticAnalysis">
-   <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
-   </property>
-   <property name="text">
-    <string>Семантический анализ</string>
-   </property>
-   <property name="toolTip">
-    <string>Семантический анализ</string>
-   </property>
-   <property name="shortcut">
-    <string>F7</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::NoRole</enum>
-   </property>
-  </action>
-  <action name="actionShowAST">
-   <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::WindowNew"/>
-   </property>
-   <property name="text">
-    <string>Показать AST</string>
-   </property>
-   <property name="toolTip">
-    <string>Показать AST</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

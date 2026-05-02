@@ -1,52 +1,51 @@
 class LexicalAnalyzer:
-    def __init__(self, lang='ru'):
-        self.lang = lang
-
-        self.TOKEN_TYPES = {
-            1: self.lang.translate('kw_double'),
-            2: self.lang.translate('kw_std'),
-            3: self.lang.translate('kw_complex'),
-            4: self.lang.translate('identifier'),
-            5: self.lang.translate('space'),
-            6: self.lang.translate('integer'),
-            7: self.lang.translate('float'),
-            8: self.lang.translate('double_colon'),
-            9: self.lang.translate('open_angle'),
-            10: self.lang.translate('close_angle'),
-            11: self.lang.translate('open_paren'),
-            12: self.lang.translate('close_paren'),
-            13: self.lang.translate('minus'),
-            14: self.lang.translate('comma'),
-            15: self.lang.translate('semicolon')
-        }
-
     TOKEN_CODES = {
-        'KEYWORD_DOUBLE': 1,
-        'KEYWORD_STD': 2,
-        'KEYWORD_COMPLEX': 3,
-        'IDENTIFIER': 4,
-        'SPACE': 5,
-        'INTEGER': 6,
-        'FLOAT': 7,
-        'DOUBLE_COLON': 8,
-        'OPEN_ANGLE': 9,
-        'CLOSE_ANGLE': 10,
-        'OPEN_PAREN': 11,
-        'CLOSE_PAREN': 12,
-        'MINUS': 13,
-        'COMMA': 14,
-        'SEMICOLON': 15,
+        "IDENTIFIER": 1,
+        "INTEGER": 2,
+        "FLOAT": 3,
+        "PLUS": 4,
+        "MINUS": 5,
+        "MULTIPLY": 6,
+        "DIVIDE": 7,
+        "MODULE": 8,
+        "OPEN_PAREN": 9,
+        "CLOSE_PAREN": 10,
+        "SPACE": 11,
     }
 
-    KEYWORDS = {
-        'double': TOKEN_CODES['KEYWORD_DOUBLE'],
-        'std': TOKEN_CODES['KEYWORD_STD'],
-        'complex': TOKEN_CODES['KEYWORD_COMPLEX']
+    TOKEN_LABEL_KEYS = {
+        TOKEN_CODES["IDENTIFIER"]: "identifier",
+        TOKEN_CODES["INTEGER"]: "integer",
+        TOKEN_CODES["FLOAT"]: "float",
+        TOKEN_CODES["PLUS"]: "plus",
+        TOKEN_CODES["MINUS"]: "minus",
+        TOKEN_CODES["MULTIPLY"]: "multiply",
+        TOKEN_CODES["DIVIDE"]: "divide",
+        TOKEN_CODES["MODULE"]: "module",
+        TOKEN_CODES["OPEN_PAREN"]: "open_paren",
+        TOKEN_CODES["CLOSE_PAREN"]: "close_paren",
+        TOKEN_CODES["SPACE"]: "space",
     }
+
+    SINGLE_CHAR_TOKENS = {
+        "+": TOKEN_CODES["PLUS"],
+        "-": TOKEN_CODES["MINUS"],
+        "*": TOKEN_CODES["MULTIPLY"],
+        "/": TOKEN_CODES["DIVIDE"],
+        "%": TOKEN_CODES["MODULE"],
+        "(": TOKEN_CODES["OPEN_PAREN"],
+        ")": TOKEN_CODES["CLOSE_PAREN"],
+    }
+
+    def __init__(self, lang):
+        self.lang = lang
+        self.TOKEN_TYPES = {
+            code: self.lang.translate(label_key)
+            for code, label_key in self.TOKEN_LABEL_KEYS.items()
+        }
 
     def analyze(self, text):
         self.text = text
-        self._lines = text.splitlines() or [text]
         self.tokens = []
         self.errors = []
         self.position = 0
@@ -56,133 +55,71 @@ class LexicalAnalyzer:
         while self.position < len(self.text):
             current_char = self.text[self.position]
 
-            if current_char == ' ':
+            if current_char in (" ", "\t"):
                 self._process_space()
-            elif current_char.isalpha() or current_char == '_':
-                self._process_identifier_or_keyword()
+            elif current_char in self.SINGLE_CHAR_TOKENS:
+                self._add_token(self.SINGLE_CHAR_TOKENS[current_char], current_char)
+                self._advance()
+            elif current_char.isalpha() or current_char == "_":
+                self._process_identifier()
             elif current_char.isdigit():
                 self._process_number()
-            elif current_char == ':':
-                self._process_double_colon()
-            elif current_char == '<':
-                self._add_token(self.TOKEN_CODES['OPEN_ANGLE'], '<')
-                self._advance()
-            elif current_char == '>':
-                self._add_token(self.TOKEN_CODES['CLOSE_ANGLE'], '>')
-                self._advance()
-            elif current_char == '(':
-                self._add_token(self.TOKEN_CODES['OPEN_PAREN'], '(')
-                self._advance()
-            elif current_char == ')':
-                self._add_token(self.TOKEN_CODES['CLOSE_PAREN'], ')')
-                self._advance()
-            elif current_char == '-':
-                self._add_token(self.TOKEN_CODES['MINUS'], '-')
-                self._advance()
-            elif current_char == ',':
-                self._add_token(self.TOKEN_CODES['COMMA'], ',')
-                self._advance()
-            elif current_char == ';':
-                self._add_token(self.TOKEN_CODES['SEMICOLON'], ';')
-                self._advance()
-            elif current_char.isspace():
+            elif current_char in ("\n", "\r"):
                 self._advance()
             else:
-                self._add_error(current_char)
-                self._advance()
+                self._process_invalid_fragment()
 
         return self.tokens, self.errors
 
     def _advance(self):
-        if self.position < len(self.text):
-            if self.text[self.position] == '\n':
-                self.line += 1
-                self.column = 1
-            else:
-                self.column += 1
-            self.position += 1
+        if self.position >= len(self.text):
+            return
 
-    def _add_token(self, code, lexeme):
-        start_col = self.column
-        end_col = start_col + len(lexeme) - 1
-        self.tokens.append({
-            'code': code,
-            'type': self.TOKEN_TYPES[code],
-            'lexeme': lexeme,
-            'location': f"{self.lang.translate('line_num').format(self.line, 0)}, {start_col}-{end_col}",
-        })
-
-    def _add_error(self, lexeme):
-        start_col = self.column
-        end_col = start_col + len(lexeme) - 1
-
-        if self.errors:
-            last = self.errors[-1]
-            last_line = last.get('line')
-            last_end = last.get('end_col')
-            if last_line == self.line and isinstance(last_end, int) and start_col > last_end:
-                between_text = ''
-                line_text = self._lines[self.line - 1] if 1 <= self.line <= len(self._lines) else ''
-
-                if start_col > last_end + 1:
-                    between_text = line_text[last_end:start_col - 1]
-
-                if start_col == last_end + 1 or (between_text and all(ch == ' ' for ch in between_text)):
-                    last['lexeme'] += between_text + lexeme
-                    last['end_col'] = end_col
-                    last['location'] = (
-                        f"{self.lang.translate('line_num').format(self.line, 0)}, "
-                        f"{last['start_col']}-{last['end_col']}"
-                    )
-                    return
-
-        self.errors.append({
-            'code': 'ERROR',
-            'type': self.lang.translate('invalid_char'),
-            'lexeme': lexeme,
-            'location': f"{self.lang.translate('line_num').format(self.line, 0)}, {start_col}-{end_col}",
-            'line': self.line,
-            'start_col': start_col,
-            'end_col': end_col,
-        })
-
-    def _process_identifier_or_keyword(self):
-        start_line = self.line
-        start_col = self.column
-        start_pos = self.position
-
-        while (self.position < len(self.text) and
-               (self.text[self.position].isalnum() or self.text[self.position] == '_')):
-            self._advance()
-
-        lexeme = self.text[start_pos:self.position]
-        code = self.KEYWORDS.get(lexeme, self.TOKEN_CODES['IDENTIFIER'])
-
-        self.tokens.append({
-            'code': code,
-            'type': self.TOKEN_TYPES[code],
-            'lexeme': lexeme,
-            'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{self.column - 1}",
-        })
+        if self.text[self.position] == "\n":
+            self.line += 1
+            self.column = 1
+        else:
+            self.column += 1
+        self.position += 1
 
     def _process_space(self):
         start_line = self.line
         start_col = self.column
         start_pos = self.position
 
-        while (self.position < len(self.text) and
-               self.text[self.position] == ' '):
+        while self.position < len(self.text) and self.text[self.position] in (" ", "\t"):
             self._advance()
 
         lexeme = self.text[start_pos:self.position]
-        end_col = self.column - 1
+        self.tokens.append(
+            {
+                "code": self.TOKEN_CODES["SPACE"],
+                "type": self.TOKEN_TYPES[self.TOKEN_CODES["SPACE"]],
+                "lexeme": lexeme,
+                "location": self._format_location(start_line, start_col, self.column - 1),
+            }
+        )
 
-        self.tokens.append({
-            'code': self.TOKEN_CODES['SPACE'],
-            'type': self.TOKEN_TYPES[self.TOKEN_CODES['SPACE']],
-            'lexeme': lexeme,
-            'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{end_col}",
-        })
+    def _process_identifier(self):
+        start_line = self.line
+        start_col = self.column
+        start_pos = self.position
+
+        while self.position < len(self.text):
+            current_char = self.text[self.position]
+            if not (current_char.isalnum() or current_char == "_"):
+                break
+            self._advance()
+
+        lexeme = self.text[start_pos:self.position]
+        self.tokens.append(
+            {
+                "code": self.TOKEN_CODES["IDENTIFIER"],
+                "type": self.TOKEN_TYPES[self.TOKEN_CODES["IDENTIFIER"]],
+                "lexeme": lexeme,
+                "location": self._format_location(start_line, start_col, self.column - 1),
+            }
+        )
 
     def _process_number(self):
         start_line = self.line
@@ -190,53 +127,67 @@ class LexicalAnalyzer:
         start_pos = self.position
         has_fraction = False
 
-        while (self.position < len(self.text) and
-               self.text[self.position].isdigit()):
+        while self.position < len(self.text) and self.text[self.position].isdigit():
             self._advance()
 
-        if (self.position < len(self.text) and
-            self.text[self.position] == '.'):
+        if self.position < len(self.text) and self.text[self.position] == ".":
             has_fraction = True
             self._advance()
-
-            while (self.position < len(self.text) and
-                   self.text[self.position].isdigit()):
+            while self.position < len(self.text) and self.text[self.position].isdigit():
                 self._advance()
 
         lexeme = self.text[start_pos:self.position]
-        code = self.TOKEN_CODES['FLOAT'] if has_fraction else self.TOKEN_CODES['INTEGER']
+        token_code = self.TOKEN_CODES["FLOAT"] if has_fraction else self.TOKEN_CODES["INTEGER"]
+        self.tokens.append(
+            {
+                "code": token_code,
+                "type": self.TOKEN_TYPES[token_code],
+                "lexeme": lexeme,
+                "location": self._format_location(start_line, start_col, self.column - 1),
+            }
+        )
 
-        self.tokens.append({
-            'code': code,
-            'type': self.TOKEN_TYPES[code],
-            'lexeme': lexeme,
-            'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{self.column - 1}",
-        })
-
-    def _process_double_colon(self):
+    def _process_invalid_fragment(self):
         start_line = self.line
         start_col = self.column
+        start_pos = self.position
 
-        has_double_colon = (
-            self.position + 1 < len(self.text) and
-            self.text[self.position + 1] == ':'
+        while self.position < len(self.text):
+            current_char = self.text[self.position]
+            if (
+                current_char in self.SINGLE_CHAR_TOKENS
+                or current_char in (" ", "\t", "\n", "\r")
+                or current_char.isalnum()
+                or current_char == "_"
+            ):
+                break
+            self._advance()
+
+        if start_pos == self.position:
+            self._advance()
+
+        lexeme = self.text[start_pos:self.position]
+        self.errors.append(
+            {
+                "code": "Error",
+                "type": self.lang.translate("invalid_char"),
+                "analysis_type": "lexical",
+                "lexeme": lexeme,
+                "location": self._format_location(start_line, start_col, self.column - 1),
+            }
         )
 
-        if has_double_colon:
-            self._advance()
-            self._advance()
-            self.tokens.append({
-                'code': self.TOKEN_CODES['DOUBLE_COLON'],
-                'type': self.TOKEN_TYPES[self.TOKEN_CODES['DOUBLE_COLON']],
-                'lexeme': '::',
-                'location': f"{self.lang.translate('line_num').format(start_line, 0)}, {start_col}-{self.column - 1}",
-            })
-
-        should_add_colon_error = (
-            not has_double_colon or
-            (self.position < len(self.text) and self.text[self.position] == ':')
+    def _add_token(self, code, lexeme):
+        start_col = self.column
+        end_col = start_col + len(lexeme) - 1
+        self.tokens.append(
+            {
+                "code": code,
+                "type": self.TOKEN_TYPES[code],
+                "lexeme": lexeme,
+                "location": self._format_location(self.line, start_col, end_col),
+            }
         )
 
-        if should_add_colon_error:
-            self._add_error(':')
-            self._advance()
+    def _format_location(self, line, start_col, end_col):
+        return f"{self.lang.translate('line_num').format(line)}, {start_col}-{end_col}"
