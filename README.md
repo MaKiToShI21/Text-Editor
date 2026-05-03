@@ -245,7 +245,7 @@ Lexer diagram:
 
 Recursive descent scheme for a parser:
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/graph.png" width="400">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/graph.png" width="200">
 
 Test lexer:
 | Without errors | With errors |
@@ -257,12 +257,12 @@ Test parser:
 | Without errors | With errors |
 |----------------|-------------|
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_parser_example_1.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_parser_example_1.png" width="500"> |
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_parser_example_2.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_parser_example_1.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_parser_example_2.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_parser_example_2.png" width="500"> |
 
 Internal form of program presentation (tetrads and POLIZ):
-| tetrads with poliz | tetrads without poliz |
+| tetrads + poliz + value | tetrads + poliz - value | incorrect line |
 |----------------|-------------|
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/with_poliz.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/without_poliz.png" width="500">
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/with_value.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/without_value.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/nothing.png" width="500"> | 
 
 <h2 align="center">Build and Launch Instructions</h2>
 
