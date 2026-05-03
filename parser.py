@@ -16,7 +16,6 @@ class ExpressionValue:
 class LineAnalysis:
     line_no: int
     expression: str
-    location: str
     quadruples: list[tuple[str, str, str, str]] = field(default_factory=list)
     postfix: list[str] | None = None
     value: str = ""
@@ -54,10 +53,6 @@ class Parser:
         self._last_error_pos = None  # token index of the last reported/suppressed error
 
     # ------------------------------------------------------------------ public
-
-    def parse(self, text):
-        session = self.analyze(text, collect_ir=False)
-        return session.tokens, session.errors
 
     def analyze(self, text, collect_ir=False):
         lexer = LexicalAnalyzer(self.lang)
@@ -146,7 +141,6 @@ class Parser:
         self._last_error_pos = None
 
         expression = "".join(token["lexeme"] for token in tokens)
-        first_location = tokens[0].get("location", "")
 
         errors_before = len(self.errors)
         value = self._parse_E()
@@ -173,7 +167,6 @@ class Parser:
         return LineAnalysis(
             line_no=line_no,
             expression=expression,
-            location=first_location,
             quadruples=list(self._quadruples) if collect_ir else [],
             postfix=value.postfix if collect_ir else None,
             value=self._format_value(value) if collect_ir else "",

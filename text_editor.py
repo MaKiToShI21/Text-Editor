@@ -28,9 +28,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.apply_language()
 
         self.status_bar = self.statusBar
-        self.lexer_process = None
         self.current_input_widget = None
-        self.current_tab_name = None
         self.current_file_path = None
         self.result_table = None
         self.errors_table = None
@@ -338,10 +336,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                                         format(tab_name, 0), 3000)
         closing()
 
-    def close_output_tab(self, index):
-        _ = index
-        return
-
     def can_close(self):
         for i in range(self.input_tab_widget.count()):
             widget = self.input_tab_widget.widget(i)
@@ -370,7 +364,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 return False
         return True
 
-    def exit_app(self, event=None):
+    def exit_app(self):
         self.close()
 
     def closeEvent(self, event):
@@ -380,7 +374,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             event.ignore()
 
     def open_file(self):
-        file_path, selected_filter = QFileDialog.getOpenFileName(
+        file_path, _ = QFileDialog.getOpenFileName(
             self,
             self.lang.translate('choose_file_to_open'),
             "",
@@ -577,7 +571,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             if self.current_input_widget.file_path:
                 self.current_file_path = self.current_input_widget.file_path
 
-        self.current_tab_name = self.input_tab_widget.tabText(index)
         self.clear_output_views()
 
         lexer = LexicalAnalyzer(self.lang)
@@ -614,7 +607,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             if self.current_input_widget.file_path:
                 self.current_file_path = self.current_input_widget.file_path
 
-        self.current_tab_name = self.input_tab_widget.tabText(index)
         self.clear_output_views()
 
         parser = Parser(self.lang)
@@ -634,20 +626,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
         else:
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
-
-    @staticmethod
-    def _extract_location(location):
-        numbers = re.findall(r"\d+", location or "")
-        if len(numbers) < 3:
-            return None, None, None
-        return int(numbers[0]), int(numbers[1]), int(numbers[2])
-
-    def get_token_type(self, code):
-        lexer = LexicalAnalyzer(self.lang)
-        return lexer.TOKEN_TYPES.get(code, self.lang.translate('unknown_code').format(code, 0))
-
-    def create_or_update_table(self, tokens, errors):
-        self.fill_table(tokens, errors, self.result_table)
 
     def fill_table(self, tokens, errors, table=None):
         if table:
@@ -718,9 +696,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         return table
-
-    def create_or_update_parser_table(self, errors):
-        self.fill_parser_table(errors, self.errors_table)
 
     def fill_parser_table(self, errors, table=None):
         if table:
@@ -795,15 +770,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             return
         self._highlight_location(location_item.text())
 
-    def on_semantic_table_item_clicked(self, item):
-        row = item.row()
-        table = item.tableWidget()
-
-        location_item = self._get_location_item(table, row, fallback_col=1)
-        if not location_item:
-            return
-        self._highlight_location(location_item.text())
-
     def _highlight_location(self, location_text):
         match = re.match(r'.*?(\d+),\s*(\d+)-(\d+)', location_text or '')
         if match:
@@ -853,50 +819,6 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         except Exception:
             pass
         table.itemClicked.connect(handler)
-
-    def output_table_data(self, table):
-        _ = table
-        return
-
-    def create_or_update_semantic_table(self, errors):
-        self.fill_parser_table(errors, self.errors_table)
-
-    def fill_semantic_table(self, errors, table=None):
-        if table:
-            table.clearContents()
-            table.setRowCount(0)
-        else:
-            table = QTableWidget(self)
-
-        table.setColumnCount(2)
-        table.setHorizontalHeaderLabels([
-            self.lang.translate('semantic_message'),
-            self.lang.translate('semantic_position'),
-        ])
-
-        row_labels = []
-        if errors:
-            table.setRowCount(len(errors))
-            for row, error in enumerate(errors):
-                message = QTableWidgetItem(error.get('message', ''))
-                message.setForeground(Qt.GlobalColor.red)
-                table.setItem(row, 0, message)
-
-                location = QTableWidgetItem(error.get('location', ''))
-                location.setForeground(Qt.GlobalColor.red)
-                table.setItem(row, 1, location)
-
-                row_labels.append(str(row + 1))
-            self._rebind_table_click_handler(table, self.on_semantic_table_item_clicked)
-        else:
-            table.setRowCount(0)
-
-        table.setVerticalHeaderLabels(row_labels)
-        table.resizeColumnsToContents()
-        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        return table
 
     def edit_action(self, action_name, method_name):
         widget = self.get_current_input_tab_widget()
