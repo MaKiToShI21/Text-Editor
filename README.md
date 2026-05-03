@@ -261,7 +261,7 @@ Test parser:
 
 Internal form of program presentation (tetrads and POLIZ):
 | tetrads + poliz + value | tetrads + poliz - value | incorrect line |
-|----------------|-------------|
+|-------------------------|-------------------------|----------------|
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/with_value.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/without_value.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/nothing.png" width="500"> | 
 
 <h2 align="center">Build and Launch Instructions</h2>
