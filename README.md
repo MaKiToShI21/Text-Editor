@@ -289,7 +289,7 @@ Internal form of program presentation (tetrads and POLIZ):
 sudo apt install clang llvm graphviz
 ```
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/install_libraries.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/install_libraries.png" width="550">
 
 **1.2. Исходный код**
 
@@ -310,7 +310,7 @@ int main() {
 
 Программа демонстрирует работу с пользовательскими операторами `*` и `+` для комплексных чисел. Сохранена в файл `complex.cpp`.
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/complex_cpp.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/complex_cpp.png" width="550">
 
 **1.3. Получение AST**
 
@@ -319,7 +319,7 @@ int main() {
 clang++ -Xclang -ast-dump -fsyntax-only complex.cpp
 ```
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/ast_dump.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/ast_dump.png" width="550">
 
 Ключевые наблюдения:
 - Функция `main` представлена узлом `FunctionDecl`.
@@ -341,7 +341,7 @@ clang++ -O0 -S -emit-llvm complex.cpp -o complex_O0.ll
 
 На уровне `-O0` компилятор не выполняет никаких оптимизаций. Пользовательские операторы компилируются в обычные вызовы функций, что делает код наглядным для анализа.
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/ir_O0.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/ir_O0.png" width="550">
 
 Оптимизированный IR (`-O2`):
 ```bash
@@ -353,14 +353,14 @@ clang++ -O2 -S -emit-llvm complex.cpp -o complex_O2.ll
 - Никаких инструкций `alloca`, `store`, `load` — всё удалено оптимизациями `-mem2reg`, `-sroa`, `-dce`;
 - Вместо вызовов функций — прямые арифметические инструкции `fmul`, `fadd`, `fsub`.
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/ir_O2.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/ir_O2.png" width="550">
 
 Сравнение двух файлов:
 ```bash
 diff complex_O0.ll complex_O2.ll
 ```
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/ir_diff.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/ir_diff.png" width="550">
 
 После оптимизации произошли следующие изменения:
 - Переменные типа `alloca` были удалены;
@@ -383,7 +383,7 @@ dot -Tpng .main.dot -o cfg_main_O2.png
 xdg-open cfg_main_O2.png
 ```
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/cfg_main_O2.png" width="400">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/cfg_main_O2.png" width="400">
 
 >[!NOTE]
 >Утилита `opt` не создаёт файл `.main.dot` для неоптимизированной версии (`-O0`). При уровне оптимизации `-O0` в IR-файле сохраняется весь служебный код C++: функции глобальной инициализации (`__cxx_global_var_init`), конструкторы модуля (`_GLOBAL__sub_I_complex.cpp`), код инициализации `std::cout` и `std::endl`. Функция `main` оказывается «окружена» этим служебным кодом, что мешает `opt` выделить её в отдельный `.dot`-файл. Это особенность работы `opt` с C++ кодом, содержащим глобальные объекты, а не ошибка выполнения команд.
@@ -411,7 +411,7 @@ void foo() {
 
 **Построение AST конструкции:**
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/additional_ast.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/additional_ast.png" width="550">
 
 **Трёхадресный код (TAC):**
 ```
@@ -435,7 +435,7 @@ store double 2.000000e+00, double* %2, align 8
 
 Если мнимая часть комплексного числа равна нулю, то хранение нуля является избыточным. Данная оптимизация заменяет комплексное число с нулевой мнимой частью на обычное вещественное число в IR — удаляет инструкцию `store` для мнимой части.
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/scheme_1.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/scheme_1.png" width="550">
 
 Правило преобразования: если `imag == 0.0`, то инструкция `store` для мнимой части может быть удалена.
 
@@ -460,7 +460,7 @@ store double -1.000000e+01, double* %my_complex_real, align 8
 
 При выполнении операции сложения комплексных чисел, если одно из слагаемых имеет нулевую мнимую часть, операцию можно упростить. Данная оптимизация заменяет `fadd %x, 0.0` на `%x`, устраняя избыточную арифметическую инструкцию.
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/tree/lab-7/images/lab7/scheme_2.png" width="550">
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/scheme_2.png" width="550">
 
 Правило преобразования:
 ```
