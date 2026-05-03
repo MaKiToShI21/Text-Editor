@@ -251,7 +251,7 @@ Test lexer:
 | Without errors | With errors |
 |----------------|-------------|
 | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_lexer_example_1.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_lexer_example_1.png" width="500"> |
-| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_lexer_example_2.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_lexer_example_1.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_lexer_example_2.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_lexer_example_2.png" width="500"> |
 
 Test parser:
 | Without errors | With errors |

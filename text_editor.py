@@ -3,7 +3,6 @@
                              QVBoxLayout, QTableWidget, QTableWidgetItem,
                              QWidget)
 from PyQt6.QtGui import QAction, QDesktopServices
-from semantic_analyzer import SemanticAnalyzer
 from language import Language, LanguageDialog
 from code_editor import CodeEditor
 from lexer import LexicalAnalyzer
@@ -622,7 +621,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         session = parser.analyze(text, collect_ir=True)
         self.fill_table(session.tokens, [], self.result_table)
 
-        ir_report = SemanticAnalyzer(self.lang).format_ir_report(session)
+        ir_report = parser.format_ir_report(session)
         errors = session.errors
 
         if errors:
