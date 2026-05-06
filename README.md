@@ -386,7 +386,7 @@ xdg-open cfg_main_O2.png
 <img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/cfg_main_O2.png" width="400">
 
 >[!NOTE]
->Утилита `opt` не создаёт файл `.main.dot` для неоптимизированной версии (`-O0`). При уровне оптимизации `-O0` в IR-файле сохраняется весь служебный код C++: функции глобальной инициализации (`__cxx_global_var_init`), конструкторы модуля (`_GLOBAL__sub_I_complex.cpp`), код инициализации `std::cout` и `std::endl`. Функция `main` оказывается «окружена» этим служебным кодом, что мешает `opt` выделить её в отдельный `.dot`-файл. Это особенность работы `opt` с C++ кодом, содержащим глобальные объекты, а не ошибка выполнения команд.
+>Утилита `opt` не создаёт файл `.main.dot` для неоптимизированной версии (`-O0`). При уровне оптимизации `-O0` в IR-файле сохраняется весь служебный код C++: функции глобальной инициализации (`__cxx_global_var_init`), конструкторы модуля (`_GLOBAL__sub_I_complex.cpp`), код инициализации `std::cout` и `std::endl`. Функция `main` оказывается «окружена» этим служебным кодом, что мешает `opt` выделить её в отдельный `.dot`-файл. Это особенность работы `opt` с C++ кодом, содержащим глобальные объекты.
 
 В LLVM каждый граф потока управления (CFG) строится на уровне функции, поскольку структура управления всегда локальна для тела функции. Для получения полного представления о программе нужно построить CFG для всех функций и анализировать их совокупность.
 
@@ -413,6 +413,10 @@ void foo() {
 
 <img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/additional_ast.png" width="550">
 
+**LLVM IR (неоптимизированный):**
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/additional_1_LLVM_IR_unopt.png" width="550">
+
 **Трёхадресный код (TAC):**
 ```
 t1 = -10.0
@@ -421,46 +425,37 @@ my_complex.real = t1
 my_complex.imag = t2
 ```
 
-**LLVM IR (неоптимизированный):**
-```llvm
-%my_complex = alloca %"class.std::complex", align 8
-%0 = bitcast %"class.std::complex"* %my_complex to { double, double }*
-%1 = getelementptr inbounds { double, double }, { double, double }* %0, i32 0, i32 0
-store double -1.000000e+01, double* %1, align 8
-%2 = getelementptr inbounds { double, double }, { double, double }* %0, i32 0, i32 1
-store double 2.000000e+00, double* %2, align 8
-```
-
 **Оптимизация №1: Свёртка нулевой мнимой части**
 
 Если мнимая часть комплексного числа равна нулю, то хранение нуля является избыточным. Данная оптимизация заменяет комплексное число с нулевой мнимой частью на обычное вещественное число в IR — удаляет инструкцию `store` для мнимой части.
 
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/scheme_1.png" width="550">
-
 Правило преобразования: если `imag == 0.0`, то инструкция `store` для мнимой части может быть удалена.
 
-```llvm
-; Входной IR (с мнимой частью = 0.0)
-store double -1.000000e+01, double* %1, align 8
-store double 0.000000e+00, double* %2, align 8   ; ← избыточная инструкция
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/scheme_1.png" width="550">
 
-; Выходной IR (после оптимизации)
-%my_complex_real = alloca double, align 8
-store double -1.000000e+01, double* %my_complex_real, align 8
-; мнимая часть не хранится (подразумевается 0.0)
+Тестовый пример:
+```CPP
+#include <complex>
+void foo() {
+    std::complex<double> my_complex(-10.0, 0.0);
+}
 ```
 
-Тестовый пример: `std::complex<double> my_complex(-10.0, 0.0);`
+Входной IR:
 
-| До оптимизации | После оптимизации |
-|----------------|-------------------|
-| Две store инструкции (real и imag) | Одна store инструкция (только real) |
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/additional_1_LLVM_IR_unopt.png" width="550">
+
+Выходной IR (после оптимизации):
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/additional_1_LLVM_IR_opt.png" width="550">
+
+Сравнение (diff):
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/additional_1_LLVM_IR_diff.png" width="550">
 
 **Оптимизация №2: Упрощение сложения с нулём**
 
 При выполнении операции сложения комплексных чисел, если одно из слагаемых имеет нулевую мнимую часть, операцию можно упростить. Данная оптимизация заменяет `fadd %x, 0.0` на `%x`, устраняя избыточную арифметическую инструкцию.
-
-<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/scheme_2.png" width="550">
 
 Правило преобразования:
 ```
@@ -468,29 +463,31 @@ fadd %x, 0.0  →  %x
 fadd 0.0, %x  →  %x
 ```
 
-```llvm
-; Входной IR
-%imag1 = load double, double* %z1_imag, align 8
-%imag2 = load double, double* %z2_imag, align 8   ; imag2 = 0.0
-%imag_sum = fadd double %imag1, %imag2            ; избыточная операция
-
-; Выходной IR (после оптимизации)
-%imag1 = load double, double* %z1_imag, align 8
-; загрузка imag2 пропущена
-%imag_sum = %imag1                                ; прямая передача
-```
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/scheme_2.png" width="550">
 
 Тестовый пример:
-```cpp
-std::complex<double> z1(3.0, 4.0);
-std::complex<double> z2(5.0, 0.0);   // мнимая часть = 0
-auto z3 = z1 + z2;
+
+```CPP
+#include <complex>
+double test() {
+    std::complex<double> z1(3.0, 4.0);
+    std::complex<double> z2(5.0, 0.0);
+    auto z3 = z1 + z2;
+    return z3.imag();
+}
 ```
 
-| До оптимизации | После оптимизации |
-|----------------|-------------------|
-| ```%sum = fadd double %imag1, %imag2 (где %imag2 = 0.0)``` | ```%sum = %imag1``` |
-| Две операции: `fadd` для `real` и `fadd` для `imag` | Одна операция `fadd` только для `real` |
+Входной IR:
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/additional_2_LLVM_IR_unopt.png" width="550">
+
+Выходной IR (после оптимизации):
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/additional_2_LLVM_IR_opt.png" width="550">
+
+Сравнение (diff):
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/additional_2_LLVM_IR_diff.png" width="550">
 
 **Вывод:** В ходе выполнения дополнительного задания были реализованы две локальные оптимизации для конструкций с комплексными числами:
 1. **Свёртка нулевой мнимой части** — позволяет сократить память и количество инструкций при хранении комплексных чисел с нулевой мнимой частью.
