@@ -29,18 +29,6 @@ class ParseSession:
 
 
 class Parser:
-    """Recursive-descent parser with error neutralization.
-
-    Grammar: E→TA, A→ε|+TA|-TA, T→FB, B→ε|*FB|/FB|%FB, F→num|id|(E)
-
-    Error neutralization rules:
-      - Parsing does not stop at the first error; it continues through the input.
-      - Consecutive errors (at adjacent token positions) are suppressed:
-        only the very first of a consecutive run is reported.
-      - Non-consecutive errors (separated by at least one successfully consumed
-        token) are each reported independently.
-    """
-
     def __init__(self, lang):
         self.lang = lang
         self.tokens = []
@@ -50,9 +38,7 @@ class Parser:
         self._position = 0
         self._temp_index = 0
         self._quadruples = []
-        self._last_error_pos = None  # token index of the last reported/suppressed error
-
-    # ------------------------------------------------------------------ public
+        self._last_error_pos = None
 
     def analyze(self, text, collect_ir=False):
         lexer = LexicalAnalyzer(self.lang)
@@ -65,11 +51,7 @@ class Parser:
         tokens_by_line = self._group_tokens_by_line(tokens)
         lexical_by_line = self._group_entries_by_line(lexical_errors)
 
-        line_count = max(
-            len(text.splitlines()),
-            max(tokens_by_line.keys(), default=0),
-            max(lexical_by_line.keys(), default=0),
-        )
+        line_count = len(text.splitlines())
 
         for line_no in range(1, line_count + 1):
             line_tokens = tokens_by_line.get(line_no, [])
@@ -78,26 +60,28 @@ class Parser:
                 continue
 
             line_errors = lexical_by_line.get(line_no, [])
-            if line_errors:
-                for error in line_errors:
-                    self.errors.append(
-                        {
-                            "analysis_type": "lexical",
-                            "lexeme": error.get("lexeme", ""),
-                            "description": error.get("type", self.lang.translate("invalid_char")),
-                            "location": error.get("location", ""),
-                        }
-                    )
+            has_lexical_errors = bool(line_errors)
+            for error in line_errors:
+                self.errors.append(
+                    {
+                        "analysis_type": "lexical",
+                        "lexeme": error.get("lexeme", ""),
+                        "description": error.get("type", self.lang.translate("invalid_char")),
+                        "location": error.get("location", ""),
+                    }
+                )
+
+            if not significant:
                 continue
 
-            line_result = self._parse_line(line_no, significant, collect_ir)
+            line_result = self._parse_line(line_no, significant, collect_ir,
+                                           has_lexical_errors=has_lexical_errors)
             if line_result is not None:
                 self.line_results.append(line_result)
 
         return ParseSession(self.tokens, self.errors, self.line_results)
 
     def format_ir_report(self, session: ParseSession) -> str:
-        """Format the intermediate representation (quadruples + RPN) report."""
         lines: list[str] = []
 
         if session.errors:
@@ -131,9 +115,7 @@ class Parser:
 
         return "\n".join(lines).rstrip()
 
-    # --------------------------------------------------------- line-level parse
-
-    def _parse_line(self, line_no, tokens, collect_ir):
+    def _parse_line(self, line_no, tokens, collect_ir, has_lexical_errors=False):
         self._current_tokens = tokens
         self._position = 0
         self._temp_index = 0
@@ -145,23 +127,18 @@ class Parser:
         errors_before = len(self.errors)
         value = self._parse_E()
 
-        # Report errors for any leftover tokens (trailing garbage).
-        # Consecutive suppression applies across the leftover loop as well.
         while self._position < len(self._current_tokens):
             token = self._current_tokens[self._position]
-            if self._is_operand_start(token):
-                self._add_syntax_error(token, self.lang.translate("parser_expected_operator"))
-            elif token["code"] == LexicalAnalyzer.TOKEN_CODES["CLOSE_PAREN"]:
+            if token["code"] == LexicalAnalyzer.TOKEN_CODES["CLOSE_PAREN"]:
                 self._add_syntax_error(token, self.lang.translate("parser_unexpected_closing_paren"))
+                self._position += 1
             else:
-                self._add_syntax_error(
-                    token,
-                    self.lang.translate("parser_unexpected_token").format(token["lexeme"]),
-                )
-            self._position += 1
+                prev = self._position
+                self._parse_E()
+                if self._position == prev:
+                    self._position += 1
 
-        # IR is only built for syntactically correct lines.
-        if len(self.errors) > errors_before:
+        if has_lexical_errors or len(self.errors) > errors_before:
             return None
 
         return LineAnalysis(
@@ -172,20 +149,13 @@ class Parser:
             value=self._format_value(value) if collect_ir else "",
         )
 
-    # ---------------------------------------------------- grammar productions
-
     def _parse_E(self):
         """E → TA"""
         first = self._parse_T()
         return self._parse_A(first)
 
     def _parse_A(self, left):
-        """A → ε | +TA | -TA  (left-associative loop with error recovery)
-
-        When an operand appears where a binary operator is expected, the
-        full factor (_parse_F) is consumed so that parenthesised expressions
-        like (8 * i) are swallowed as a unit rather than token-by-token.
-        """
+        "A → ε | +TA | -TA"
         codes = LexicalAnalyzer.TOKEN_CODES
         while True:
             tok = self._current_token()
@@ -198,7 +168,7 @@ class Parser:
                 left = self._combine_binary(left, tok, right)
             elif self._is_operand_start(tok):
                 self._add_syntax_error(tok, self.lang.translate("parser_expected_operator"))
-                self._parse_F()  # consume the full factor (including any sub-expression)
+                self._parse_F()
             else:
                 break
         return left
@@ -209,7 +179,7 @@ class Parser:
         return self._parse_B(first)
 
     def _parse_B(self, left):
-        """B → ε | *FB | /FB | %FB  (with the same operand-recovery as A)"""
+        "B → ε | *FB | /FB | %FB"
         codes = LexicalAnalyzer.TOKEN_CODES
         while True:
             tok = self._current_token()
@@ -222,19 +192,13 @@ class Parser:
                 left = self._combine_binary(left, tok, right)
             elif self._is_operand_start(tok):
                 self._add_syntax_error(tok, self.lang.translate("parser_expected_operator"))
-                self._parse_F()  # consume the full factor (including any sub-expression)
+                self._parse_F()
             else:
                 break
         return left
 
     def _parse_F(self):
-        """F → num | id | (E) | unary +/- F
-
-        Error recovery: on an unexpected token, report an error (subject to
-        consecutive suppression), skip the token, and retry.  The one
-        exception is CLOSE_PAREN: it is reported but NOT consumed, so that
-        the enclosing (E) handler can still match it.
-        """
+        "F → num | id | (E) | unary +/- F"
         codes = LexicalAnalyzer.TOKEN_CODES
         while True:
             token = self._current_token()
@@ -265,18 +229,13 @@ class Parser:
                 return nested
 
             if code == codes["CLOSE_PAREN"]:
-                # Do NOT consume: leave the ')' for the enclosing (E) handler.
                 self._add_syntax_error(token, self.lang.translate("parser_expected_operand"))
                 return self._make_dummy()
 
-            # Any other unexpected token: report, skip, retry.
             self._add_syntax_error(token, self.lang.translate("parser_expected_operand"))
             self._position += 1
 
-    # --------------------------------------------------- IR / value builders
-
     def _make_dummy(self):
-        """Placeholder ExpressionValue used during error recovery."""
         t = self._new_temp()
         return ExpressionValue(text=t, postfix=[], is_integer_only=False)
 
@@ -348,7 +307,6 @@ class Parser:
         )
 
     def _format_value(self, ev: ExpressionValue) -> str:
-        """Return a display string for the computed value (integers only)."""
         if not ev.is_integer_only:
             return ""
         if ev.evaluation_error:
@@ -360,8 +318,6 @@ class Parser:
     def _new_temp(self):
         self._temp_index += 1
         return f"t{self._temp_index}"
-
-    # ----------------------------------------------- token stream primitives
 
     def _current_token(self):
         if self._position >= len(self._current_tokens):
@@ -378,10 +334,7 @@ class Parser:
         self._position += 1
         return True
 
-    # --------------------------------------------------- error reporting
-
     def _add_syntax_error(self, token, description, pos=None):
-        """Append a syntax error, suppressing it if consecutive with the last."""
         if pos is None:
             pos = self._position
         if self._last_error_pos is not None and pos <= self._last_error_pos + 1:
@@ -398,7 +351,6 @@ class Parser:
         )
 
     def _add_eof_error(self, description):
-        """Append an end-of-input error, suppressing it if consecutive."""
         pos = len(self._current_tokens)
         if self._last_error_pos is not None and pos <= self._last_error_pos + 1:
             self._last_error_pos = pos
@@ -420,8 +372,6 @@ class Parser:
             self._add_syntax_error(token, self.lang.translate("parser_expected_closing_paren"))
         else:
             self._add_eof_error(self.lang.translate("parser_expected_closing_paren"))
-
-    # ---------------------------------------------------- static helpers
 
     @staticmethod
     def _group_tokens_by_line(tokens):
