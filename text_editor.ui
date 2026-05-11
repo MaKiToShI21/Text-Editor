@@ -247,6 +247,7 @@ QToolButton QIcon {
    <addaction name="separator"/>
    <addaction name="actionRunParser"/>
    <addaction name="actionShowAST"/>
+   <addaction name="actionRunFullAnalysis"/>
    <addaction name="separator"/>
    <addaction name="actionHelp"/>
    <addaction name="actionAbout"/>
@@ -375,6 +376,8 @@ QMenu::separator {
     <addaction name="actionRunParser"/>
     <addaction name="actionSemanticAnalysis"/>
     <addaction name="actionShowAST"/>
+    <addaction name="separator"/>
+    <addaction name="actionRunFullAnalysis"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -701,6 +704,23 @@ QMenu::separator {
    </property>
    <property name="toolTip">
     <string>Показать AST</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionRunFullAnalysis">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
+   </property>
+   <property name="text">
+    <string>Полный анализ + оптимизации</string>
+   </property>
+   <property name="toolTip">
+    <string>Полный анализ + оптимизации</string>
+   </property>
+   <property name="shortcut">
+    <string>F8</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>

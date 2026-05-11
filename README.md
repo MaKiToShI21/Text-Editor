@@ -10,7 +10,9 @@
 7. **[Title and Objective of the Laboratory Work 3](#title-and-objective-of-the-laboratory-work-3)**
 8. **[Title and Objective of the Laboratory Work 4](#title-and-objective-of-the-laboratory-work-4)**
 8. **[Title and Objective of the Laboratory Work 5](#title-and-objective-of-the-laboratory-work-5)**
-9. **[User Manual](#user-manual)**
+8. **[Title and Objective of the Laboratory Work 6](#title-and-objective-of-the-laboratory-work-6)**
+9. **[Title and Objective of the Laboratory Work 7](#title-and-objective-of-the-laboratory-work-7)**
+10. **[User Manual](#user-manual)**
 
 ___
 
@@ -213,6 +215,369 @@ The `PyQt6 Graphics View Framework` is used to display the AST:
 - `QGraphicsTextItem` — node/terminal labels
 - `QPen + scene.addLine(...)` — edges and arrows
 - `fitInView(...), wheel/key zoom, and + / - / 100% buttons` — scaling the image.
+
+<h2 align="center">Title and Objective of the Laboratory Work 6</h2>
+
+**Laboratory Work 6.** Creating an internal presentation form for the program
+
+**Objective:** To study methods for constructing an internal representation of a program (IRP) based on a context-free grammar, implement a syntactic analyzer using the recursive descent method, and transform arithmetic expressions into tetrads and POLYSIS.
+
+**Statement of the problem:**
+1. Implement a recursive descent method to detect lexical and syntactic errors for a given context-sensitive grammar.
+2. Represent the program's internal form as tetrads (op, arg1, arg2, result) for arithmetic expressions (only for valid strings).
+3. Convert the expression to POLIZ (Polish inverse notation) and evaluate it (only for arithmetic expressions consisting of integers).
+
+**Task option:**
+
+Programming language: `C/C++`
+
+Complete definition of the KS grammar for the programming language:
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/grammar.png" width="400">
+
+Examples of correct strings:
+1. (17 + 3 * 5) % 7 - 2
+2. a1 + b2 * (c3 - 4)
+3. 8 / 2 + 10 % 3
+
+Lexer diagram:
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/state_diagram.png" width="400">
+
+Recursive descent scheme for a parser:
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/graph.png" width="200">
+
+Test lexer:
+| Without errors | With errors |
+|----------------|-------------|
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_lexer_example_1.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_lexer_example_1.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_lexer_example_2.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_lexer_example_2.png" width="500"> |
+
+Test parser:
+| Without errors | With errors |
+|----------------|-------------|
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_parser_example_1.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_parser_example_1.png" width="500"> |
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/correct_parser_example_2.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/incorrect_parser_example_2.png" width="500"> |
+
+Internal form of program presentation (tetrads and POLIZ):
+| tetrads + poliz + value | tetrads + poliz - value | incorrect line |
+|-------------------------|-------------------------|----------------|
+| <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/with_value.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/without_value.png" width="500"> | <img src="https://github.com/MaKiToShI21/Text-Editor/blob/internal-representation-of-the-program/images/lab6/nothing.png" width="500"> | 
+
+<h2 align="center">Title and Objective of the Laboratory Work 7</h2>
+
+**Лабораторная работа №7.** Исследование инфраструктуры Clang/LLVM: AST, LLVM IR, оптимизации и граф потока управления
+
+**Цель работы:** Изучить инфраструктуру компилятора Clang/LLVM: получить абстрактное синтаксическое дерево (AST), сгенерировать LLVM IR на различных уровнях оптимизации, применить оптимизации и построить граф потока управления (CFG) для программы на C++.
+
+**Постановка задачи:** С помощью инструментов Clang/LLVM проанализировать программу на C++, работающую с комплексными числами: получить её AST, сгенерировать и сравнить LLVM IR до и после оптимизации, а также визуализировать CFG.
+
+---
+
+### 1. Общая часть работы
+
+**1.1. Установка и подготовка среды**
+
+Работа выполнялась в среде Ubuntu 22.04. Установлены следующие инструменты:
+- `clang` — компилятор языка C/C++;
+- `llvm` — инструменты анализа и оптимизации кода;
+- `opt` — инструмент для работы с LLVM IR и применения оптимизаций;
+- `Graphviz` — инструмент для визуализации графов.
+
+```bash
+sudo apt install clang llvm graphviz
+```
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/install_libraries.png" width="550">
+
+**1.2. Исходный код**
+
+Программа на языке C++:
+
+```cpp
+#include <iostream>
+#include <complex>
+
+int main() {
+    std::complex<double> z1(3.0, 4.0);
+    std::complex<double> z2(1.0, 2.0);
+    auto z3 = z1 * z2 + z1;
+    std::cout << z3.real() << " " << z3.imag() << std::endl;
+    return 0;
+}
+```
+
+Программа демонстрирует работу с пользовательскими операторами `*` и `+` для комплексных чисел. Сохранена в файл `complex.cpp`.
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/complex_cpp.png" width="550">
+
+**1.3. Получение AST**
+
+Команда:
+```bash
+clang++ -Xclang -ast-dump -fsyntax-only complex.cpp
+```
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/ast_dump.png" width="550">
+
+Ключевые наблюдения:
+- Функция `main` представлена узлом `FunctionDecl`.
+- Переменные `z1`, `z2` инициализируются через `CXXConstructExpr` (вызов конструктора).
+- Операторы `*` и `+` представлены узлами `CXXOperatorCallExpr`, что доказывает: пользовательские операторы являются вызовами функций, а не встроенными операциями.
+- Для выражения `z1 * z2 + z1` AST имеет иерархическую структуру: сначала умножение, затем сложение.
+
+**1.4. Генерация LLVM IR**
+
+Неоптимизированный IR (`-O0`):
+```bash
+clang++ -O0 -S -emit-llvm complex.cpp -o complex_O0.ll
+```
+
+В неоптимизированном IR наблюдаются следующие характерные черты:
+- Все переменные (`z1`, `z2`, `z3`) размещены в памяти через `alloca`;
+- Множество операций `load` и `store` для работы с переменными;
+- Операторы `*` и `+` вызываются как обычные функции.
+
+На уровне `-O0` компилятор не выполняет никаких оптимизаций. Пользовательские операторы компилируются в обычные вызовы функций, что делает код наглядным для анализа.
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/ir_O0.png" width="550">
+
+Оптимизированный IR (`-O2`):
+```bash
+clang++ -O2 -S -emit-llvm complex.cpp -o complex_O2.ll
+```
+
+В файле с IR после оптимизации:
+- Все функции `operator*` и `operator+` исчезли — они были встроены (`-inline`) и их вычисления свёрнуты (`-constprop`);
+- Никаких инструкций `alloca`, `store`, `load` — всё удалено оптимизациями `-mem2reg`, `-sroa`, `-dce`;
+- Вместо вызовов функций — прямые арифметические инструкции `fmul`, `fadd`, `fsub`.
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/ir_O2.png" width="550">
+
+Сравнение двух файлов:
+```bash
+diff complex_O0.ll complex_O2.ll
+```
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/ir_diff.png" width="550">
+
+После оптимизации произошли следующие изменения:
+- Переменные типа `alloca` были удалены;
+- Код переведён в SSA-форму;
+- Оптимизация улучшила читаемость и упростила поток управления.
+
+Уже на уровне `-O2` компилятор LLVM способен «заглянуть внутрь» функций-операторов комплексных чисел и оптимизировать их так же эффективно, как и встроенные типы.
+
+**1.5. Граф потока управления программы**
+
+Команды:
+```bash
+# Генерация оптимизированного LLVM IR
+clang++ -O2 -S -emit-llvm complex.cpp -o complex_O0.ll
+# Генерация .dot-файлов CFG для функций
+opt -dot-cfg -disable-output complex_O0.ll
+# Преобразование .dot-файлов в .png с помощью Graphviz
+dot -Tpng .main.dot -o cfg_main_O2.png
+# Просмотр CFG
+xdg-open cfg_main_O2.png
+```
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7/images/lab7/cfg_main_O2.png" width="400">
+
+>[!NOTE]
+>Утилита `opt` не создаёт файл `.main.dot` для неоптимизированной версии (`-O0`). При уровне оптимизации `-O0` в IR-файле сохраняется весь служебный код C++: функции глобальной инициализации (`__cxx_global_var_init`), конструкторы модуля (`_GLOBAL__sub_I_complex.cpp`), код инициализации `std::cout` и `std::endl`. Функция `main` оказывается «окружена» этим служебным кодом, что мешает `opt` выделить её в отдельный `.dot`-файл. Это особенность работы `opt` с C++ кодом, содержащим глобальные объекты.
+
+В LLVM каждый граф потока управления (CFG) строится на уровне функции, поскольку структура управления всегда локальна для тела функции. Для получения полного представления о программе нужно построить CFG для всех функций и анализировать их совокупность.
+
+**1.6. Выводы**
+
+- С помощью Clang можно получить полную структуру AST и LLVM IR, а также построить CFG.
+- LLVM предоставляет гибкие инструменты анализа и оптимизации кода.
+- Промежуточное представление (IR) удобно для написания компиляторных трансформаций.
+- На примере комплексных чисел показано, как пользовательские операторы (синтаксический сахар) преобразуются в вызовы функций на уровне AST и IR, а затем могут быть полностью оптимизированы (встроены) на уровнях `-O2` и выше.
+
+---
+
+### 2. Дополнительное задание: построение AST, генерация IR и локальные оптимизации
+
+**Синтаксическая конструкция:**
+
+```cpp
+std::complex<double> my_complex(-10.0, 2.0);
+```
+
+Это объявление переменной комплексного типа `std::complex<double>` с
+двумя вещественными аргументами: действительной частью `-10.0` и мнимой
+частью `2.0`. Все этапы (AST, генерация IR, две локальные оптимизации)
+реализованы в GUI программы и доступны через пункт меню **«Пуск → Полный
+анализ + оптимизации»** (горячая клавиша `F8`). Меню запускает
+лексический, синтаксический и семантический анализ, строит AST,
+генерирует трёхадресный код и применяет обе оптимизации, после чего
+показывает каждый этап в отдельном окне.
+
+#### 2.1. Построение AST конструкции
+
+После семантического анализа для строки строится AST с узлом
+`ComplexDeclNode` в качестве корня. У него есть атрибуты (имя
+переменной и модификаторы) и три дочерних узла: тип, действительная и
+мнимая части. Унарный минус выделяется в отдельный узел
+`UnaryOpNode`, чтобы дать оптимизатору точку для свёртки.
+
+Для строки `std::complex<double> my_complex(-10.0, 2.0);` AST имеет
+следующий вид:
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7-extra-excercise/images/lab7/additional_ast.png" width="550">
+
+
+#### 2.2. Генерация промежуточного представления (TAC)
+
+Каждый литерал помещается в собственную временную переменную, унарный
+минус и присваивание полей объекта разбиваются на отдельные
+инструкции — такая «многословная» форма даёт обеим оптимизациям точки
+приложения и наглядно показывает их работу:
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7-extra-excercise/images/lab7/additional_tac.png" width="550">
+
+
+#### 2.3. Локальные оптимизации
+
+Реализованы две локальные оптимизации. Обе работают строго в пределах
+одной конструкции (объявления `std::complex<double>`), сохраняют
+семантику и приводят IR к более простому/каноническому виду.
+
+##### Оптимизация №1. Свёртка констант (Constant Folding)
+
+**Текстовое описание.** Если все операнды операции являются константами,
+её результат вычисляется на этапе компиляции. В нашей конструкции это
+прежде всего «склейка» унарного минуса с числовым литералом:
+`t2 = neg t1` при известной `t1 = 10.0` сворачивается в
+`t2 = -10.0`. Алгоритм при необходимости вычисляет и бинарные
+константные выражения (`+`, `-`, `*`, `/`).
+
+**Обобщённая блок-схема:**
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7-extra-excercise/images/lab7/scheme_1.png" width="550">
+
+**Тестовый пример** — конструкция `std::complex<double> my_complex(-10.0, 2.0);`.
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7-extra-excercise/images/lab7/opt_1.png" width="550">
+
+`neg 10.0` свернулось в литерал `-10.0`, остальные инструкции не
+изменились — следующая оптимизация уберёт ставшие лишними `t1`, `t4`,
+`t5`.
+
+##### Оптимизация №2. Удаление лишних копий и канонизация (Copy Propagation + DCE)
+
+**Текстовое описание.** Локальная распространения копий: цепочки
+`tN = tM` заменяются прямой подстановкой исходного значения, а
+неиспользуемые временные переменные удаляются (Dead Code Elimination).
+Дополнительно применяются алгебраические тождества:
+`x + 0 → x`, `0 + x → x`, `x - 0 → x`, `x · 1 → x`, `1 · x → x`,
+`x · 0 → 0`, `x / 1 → x`. В завершение, если временная переменная
+имеет единственное использование и хранит константу, эта константа
+встраивается прямо в место использования (форма канонизации).
+
+**Обобщённая блок-схема:**
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7-extra-excercise/images/lab7/scheme_2.png" width="550">
+
+**Тестовый пример** — `std::complex<double> my_complex(-10.0, 2.0);`.
+
+<img src="https://github.com/MaKiToShI21/Text-Editor/blob/lab-7-extra-excercise/images/lab7/opt_2.png" width="550">
+
+После двух локальных оптимизаций IR содержит только два видимых
+присваивания полей `my_complex.real` и `my_complex.imag`. Это
+эквивалентно исходной конструкции, но без избыточных временных
+переменных.
+
+
+#### 2.5. Вывод
+
+Реализованные оптимизации удовлетворяют требованиям:
+
+1. **Локальность.** Обе оптимизации работают строго в пределах одной
+   конструкции `std::complex<double> name(real, imag);` — для каждой
+   строки строится свой блок инструкций и преобразуется независимо от
+   остальных строк программы.
+2. **Сохранение семантики.** Свёртка констант лишь подставляет
+   значения, известные на этапе компиляции. Удаление лишних копий
+   убирает только те временные, чьи определения не имеют видимых
+   эффектов; store-инструкции (запись полей объекта) сохраняются.
+3. **Упрощение и канонизация.** Окончательный IR содержит только
+   присваивания полей объекта прямо вычисленными значениями.
+4. **Свёртка констант** выполняется явно — это первая оптимизация.
+
+---
+
+### 3. Ответы на контрольные вопросы
+
+**1. Что такое Clang, и какова его роль в процессе компиляции программ?**
+Clang — это фронтенд компилятора LLVM для языков C, C++ и Objective-C. Его роль: выполнение лексического, синтаксического и семантического анализа исходного кода, построение AST, генерация LLVM IR и выдача диагностических сообщений (ошибки, предупреждения).
+
+**2. Что представляет собой LLVM и как он используется в современных компиляторах?**
+LLVM (Low Level Virtual Machine) — это набор модульных инструментов для компиляции, оптимизации и генерации машинного кода. Он используется как промежуточный слой между фронтендом (Clang) и бэкендом. Современные компиляторы (Clang, Rustc, Swift) используют LLVM для оптимизаций и генерации кода под различные архитектуры (x86, ARM, RISC-V).
+
+**3. Чем отличается AST от промежуточного представления LLVM IR?**
+
+| | AST | LLVM IR |
+|---|---|---|
+| Уровень | Высокоуровневое, близко к исходному коду | Низкоуровневое, похоже на ассемблер |
+| Сохраняет | Имена переменных, типы, структуру языка | Упрощённые типы, виртуальные регистры |
+| Используется для | Семантического анализа | Оптимизаций |
+| Генерация машинного кода | Не пригоден напрямую | Легко транслируется |
+
+**4. Для чего необходимо промежуточное представление (IR) в процессе компиляции?**
+IR необходимо для: независимости от языка (один IR от разных языков C++, Rust, Swift), независимости от платформы (один IR под разные архитектуры x86, ARM), модульности оптимизаций и упрощения анализа через SSA-форму.
+
+**5. Что делает инструкция `alloca` в LLVM IR, и зачем она используется в функциях?**
+`alloca` выделяет память на стеке для локальной переменной. Используется в неоптимизированном коде (`-O0`) для хранения переменных в памяти, позволяя легко отлаживать код. При оптимизациях (`-O2`) `alloca` заменяется на регистры (SSA-форма) через оптимизацию `-mem2reg`.
+
+**6. Зачем нужна оптимизация кода в компиляторе, и какие основные цели она преследует?**
+
+| Цель | Описание |
+|---|---|
+| Увеличение скорости | Уменьшение времени выполнения |
+| Уменьшение размера | Сжатие кода для встраиваемых систем |
+| Снижение энергопотребления | Меньше инструкций → меньше энергии |
+| Устранение избыточности | Удаление мёртвого кода, свёртка констант |
+
+**7. Что такое SSA-форма и почему она важна при оптимизации программ?**
+SSA (Static Single Assignment) — форма представления кода, где каждая переменная присваивается ровно один раз. При повторном присваивании создаётся новая «версия» переменной (например, `x1`, `x2`). SSA важна, потому что упрощает анализ потока данных, позволяет выполнять глобальные оптимизации (GVN, constant propagation) и облегчает определение живых переменных.
+
+**8. Что такое граф потока управления (CFG) и как он помогает анализировать поведение программы?**
+CFG (Control Flow Graph) — ориентированный граф, где узлы — базовые блоки (линейные последовательности инструкций без переходов), а рёбра — переходы между блоками (`if`, `goto`, вызовы). CFG помогает визуализировать структуру программы, анализировать достижимость блоков и выполнять оптимизации (удаление мёртвого кода, свёртка условных переходов).
+
+**9. Как устроено представление арифметических операций в LLVM IR?**
+
+| Тип операндов | Инструкции |
+|---|---|
+| Целые числа | `add`, `sub`, `mul`, `div`, `rem` |
+| Числа с плавающей точкой | `fadd`, `fsub`, `fmul`, `fdiv`, `frem` |
+
+```llvm
+%sum_int   = add  i32    %a, %b   ; сложение целых 32-битных
+%sum_float = fadd double %x, %y   ; сложение double
+%mul       = fmul double %a, %b   ; умножение double
+```
+
+**10. Почему функции в LLVM IR обычно представляют собой отдельные единицы анализа и оптимизации?**
+Функции имеют чёткие границы (вход, выход, локальные переменные), могут анализироваться и оптимизироваться изолированно, поддерживают встраивание (inlining) — замену вызова функции её телом, а также упрощают параллельную компиляцию.
+
+**11. Что происходит с функцией в LLVM IR, если она вызывается один раз и очень короткая?**
+Такая функция встраивается (inlined). Компилятор удаляет инструкцию `call`, копирует тело функции в место вызова и применяет дополнительные оптимизации (`-constprop`, `-mem2reg`, `-dce`). Пример: функция `square(int x) { return x * x; }` при вызове `square(5)` будет заменена на `25` (свёртка констант).
+
+**12. Какие преимущества даёт использование IR и CFG для автоматических оптимизаций по сравнению с анализом исходного текста на C?**
+
+| Анализ исходного C-кода | Анализ LLVM IR |
+|---|---|
+| Сложный парсинг | Простой, линейный формат |
+| Много синтаксического сахара | Унифицированное представление |
+| Нет SSA-формы (переменные перезаписываются) | SSA-форма (каждая переменная — один раз) |
+| Типы абстрактные (структуры, классы) | Типы низкоуровневые (указатели, числа) |
+| CFG нужно строить заново | CFG легко извлекается из IR |
+
+Главное преимущество: IR уже привёл код к простому, унифицированному виду. Оптимизациям не нужно «понимать» особенности языка C++ (перегрузку операторов, шаблоны, наследование) — всё уже развёрнуто в простые инструкции. CFG даёт чёткую структуру, которую можно алгоритмически анализировать.
 
 <h2 align="center">Build and Launch Instructions</h2>
 

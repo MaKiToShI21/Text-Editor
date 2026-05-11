@@ -4,6 +4,7 @@
                              QHBoxLayout, QPushButton, QGraphicsScene,
                              QGraphicsTextItem, QWidget)
 from PyQt6.QtGui import QAction, QDesktopServices, QPen, QFont
+from analysis_window import FullAnalysisWindow
 from semantic_analyzer import SemanticAnalyzer
 from language import Language, LanguageDialog
 from zoom_AST_graph import ZoomGraphicsView
@@ -75,6 +76,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
         self.actionRunParser.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
         self.actionSemanticAnalysis.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
         self.actionShowAST.setIcon(QtGui.QIcon(self.resource_path("icons/show_AST.png")))
+        self.actionRunFullAnalysis.setIcon(QtGui.QIcon(self.resource_path("icons/run.png")))
 
     def setup_actions(self):
         action_map = {
@@ -96,6 +98,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             'actionRunParser': self.runParser,
             'actionSemanticAnalysis': self.runSemanticAnalysis,
             'actionShowAST': self.showAST,
+            'actionRunFullAnalysis': self.runFullAnalysis,
             'actionHelp': self.help,
             'actionAbout': self.about,
             'actionLanguage': self.show_language_dialog
@@ -158,7 +161,7 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             'actionOpenExample', 'actionOpenReferences',
             'actionOpenSourceCode', 'actionRunLexer', 'actionRunParser',
             'actionSemanticAnalysis', 'actionHelp', 'actionAbout',
-            'actionLanguage', 'actionShowAST'
+            'actionLanguage', 'actionShowAST', 'actionRunFullAnalysis'
         ]
 
         for action_name in action_names:
@@ -698,6 +701,36 @@ class TextEditor(QMainWindow, Ui_MainWindow):
             self.status_bar.showMessage(self.lang.translate('no_errors'), 10000)
         else:
             self.status_bar.showMessage(self.lang.translate('total_errors').format(len(errors), 0), 10000)
+
+    def runFullAnalysis(self):
+        """Открыть отдельное окно с полным конвейером анализа: лексический,
+        синтаксический, семантический анализ, построение AST и две локальные
+        оптимизации трёхадресного кода."""
+
+        if not self.input_tab_widget:
+            return
+
+        index = self.input_tab_widget.currentIndex()
+        if index < 0:
+            self.status_bar.showMessage(self.lang.translate('text_edit_inactive'), 3000)
+            return
+
+        editor = self._get_active_editor_for_analysis()
+        if editor is None:
+            self.status_bar.showMessage(self.lang.translate('text_edit_inactive'), 3000)
+            return
+
+        text = editor.text()
+        if not text or not text.strip():
+            self.status_bar.showMessage(self.lang.translate('semantic_analysis_input_empty'), 5000)
+            return
+
+        if not getattr(editor, 'file_path', None) or editor.isModified():
+            if not self.save_file():
+                return
+
+        dialog = FullAnalysisWindow(self.lang, text, parent=self)
+        dialog.exec()
 
     def showAST(self):
         editor = self.input_tab_widget.currentWidget() if self.input_tab_widget else None
@@ -1449,6 +1482,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                 <h2 id='run-menu'>Меню «Пуск»</h2>
                 <p><b>Запуск лексического анализатора</b> (<span>F5</span>) — запускает лексический анализ текста из области редактирования.</p>
                 <p><b>Запуск парсера анализатора</b> (<span>F6</span>) — запускает синтаксический анализ текста из области редактирования.</p>
+                <p><b>Запуск семантического анализатора</b> (<span>F7</span>) — запускает семантический анализ и построение AST.</p>
+                <p><b>Полный анализ + оптимизации</b> (<span>F8</span>) — в отдельном окне последовательно запускает лексический, синтаксический и семантический анализ, строит AST конструкции и применяет две локальные оптимизации IR (свёртка констант и удаление лишних копий).</p>
 
                 <h2 id='help-menu'>Меню «Справка»</h2>
                 <table>
@@ -1654,6 +1689,8 @@ class TextEditor(QMainWindow, Ui_MainWindow):
                     <h2 id='run-menu'>Menu «Run»</h2>
                     <p><b>Launching the lexical analyzer</b> (<span>F5</span>) — starts lexical analysis of the text in the editing area.</p>
                     <p><b>Launching the syntax analyzer</b> (<span>F6</span>) — starts parsing the text from the editing area.</p>
+                    <p><b>Launching the semantic analyzer</b> (<span>F7</span>) — runs semantic analysis and builds the AST.</p>
+                    <p><b>Full analysis + optimizations (Coursework)</b> (<span>F8</span>) — opens a dedicated window that sequentially runs lexical, syntactic and semantic analysis, builds the AST of the construct and applies two local IR optimizations (constant folding and dead-copy elimination).</p>
 
                     <h2 id='help-menu'>Menu «Help»</h2>
                     <table>

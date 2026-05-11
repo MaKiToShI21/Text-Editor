@@ -67,6 +67,8 @@ class Language():
                 'actionRunLexer': 'Лексический анализ',
                 'actionSemanticAnalysis': 'Семантический анализ',
                 'actionShowAST': 'Показать AST',
+                'actionRunFullAnalysis': 'Полный анализ + оптимизации',
+                'actionRunFullAnalysis_toolTip': 'Полный анализ + оптимизации',
 
                 # Help menu actions
                 'actionHelp': 'Вызов справки',
@@ -177,7 +179,57 @@ class Language():
                 'semantic_position': 'Позиция',
                 'semantic_duplicate_identifier': 'Ошибка: идентификатор "{}" уже объявлен ранее (строка {})',
                 'semantic_type_mismatch': 'Ошибка: значение "{}" имеет тип int, ожидался double',
-                'semantic_out_of_range': 'Ошибка: значение "{}" вне диапазона типа double'
+                'semantic_out_of_range': 'Ошибка: значение "{}" вне диапазона типа double',
+
+                # Полный анализ + оптимизации
+                'full_analysis_title': 'Полный анализ конструкции std::complex<double>',
+                'full_analysis_description': (
+                    'В одном окне показаны все этапы обработки конструкции '
+                    'std::complex<double> name(real, imag); — лексический, '
+                    'синтаксический и семантический анализы, построение AST, '
+                    'генерация трёхадресного кода (TAC) и две локальные '
+                    'оптимизации: свёртка констант и удаление лишних копий.'
+                ),
+                'full_analysis_no_input': 'Введите исходный код перед запуском полного анализа.',
+                'full_analysis_blocked_by_errors': (
+                    'Построение AST и трёхадресного кода пропущено: '
+                    'в исходном коде обнаружены лексические, синтаксические '
+                    'или семантические ошибки. Исправьте их и запустите анализ снова.'
+                ),
+                'full_analysis_input_label': '1. Исходный текст',
+                'full_analysis_lexer_title': '2. Лексический анализ',
+                'full_analysis_lexer_ok': 'Лексический анализ выполнен без ошибок.',
+                'full_analysis_lexer_errors': 'Лексический анализ обнаружил ошибок: {}',
+                'full_analysis_parser_title': '3. Синтаксический анализ',
+                'full_analysis_parser_ok': 'Синтаксический анализ выполнен без ошибок.',
+                'full_analysis_parser_errors': 'Синтаксический анализ обнаружил ошибок: {}',
+                'full_analysis_semantic_title': '4. Семантический анализ',
+                'full_analysis_semantic_ok': 'Семантический анализ выполнен без ошибок.',
+                'full_analysis_semantic_errors': 'Семантический анализ обнаружил ошибок: {}',
+                'full_analysis_pipeline_title': '5. Конструкция №{index}:  {line}',
+                'full_analysis_ast_label': 'AST конструкции',
+                'full_analysis_initial_ir_label': 'Исходное промежуточное представление (TAC)',
+                'full_analysis_initial_ir_desc': (
+                    'Каждый литерал размещён во временной переменной.'
+                ),
+                'full_analysis_opt1_title': 'Оптимизация №1. Свёртка констант (Constant Folding)',
+                'full_analysis_opt1_desc': (
+                    'Если операнды операции являются константами, вычисление '
+                    'выполняется на этапе компиляции. В конструкции это '
+                    'объединение унарного минуса и числового литерала: '
+                    'выражение «neg 10.0» сворачивается в литерал «-10.0».'
+                ),
+                'full_analysis_opt2_title': 'Оптимизация №2. Удаление лишних копий и канонизация',
+                'full_analysis_opt2_desc': (
+                    'Локальная распространения копий: цепочки tN = tM '
+                    'заменяются прямой подстановкой исходного значения, '
+                    'а неиспользуемые временные переменные удаляются. '
+                    'Дополнительно применяются алгебраические тождества '
+                    '(x + 0 → x, x · 1 → x, x · 0 → 0).'
+                ),
+                'full_analysis_input_ir_label': 'Входной IR:',
+                'full_analysis_output_ir_label': 'Выходной IR:',
+                'close_button': 'Закрыть',
             },
             'en': {
                 # Window title
@@ -239,6 +291,8 @@ class Language():
                 'actionRunLexer': 'Lexical analysis',
                 'actionSemanticAnalysis': 'Semantic analysis',
                 'actionShowAST': 'Show AST',
+                'actionRunFullAnalysis': 'Full analysis + optimizations (Coursework)',
+                'actionRunFullAnalysis_toolTip': 'Full analysis + optimizations (Coursework)',
 
                 # Help menu actions
                 'actionHelp': 'Help',
@@ -348,7 +402,60 @@ class Language():
                 'semantic_position': 'Position',
                 'semantic_duplicate_identifier': 'Error: identifier "{}" was already declared before (line {})',
                 'semantic_type_mismatch': 'Error: value "{}" has int type, expected double',
-                'semantic_out_of_range': 'Error: value "{}" is out of range for double'
+                'semantic_out_of_range': 'Error: value "{}" is out of range for double',
+
+                # Full analysis + optimizations
+                'full_analysis_title': 'Full analysis of std::complex<double> construct',
+                'full_analysis_description': (
+                    'A single window that brings together every processing '
+                    'step for the construct '
+                    'std::complex<double> name(real, imag); — lexical, '
+                    'syntactic and semantic analyses, AST construction, '
+                    'three-address code (TAC) generation, and two local '
+                    'optimizations: constant folding and dead-copy removal.'
+                ),
+                'full_analysis_no_input': 'Type some source code before running the full analysis.',
+                'full_analysis_blocked_by_errors': (
+                    'AST construction and IR generation skipped: lexical, '
+                    'syntactic or semantic errors were detected in the input. '
+                    'Fix them and run the full analysis again.'
+                ),
+                'full_analysis_input_label': '1. Source text',
+                'full_analysis_lexer_title': '2. Lexical analysis',
+                'full_analysis_lexer_ok': 'Lexical analysis completed without errors.',
+                'full_analysis_lexer_errors': 'Lexical analysis found errors: {}',
+                'full_analysis_parser_title': '3. Syntactic analysis',
+                'full_analysis_parser_ok': 'Syntactic analysis completed without errors.',
+                'full_analysis_parser_errors': 'Syntactic analysis found errors: {}',
+                'full_analysis_semantic_title': '4. Semantic analysis',
+                'full_analysis_semantic_ok': 'Semantic analysis completed without errors.',
+                'full_analysis_semantic_errors': 'Semantic analysis found errors: {}',
+                'full_analysis_pipeline_title': '5. Construct #{index}: {line}',
+                'full_analysis_ast_label': 'AST of the construct',
+                'full_analysis_initial_ir_label': 'Initial intermediate representation (TAC)',
+                'full_analysis_initial_ir_desc': (
+                    'Every literal lives in its own temporary; unary minus '
+                    'and field assignments are split into separate instructions '
+                    'on purpose, so the optimizations have something to remove.'
+                ),
+                'full_analysis_opt1_title': 'Optimization #1. Constant folding',
+                'full_analysis_opt1_desc': (
+                    'When both operands of an operation are constants, the '
+                    'compiler evaluates the result at compile time. For our '
+                    'construct that means folding the unary-minus together '
+                    'with the literal: the pair «neg 10.0» collapses into the '
+                    'single literal «-10.0».'
+                ),
+                'full_analysis_opt2_title': 'Optimization #2. Copy elimination & canonicalization',
+                'full_analysis_opt2_desc': (
+                    'Local copy propagation: chains of tN = tM are replaced '
+                    'by substituting the original value, and unused temporaries '
+                    'are dropped. Algebraic identities are applied too '
+                    '(x + 0 → x, x · 1 → x, x · 0 → 0).'
+                ),
+                'full_analysis_input_ir_label': 'Input IR:',
+                'full_analysis_output_ir_label': 'Output IR:',
+                'close_button': 'Close',
             }
         }
 
